@@ -1,0 +1,804 @@
+# Asvada backlog — source of truth for seeding GitHub.
+# scripts/bootstrap_github.py reads this file and creates labels, milestones, issues,
+# epic → sub-issue links and the Project board. Re-running is safe (matches by title).
+#
+# points: Fibonacci story points. priority: P0 (MVP-critical) / P1 / P2.
+# sprint: index into `sprints`. milestone: key into `milestones`.
+
+repo: deechauhan/asvada
+project_title: Asvada
+
+sprints:
+  start: 2026-11-23      # Monday
+  length_days: 14
+  count: 21              # Sprint 0 … Sprint 20
+
+milestones:
+  M0: {title: "M0 · Foundations", due: 2027-01-03, description: "Repo, CI, Xcode workspace, design tokens, app shell and the data model."}
+  M1: {title: "M1 · Log & Rank (MVP core)", due: 2027-04-25, description: "Collections, item sources, quick-log, entries, rating modes incl. pairwise ranking, timeline and collection views."}
+  M2: {title: "M2 · Map Collage", due: 2027-05-23, description: "Map tab with country fill, clustered photo stacks and pins."}
+  M3: {title: "M3 · Backup & Sync", due: 2027-07-04, description: "iCloud Drive backup/restore, Files export, optional CloudKit sync."}
+  M4: {title: "M4 · Look Back", due: 2027-08-15, description: "Photo-library backfill, trips, stats, on-this-day, year in review, poster export."}
+  M5: {title: "M5 · v1.0 Launch", due: 2027-09-12, description: "Quality pass, accessibility, TestFlight and App Store release."}
+
+labels:
+  - {name: "type:epic",   color: "5319e7", description: "Large outcome made of several stories"}
+  - {name: "type:story",  color: "1d76db", description: "User-visible value with acceptance criteria"}
+  - {name: "type:task",   color: "0e8a16", description: "Technical or enabling work"}
+  - {name: "type:spike",  color: "fbca04", description: "Time-boxed research ending in a decision"}
+  - {name: "type:bug",    color: "d73a4a", description: "Something isn't working"}
+  - {name: "priority:P0", color: "b60205", description: "MVP-critical"}
+  - {name: "priority:P1", color: "d93f0b", description: "Important"}
+  - {name: "priority:P2", color: "fef2c0", description: "Nice to have"}
+  - {name: "area:infra",       color: "c5def5", description: "Repo, CI, tooling"}
+  - {name: "area:design",      color: "c5def5", description: "Design system, app shell"}
+  - {name: "area:data",        color: "c5def5", description: "Models, persistence, migrations"}
+  - {name: "area:collections", color: "c5def5", description: "Collections & custom fields"}
+  - {name: "area:sources",     color: "c5def5", description: "Place/film search, catalogs"}
+  - {name: "area:logging",     color: "c5def5", description: "Quick-log, entries, photos"}
+  - {name: "area:ranking",     color: "c5def5", description: "Rating modes, ranking engine"}
+  - {name: "area:browse",      color: "c5def5", description: "Timeline, collection views, search"}
+  - {name: "area:map",         color: "c5def5", description: "Map collage"}
+  - {name: "area:sync",        color: "c5def5", description: "Backup, restore, iCloud"}
+  - {name: "area:photos",      color: "c5def5", description: "Photo-library backfill"}
+  - {name: "area:insights",    color: "c5def5", description: "Trips, stats, look-back features"}
+  - {name: "area:quality",     color: "c5def5", description: "Testing, a11y, performance, privacy"}
+  - {name: "area:release",     color: "c5def5", description: "TestFlight, App Store"}
+  - {name: "ceremony",         color: "ededed", description: "Sprint planning/review/retro tracking"}
+
+epics:
+
+  # ───────────────────────────── M0 ─────────────────────────────
+  - key: E1
+    title: "Epic: Project setup & tooling"
+    milestone: M0
+    area: infra
+    priority: P0
+    summary: "Everything needed to start building safely: Xcode workspace, CI, lint, secrets, branch protection and key early decisions."
+    items:
+      - title: "Create Xcode project and modular workspace"
+        type: task
+        points: 3
+        priority: P0
+        sprint: 0
+        body: "Create the `Asvada` iOS app target and local Swift packages per `docs/ARCHITECTURE.md` (Features, Core/Model, Core/Storage, Core/Geo, Core/Sources, Core/Ranking, Core/DesignSystem)."
+        ac:
+          - "App builds and launches an empty screen on the iOS simulator"
+          - "Each module is a local Swift package with a placeholder type and one passing test"
+          - "Swift 6 language mode and strict concurrency enabled"
+          - "`.gitignore` covers Xcode user data, DerivedData and secrets"
+      - title: "Set up GitHub Actions CI (build + test on PRs)"
+        type: task
+        points: 3
+        priority: P0
+        sprint: 0
+        body: "macOS runner workflow that builds the app and runs unit tests on every PR and push to `main`."
+        ac:
+          - "Workflow runs on pull_request and push to main"
+          - "Fails the PR on build error or failing test"
+          - "Caches SPM dependencies"
+          - "Status badge in README"
+      - title: "Add SwiftLint and SwiftFormat"
+        type: task
+        points: 2
+        priority: P1
+        sprint: 0
+        body: "Consistent style enforced locally and in CI."
+        ac:
+          - "Config files committed with agreed rules"
+          - "Lint step runs in CI and fails on errors"
+          - "README explains how to run format locally"
+      - title: "Secrets handling for the TMDB API key"
+        type: task
+        points: 1
+        priority: P0
+        sprint: 0
+        body: "Keep the TMDB key out of git; inject via an uncommitted xcconfig locally and a CI secret."
+        ac:
+          - "`Secrets.xcconfig` is gitignored; `Secrets.example.xcconfig` is committed"
+          - "App reads the key from Info.plist build setting"
+          - "CI reads the key from a GitHub Actions secret"
+      - title: "Protect main: branch rules and merge settings"
+        type: task
+        points: 1
+        priority: P1
+        sprint: 0
+        body: "Make `main` require a PR and green CI."
+        ac:
+          - "Branch protection (or ruleset) requires PR + passing CI on main"
+          - "Squash merge only; auto-delete head branches"
+          - "PR template and CODEOWNERS (already committed) verified working"
+      - title: "Spike: confirm minimum iOS version (ADR-0001)"
+        type: spike
+        points: 2
+        priority: P0
+        sprint: 0
+        body: "Decide iOS 26+ vs 18+ based on SwiftData, MapKit and SwiftUI APIs we need. Time-box: 1 evening."
+        ac:
+          - "ADR-0001 written in docs/DECISIONS with decision and consequences"
+          - "Deployment target set in the Xcode project"
+      - title: "Confirm name availability: App Store, domain, trademark"
+        type: task
+        points: 1
+        priority: P1
+        sprint: 0
+        body: "Check 'Asvada' is free in App Store Connect, register a domain (e.g. asvada.app) and do a basic trademark search."
+        ac:
+          - "App name reserved in App Store Connect (or alternative chosen)"
+          - "Domain registered"
+          - "Findings noted in a comment on this issue"
+
+  - key: E2
+    title: "Epic: Design system & app shell"
+    milestone: M0
+    area: design
+    priority: P0
+    summary: "A small design system and the navigation skeleton every feature plugs into."
+    items:
+      - title: "Design tokens: colour, type, spacing, light & dark"
+        type: story
+        points: 3
+        priority: P0
+        sprint: 1
+        story: "As a user I want the app to look calm and consistent in light and dark mode so that browsing memories feels pleasant."
+        ac:
+          - "Colour, typography and spacing tokens in Core/DesignSystem"
+          - "Per-collection accent colours defined"
+          - "All tokens work in light and dark mode and pass WCAG AA contrast for text"
+          - "A preview catalogue screen shows every token"
+      - title: "App shell: tabs and global add button"
+        type: story
+        points: 3
+        priority: P0
+        sprint: 1
+        story: "As a user I want clear tabs for Timeline, Collections, Map and Settings and an always-available + button so that I can log something from anywhere."
+        ac:
+          - "Tab bar with Timeline, Collections, Map, Settings placeholders"
+          - "Global + opens a quick-log sheet placeholder"
+          - "Navigation state restores after relaunch"
+      - title: "App icon, launch screen and About screen"
+        type: task
+        points: 1
+        priority: P2
+        sprint: 2
+        body: "Placeholder icon and launch screen; About explains āsvāda (आस्वाद)."
+        ac:
+          - "Icon in all required sizes"
+          - "About screen shows name meaning and version"
+
+  - key: E3
+    title: "Epic: Data model & persistence"
+    milestone: M0
+    area: data
+    priority: P0
+    summary: "CloudKit-compatible SwiftData models, migrations and a repository layer."
+    items:
+      - title: "Define SwiftData models (CloudKit-compatible)"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 1
+        story: "As a user I want my collections, items and entries stored reliably on my device so that nothing I log is lost."
+        ac:
+          - "Models ExperienceCollection, Item, Entry, Photo, Trip, Tag, Person as in docs/ARCHITECTURE.md"
+          - "Every attribute optional or defaulted; every relationship optional; no unique constraints"
+          - "Photos use external storage for image data"
+          - "Model container created at launch; data persists across relaunch"
+      - title: "Versioned schema and migration scaffold"
+        type: task
+        points: 3
+        priority: P0
+        sprint: 1
+        body: "Introduce `VersionedSchema` V1 and a `SchemaMigrationPlan` so future changes are safe."
+        ac:
+          - "SchemaV1 defined; migration plan wired into the container"
+          - "Test proves a V1 store opens with the current build"
+      - title: "Repository layer and in-memory container for tests/previews"
+        type: task
+        points: 3
+        priority: P0
+        sprint: 2
+        body: "Small repository API (fetch, upsert by externalRef, delete) used by features; in-memory container for SwiftUI previews and tests."
+        ac:
+          - "Upsert dedupes items by externalRef within a collection"
+          - "Previews use sample data from an in-memory store"
+          - "Unit tests cover upsert, cascade delete and dedupe"
+      - title: "Seed built-in collections on first launch"
+        type: story
+        points: 2
+        priority: P0
+        sprint: 2
+        story: "As a new user I want Cafés, Restaurants, Countries, Cities, Airlines and Films ready to use so that I can start logging immediately."
+        ac:
+          - "Six built-in collections with sensible rating and view modes"
+          - "Seeding runs once and is idempotent"
+          - "Built-ins can be hidden but not accidentally duplicated"
+
+  # ───────────────────────────── M1 ─────────────────────────────
+  - key: E4
+    title: "Epic: Collections"
+    milestone: M1
+    area: collections
+    priority: P0
+    summary: "Users can see, create, customise and manage collections."
+    items:
+      - title: "Collections screen: list, reorder, hide"
+        type: story
+        points: 3
+        priority: P0
+        sprint: 3
+        story: "As a user I want to see all my collections with counts and reorder or hide them so that the ones I use most are on top."
+        ac:
+          - "Grid/list of collections with icon, colour and item count"
+          - "Drag to reorder persists"
+          - "Hide/unhide built-ins"
+      - title: "Create a custom collection"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 3
+        story: "As a user I want to create my own collection (e.g. Concerts, Hikes) and choose its rating and view style so that I can track anything."
+        ac:
+          - "Name, icon, colour, rating mode and default view are selectable"
+          - "Item source can be manual or place search"
+          - "New collection appears in Collections and in quick-log"
+      - title: "Edit and delete a collection safely"
+        type: story
+        points: 2
+        priority: P1
+        sprint: 3
+        story: "As a user I want to rename or delete a collection without losing data by accident."
+        ac:
+          - "Edit name/icon/colour/modes"
+          - "Delete asks for confirmation showing how many items/entries will be removed"
+      - title: "Custom fields for collections"
+        type: story
+        points: 5
+        priority: P1
+        sprint: 4
+        story: "As a user I want to add my own fields (e.g. 'Seat', 'Dish ordered', 'Cabin class') so that each collection records what matters to me."
+        ac:
+          - "Field types: text, number, single choice, date, yes/no"
+          - "Fields appear in the entry form for that collection"
+          - "Values stored in Entry.extraJSON and survive app restart"
+
+  - key: E5
+    title: "Epic: Item sources — search and catalogs"
+    milestone: M1
+    area: sources
+    priority: P0
+    summary: "Finding the thing you experienced is fast and offline-friendly."
+    items:
+      - title: "Place search with MapKit (cafés, restaurants, cities)"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 4
+        story: "As a user I want to search for a café or restaurant by name, near me or anywhere, so that I don't have to type addresses."
+        ac:
+          - "MKLocalSearch with results near current location and a free-text search"
+          - "Result stores name, coordinates, address, country code and MapKit identifier"
+          - "Works without location permission (search-only)"
+      - title: "Bundled country catalog and polygons"
+        type: task
+        points: 3
+        priority: P0
+        sprint: 4
+        body: "Ship ISO-3166 countries (names, flags, continents) and simplified Natural Earth admin-0 polygons in Core/Geo."
+        ac:
+          - "Catalog of countries with ISO codes and flag emoji"
+          - "Simplified polygons < 3 MB bundled; licence noted (public domain)"
+          - "Country picker supports search and multi-select"
+      - title: "Bundled airline catalog"
+        type: task
+        points: 2
+        priority: P0
+        sprint: 5
+        body: "Static list of airlines with IATA/ICAO codes and country."
+        ac:
+          - "Searchable by name and code"
+          - "Licence/source of dataset noted in repo"
+      - title: "Manual item creation for any collection"
+        type: story
+        points: 2
+        priority: P0
+        sprint: 5
+        story: "As a user I want to add an item by hand when search can't find it."
+        ac:
+          - "Name required; optional location picked on a map"
+          - "Manual items behave like searched ones everywhere else"
+      - title: "Film search with TMDB and poster caching"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 5
+        story: "As a user I want to find a film by title and see its poster so that my film log looks great."
+        ac:
+          - "Search TMDB by title; show year and poster"
+          - "Selected film stored with tmdb externalRef; poster cached locally"
+          - "Graceful offline state; TMDB attribution shown per their terms"
+      - title: "Offline country lookup from coordinates"
+        type: story
+        points: 3
+        priority: P0
+        sprint: 5
+        story: "As a user I want places I log to count towards the countries I've visited automatically."
+        ac:
+          - "Point-in-polygon lookup returns ISO code for a coordinate offline"
+          - "Logging a place marks its country as visited"
+          - "Unit tests with border and island cases"
+
+  - key: E6
+    title: "Epic: Quick-log & entries"
+    milestone: M1
+    area: logging
+    priority: P0
+    summary: "Logging an experience takes seconds; entries hold the details and photos."
+    items:
+      - title: "Quick-log flow (under 15 seconds)"
+        type: story
+        points: 8
+        priority: P0
+        sprint: 6
+        story: "As a user I want to log something in a few taps — pick a collection, find the item, rate it, save — so that logging never feels like a chore."
+        ac:
+          - "Flow: collection → search/pick item → rating (per mode) → optional details → save"
+          - "Recent and nearby suggestions shown first"
+          - "Median completion < 15 s in a timed test with 10 entries"
+          - "Saved entry appears immediately on the timeline"
+      - title: "Entry details: date, notes, companions, tags"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 6
+        story: "As a user I want to add when it was, who I was with, notes and tags so that the memory is complete."
+        ac:
+          - "Date (defaults to now, editable, supports past dates)"
+          - "Notes, people and tags with autocomplete from existing ones"
+          - "Edits save automatically"
+      - title: "Attach photos to an entry"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 7
+        story: "As a user I want to attach photos to an entry so that I can see the moment again."
+        ac:
+          - "PhotosPicker multi-select; images downscaled and thumbnails generated"
+          - "Stored in-app (not PHAsset references)"
+          - "Photo date/location read from metadata when present"
+      - title: "Item detail: all entries and stats for one thing"
+        type: story
+        points: 3
+        priority: P1
+        sprint: 7
+        story: "As a user I want to open a café or airline and see every visit/flight, my average rating and photos."
+        ac:
+          - "Header with name, location/poster, rank or rating"
+          - "List of entries newest first; photo strip"
+          - "Counts: visits/flights/watches"
+      - title: "Edit and delete entries with undo"
+        type: story
+        points: 2
+        priority: P1
+        sprint: 7
+        story: "As a user I want to fix or remove an entry and undo mistakes."
+        ac:
+          - "Swipe to delete with undo toast"
+          - "Edit reopens the entry form with values filled in"
+
+  - key: E7
+    title: "Epic: Rating modes & ranking engine"
+    milestone: M1
+    area: ranking
+    priority: P0
+    summary: "Each collection rates in the way that fits it: stars, checklist, log or pairwise ranking."
+    items:
+      - title: "Rating mode: stars"
+        type: story
+        points: 2
+        priority: P0
+        sprint: 7
+        story: "As a user I want to give a quick 1–5 star rating (with halves) where ranking is overkill."
+        ac:
+          - "Half-star input, accessible with VoiceOver adjustable action"
+          - "Average shown on item detail"
+      - title: "Rating mode: checklist with completion progress"
+        type: story
+        points: 3
+        priority: P0
+        sprint: 8
+        story: "As a user I want to tick off countries and see '47 of 195' so that I can see how much of the world I've seen."
+        ac:
+          - "Visited/not visited toggle per catalog item"
+          - "Progress ring and percentage, overall and per continent"
+      - title: "Rating mode: log (repeat entries)"
+        type: story
+        points: 2
+        priority: P0
+        sprint: 8
+        story: "As a user I want to log the same film or airline many times and see counts."
+        ac:
+          - "Multiple entries per item allowed and counted"
+          - "Optional per-entry rating"
+      - title: "Ranking engine: pairwise binary insertion"
+        type: task
+        points: 5
+        priority: P0
+        sprint: 8
+        body: "Core/Ranking: place a new item with ~log2(n) 'which was better?' comparisons; gap-based rankScore with rebalance."
+        ac:
+          - "Places an item in ≤ ceil(log2(n+1)) comparisons"
+          - "Gap-based scores; rebalance when gaps run out"
+          - "Property-based tests for ordering invariants"
+      - title: "Rating mode: ranked via 'which was better?'"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 9
+        story: "As a user I want to rank cafés by answering 'better or worse than X?' so that my list reflects real preferences instead of inflated stars."
+        ac:
+          - "Comparison sheet shows two items with photos; skip and 'too close' options"
+          - "Ranked list with position numbers"
+          - "Drag to manually re-order; rank score updated"
+
+  - key: E8
+    title: "Epic: Timeline & browsing"
+    milestone: M1
+    area: browse
+    priority: P0
+    summary: "Looking back is the reward: a mixed timeline and beautiful per-collection views."
+    items:
+      - title: "Timeline home grouped by month"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 9
+        story: "As a user I want a single timeline of everything I've logged so that the app feels like a memory book, not a set of lists."
+        ac:
+          - "Mixed feed across collections grouped by month/year"
+          - "Cards show photo, item, collection colour and rating"
+          - "Smooth scrolling with 5,000 entries"
+      - title: "Collection views: list, poster grid, ranked, progress"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 10
+        story: "As a user I want each collection to show in the layout that suits it — posters for films, a ranked list for cafés, a progress grid for countries."
+        ac:
+          - "Four view modes; default per collection, switchable"
+          - "Sort and filter by date, rating, location"
+      - title: "Search across everything"
+        type: story
+        points: 3
+        priority: P1
+        sprint: 10
+        story: "As a user I want to search all my items, notes, people and tags from one place."
+        ac:
+          - "Search field on Timeline and Collections"
+          - "Results grouped by collection; tapping opens item/entry"
+      - title: "Onboarding: pick your collections"
+        type: story
+        points: 3
+        priority: P1
+        sprint: 10
+        story: "As a new user I want to pick which collections I care about and log my first few items quickly."
+        ac:
+          - "First-run screen to choose built-in collections"
+          - "Shortcut to tick visited countries in one go"
+          - "Skippable; shown once"
+
+  # ───────────────────────────── M2 ─────────────────────────────
+  - key: E9
+    title: "Epic: Map collage"
+    milestone: M2
+    area: map
+    priority: P0
+    summary: "The signature view: countries fill in, cities become photo stacks, places become pins."
+    items:
+      - title: "Spike: clustering approach — MKMapView vs ClusterMap (ADR-0003)"
+        type: spike
+        points: 2
+        priority: P0
+        sprint: 10
+        body: "SwiftUI Map has no clustering API. Compare MKMapView + MKClusterAnnotation via UIViewRepresentable against the ClusterMap package. Time-box: 1 evening."
+        ac:
+          - "Prototype with 2,000 synthetic pins on device"
+          - "ADR-0003 records choice, performance notes and trade-offs"
+      - title: "Map: fill visited countries"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 11
+        story: "As a user I want to see the countries I've been to coloured in on a world map."
+        ac:
+          - "Visited countries rendered as polygon overlays from bundled data"
+          - "Tapping a country shows its entries"
+          - "Renders in < 500 ms on a recent iPhone"
+      - title: "Map: clustered photo stacks with counts"
+        type: story
+        points: 8
+        priority: P0
+        sprint: 11
+        story: "As a user I want places to group into stacks of my photos as I zoom out so that the map feels like a collage."
+        ac:
+          - "Clusters render as overlapping photo thumbnails with a count badge"
+          - "Clusters split smoothly on zoom"
+          - "Falls back to collection icon when an entry has no photo"
+      - title: "Map: individual pins tinted by collection"
+        type: story
+        points: 3
+        priority: P0
+        sprint: 12
+        story: "As a user I want to see each café, restaurant and place as a pin coloured by its collection when zoomed in."
+        ac:
+          - "Pins use collection accent colour and icon"
+          - "Tap opens a preview card linking to item detail"
+      - title: "Map filters: collection, year, trip"
+        type: story
+        points: 3
+        priority: P1
+        sprint: 12
+        story: "As a user I want to filter the map to, say, restaurants in 2025 or one trip."
+        ac:
+          - "Filter sheet with collections, year range and trip"
+          - "Filters persist per session"
+      - title: "Map performance test with 5,000 entries"
+        type: task
+        points: 2
+        priority: P1
+        sprint: 12
+        body: "Measure frame rate and memory with a large synthetic dataset; fix hotspots."
+        ac:
+          - "Instruments run recorded; ≥ 55 fps while panning on target device"
+          - "Thumbnail cache bounded"
+
+  # ───────────────────────────── M3 ─────────────────────────────
+  - key: E10
+    title: "Epic: Backup, restore & sync"
+    milestone: M3
+    area: sync
+    priority: P0
+    summary: "Optional iCloud protects data and later syncs devices, without ever deleting local data."
+    items:
+      - title: "Spike: sync strategy — SwiftData+CloudKit vs GRDB+CKSyncEngine (ADR-0002)"
+        type: spike
+        points: 3
+        priority: P0
+        sprint: 12
+        body: "Evaluate runtime toggling, account sign-out behaviour, photo assets, conflict handling and migration cost. Time-box: 2 evenings."
+        ac:
+          - "Prototype toggling sync on/off without losing local data"
+          - "ADR-0002 records decision and migration path"
+      - title: "Backup bundle format v1"
+        type: task
+        points: 5
+        priority: P0
+        sprint: 13
+        body: "Versioned export: manifest.json (schema version, counts, checksum), data.json, photos/ folder."
+        ac:
+          - "Round-trip test: export → wipe → import gives identical data"
+          - "Format documented in docs/BACKUP_FORMAT.md"
+      - title: "Back up to iCloud Drive (manual and scheduled)"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 13
+        story: "As a user I want my memories backed up to my iCloud so that I don't lose them if I lose my phone."
+        ac:
+          - "Settings toggle; off by default; checks iCloud account status"
+          - "Back up now + automatic weekly backup; keeps last 5"
+          - "Shows last backup time and size"
+      - title: "Restore from backup with merge"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 14
+        story: "As a user I want to restore my data on a new phone, merging with anything already there."
+        ac:
+          - "Pick a backup; preview counts before restoring"
+          - "Merge by id; no duplicates on repeated restore"
+      - title: "Export and import via the Files app"
+        type: story
+        points: 2
+        priority: P1
+        sprint: 14
+        story: "As a user I want to export my data as a file I own, without iCloud."
+        ac:
+          - "Share sheet export of the backup bundle"
+          - "Import a bundle from Files"
+      - title: "Settings: privacy info, data export and delete all data"
+        type: story
+        points: 3
+        priority: P1
+        sprint: 14
+        story: "As a user I want to see exactly what leaves my device and be able to delete everything."
+        ac:
+          - "Privacy page lists network use (TMDB, map tiles, iCloud if enabled)"
+          - "Delete all data with double confirmation"
+      - title: "Optional CloudKit sync (feature flag)"
+        type: story
+        points: 8
+        priority: P1
+        sprint: 15
+        story: "As a user with an iPad I want my data to sync between devices when I turn it on."
+        ac:
+          - "Off by default; enabling never deletes local data"
+          - "Handles iCloud sign-out gracefully (keeps local copy)"
+          - "Photos sync as assets"
+      - title: "Data-loss test suite (sign-out, toggle, reinstall)"
+        type: task
+        points: 3
+        priority: P0
+        sprint: 15
+        body: "Scripted manual + automated tests for the scary paths."
+        ac:
+          - "Checklist in docs/TEST_PLAN.md run and recorded"
+          - "No data loss in any scenario"
+
+  # ───────────────────────────── M4 ─────────────────────────────
+  - key: E11
+    title: "Epic: Photo backfill & trips"
+    milestone: M4
+    area: photos
+    priority: P1
+    summary: "Fill the map on day one from the photos you already have, and group memories into trips."
+    items:
+      - title: "Scan photo library on-device for visits"
+        type: story
+        points: 8
+        priority: P1
+        sprint: 16
+        story: "As a new user I want the app to find the places and countries in my existing photos so that my map isn't empty."
+        ac:
+          - "Requests limited/full Photos access with clear explanation"
+          - "Clusters photos by location and time on-device; nothing uploaded"
+          - "Progress UI; can be paused and resumed"
+      - title: "Suggestions inbox: 'You were in Lisbon, add it?'"
+        type: story
+        points: 5
+        priority: P1
+        sprint: 16
+        story: "As a user I want to accept or dismiss suggested visits in one tap."
+        ac:
+          - "Suggestions show place, dates and sample photos"
+          - "Accept creates entries (and country visits); dismiss is remembered"
+      - title: "Trips: group entries and view a trip"
+        type: story
+        points: 5
+        priority: P1
+        sprint: 17
+        story: "As a user I want to group a flight, restaurants and cafés into a trip and see it on one page and map."
+        ac:
+          - "Create trip with dates; auto-suggest entries in date range"
+          - "Trip page with route on map and entries by day"
+
+  - key: E12
+    title: "Epic: Look back — stats, on this day, year in review"
+    milestone: M4
+    area: insights
+    priority: P2
+    summary: "Reasons to come back: stats, anniversaries and shareable recaps."
+    items:
+      - title: "Stats dashboard"
+        type: story
+        points: 5
+        priority: P2
+        sprint: 17
+        story: "As a user I want stats like countries %, most-flown airline and top cafés per city."
+        ac:
+          - "Stats per collection and overall"
+          - "Charts accessible with VoiceOver summaries"
+      - title: "On this day"
+        type: story
+        points: 3
+        priority: P2
+        sprint: 17
+        story: "As a user I want to be reminded what I did on this day in past years."
+        ac:
+          - "Card on the timeline when matches exist"
+          - "Optional local notification, off by default"
+      - title: "Year in review"
+        type: story
+        points: 5
+        priority: P2
+        sprint: 18
+        story: "As a user I want a beautiful recap of my year: new countries, top films, best meals."
+        ac:
+          - "Swipeable story-style screens"
+          - "Export as images"
+      - title: "Poster export of a trip or year"
+        type: story
+        points: 5
+        priority: P2
+        sprint: 18
+        story: "As a user I want to export a map collage poster of a trip or year to share or print."
+        ac:
+          - "MKMapSnapshotter + photo collage rendered at print resolution"
+          - "Share sheet export as PNG/PDF"
+
+  # ───────────────────────────── M5 ─────────────────────────────
+  - key: E13
+    title: "Epic: Quality — testing, accessibility, performance, privacy"
+    milestone: M5
+    area: quality
+    priority: P0
+    summary: "Make v1.0 solid, accessible and fast."
+    items:
+      - title: "UI tests for critical flows"
+        type: task
+        points: 5
+        priority: P0
+        sprint: 19
+        body: "XCUITests: first launch, quick-log, ranking comparison, backup/restore."
+        ac:
+          - "Tests run in CI on every PR"
+          - "Flaky tests quarantined with an issue"
+      - title: "Accessibility pass"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 19
+        story: "As a VoiceOver or large-text user I want to use every feature comfortably."
+        ac:
+          - "All controls labelled; rotor works on timeline and map lists"
+          - "Dynamic Type up to AX5 without truncation of key info"
+          - "Reduce Motion respected"
+      - title: "Performance and memory profiling"
+        type: task
+        points: 3
+        priority: P1
+        sprint: 19
+        body: "Launch time, scroll performance and memory with a large dataset."
+        ac:
+          - "Cold launch < 1 s on target device"
+          - "No leaks reported by Instruments in key flows"
+      - title: "Optional Face ID app lock"
+        type: story
+        points: 3
+        priority: P2
+        sprint: 20
+        story: "As a user I want to lock the app with Face ID because my memories are private."
+        ac:
+          - "Toggle in Settings; locks on background after a chosen delay"
+
+  - key: E14
+    title: "Epic: Release v1.0"
+    milestone: M5
+    area: release
+    priority: P0
+    summary: "Ship to TestFlight and the App Store."
+    items:
+      - title: "TestFlight internal beta"
+        type: task
+        points: 2
+        priority: P0
+        sprint: 20
+        body: "Archive, upload and distribute to internal testers."
+        ac:
+          - "Build distributed; feedback collected as issues"
+      - title: "App Store listing and privacy label"
+        type: task
+        points: 3
+        priority: P0
+        sprint: 20
+        body: "Name, subtitle, keywords, screenshots, description and 'Data not collected' privacy label."
+        ac:
+          - "Listing complete in App Store Connect"
+          - "Screenshots for required device sizes"
+      - title: "Privacy policy and support page"
+        type: task
+        points: 2
+        priority: P0
+        sprint: 20
+        body: "Simple static site on the domain with privacy policy and support contact."
+        ac:
+          - "Pages live and linked from the app and listing"
+      - title: "Release v1.0"
+        type: task
+        points: 1
+        priority: P0
+        sprint: 20
+        body: "Submit for review, tag v1.0.0, write release notes."
+        ac:
+          - "App approved and live"
+          - "Git tag v1.0.0 and GitHub release created"

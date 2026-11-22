@@ -1,0 +1,13 @@
+name: Epic
+description: A large outcome made of several stories (add them as sub-issues)
+labels: ["type:epic"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+    validations: {required: true}
+  - type: textarea
+    id: scope
+    attributes:
+      label: In scope / out of scope

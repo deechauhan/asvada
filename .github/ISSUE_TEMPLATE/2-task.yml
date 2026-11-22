@@ -1,0 +1,16 @@
+name: Task
+description: Technical or enabling work
+labels: ["type:task"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What and why
+    validations: {required: true}
+  - type: textarea
+    id: ac
+    attributes:
+      label: Done when
+      value: |
+        - [ ] 
+    validations: {required: true}
