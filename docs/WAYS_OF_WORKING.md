@@ -78,7 +78,7 @@ Anything bigger than 8 gets split.
 | Sprint end (Sun) | **Review** — demo what's done; update milestone progress | 20 min |
 | Sprint end | **Retro** — one thing to keep, one to change, as a comment on the sprint's tracking issue | 10 min |
 
-Default capacity: **~13 points per sprint** (side-project pace). Adjust after Sprint 1 using actuals.
+Default capacity: **~14 points per sprint** (side-project pace). Adjust after Sprint 1 using actuals.
 
 ## Working with Claude
 
