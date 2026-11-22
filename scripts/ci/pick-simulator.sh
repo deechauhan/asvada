@@ -15,5 +15,5 @@ for runtime, items in devs.items():
 if not best:
     sys.exit("no iPhone simulator available")
 print(best[1])
-print(f"picked {best[2]} iOS {\".\".join(map(str, best[0]))}", file=sys.stderr)
+print("picked", best[2], "iOS", ".".join(map(str, best[0])), file=sys.stderr)
 '
