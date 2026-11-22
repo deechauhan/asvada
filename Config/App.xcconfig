@@ -1,0 +1,4 @@
+// Shared build settings for the app target. Secrets come from the optional, gitignored
+// Secrets.xcconfig (see Secrets.example.xcconfig); CI writes it from a GitHub Actions secret.
+TMDB_API_KEY =
+#include? "Secrets.xcconfig"

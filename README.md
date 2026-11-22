@@ -33,11 +33,22 @@ Requirements: macOS with Xcode 26+, [XcodeGen](https://github.com/yonaskolb/Xcod
 
 ```bash
 brew install xcodegen
+cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig   # then paste your TMDB key (gitignored)
 xcodegen generate        # creates Asvada.xcodeproj from project.yml (not committed)
 open Asvada.xcodeproj
 ```
 
 Run a module's unit tests without Xcode's UI: `swift test --package-path Packages/Core/Model`.
+
+### Code style
+
+[SwiftFormat](https://github.com/nicklockwood/SwiftFormat) and [SwiftLint](https://github.com/realm/SwiftLint) are enforced in CI (`.swiftformat`, `.swiftlint.yml`). Before pushing:
+
+```bash
+brew install swiftformat swiftlint
+swiftformat .                 # fixes formatting in place
+swiftlint lint --strict       # warnings fail CI
+```
 
 ### Automation (GitHub Actions)
 
@@ -46,7 +57,7 @@ Run a module's unit tests without Xcode's UI: `swift test --package-path Package
 | **CI** (`ci.yml`) | On every PR and push to `main`: `swift test` for each package, then builds the app, runs the UI tests on an iOS simulator and uploads screenshots |
 | **Label PR** (`labeler.yml`) | Adds `area:*` labels from changed paths and `type:*` from the branch prefix |
 | **Project board** (`project.yml`) | Adds new issues and PRs to the Asvada board; run it by hand to (re)seed the board from `backlog/backlog.yaml`. Needs a `PROJECT_TOKEN` secret (classic PAT, `repo` + `project` scopes) |
-| **Release** (`release.yml`) | Closing a milestone tags `main`, publishes a release (M0 → `v0.1.0` … M4 → `v0.5.0`, M5 → `v1.0.0`) and sweeps stale branches |
+| **Release** (`release.yml`) | Every merge to `main` publishes a GitHub Release with a changelog of the PRs since the last one, grouped by type (patch bump, e.g. `v0.1.3` → `v0.1.4`). Closing a milestone publishes `v0.<k+1>.0` (M5 → `v1.0.0`) and sweeps stale branches. See [Releases](https://github.com/deechauhan/asvada/releases) |
 | **Branch cleanup** (`branch-cleanup.yml`) | Deletes a PR's branch when it merges; weekly (and on demand) deletes branches whose PR is closed or that are already in `main`. Never deletes `main`, the default branch, branches with open PRs, or unmerged branches without a PR |
 
 Progress screenshots live in [`screenshots/`](screenshots/).
@@ -60,6 +71,7 @@ Progress screenshots live in [`screenshots/`](screenshots/).
 | `Packages/Features` | Feature screens (SwiftUI) |
 | `Packages/Core/*` | Model, Storage, Geo, Sources, Ranking, DesignSystem |
 | `project.yml` | XcodeGen spec for the app project |
+| `Config/` | xcconfig build settings; `Secrets.xcconfig` (gitignored) holds the TMDB key |
 | `screenshots/` | Per-issue screenshots from CI |
 
 ## Licence

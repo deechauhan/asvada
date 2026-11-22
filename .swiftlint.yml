@@ -1,0 +1,45 @@
+# SwiftLint — https://realm.github.io/SwiftLint/rule-directory.html
+# CI runs `swiftlint --strict`, so warnings fail the build.
+included:
+  - App
+  - AppUITests
+  - Packages
+excluded:
+  - "**/.build"
+  - build
+  - DerivedData
+
+disabled_rules:
+  - todo                     # TODOs are fine while we build; tracked in issues
+  - trailing_comma           # SwiftFormat owns commas
+  - opening_brace            # SwiftFormat owns brace placement
+  # Import order is enforced by SwiftFormat (sortImports), not SwiftLint.
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - closure_spacing
+  - contains_over_first_not_nil
+  - explicit_init
+  - fatal_error_message
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - modifier_order
+  - redundant_nil_coalescing
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+  - weak_delegate
+
+line_length:
+  warning: 130
+  error: 160
+  ignores_urls: true
+  ignores_comments: true
+
+identifier_name:
+  excluded: [id, x, y, i, j, db, ok]
+
+type_body_length:
+  warning: 300
+file_length:
+  warning: 500

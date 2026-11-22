@@ -11,6 +11,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Lint (SwiftLint + SwiftFormat)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: SwiftFormat
+        run: docker run --rm -v "$PWD:/work" -w /work ghcr.io/nicklockwood/swiftformat:0.64.7 --lint .
+      - name: SwiftLint
+        if: success() || failure()
+        run: docker run --rm -v "$PWD:/work" -w /work ghcr.io/realm/swiftlint:0.65.1 swiftlint lint --strict --reporter github-actions-logging
+
   packages:
     name: Package tests
     runs-on: macos-26
@@ -54,11 +66,19 @@ jobs:
           restore-keys: spm-app-${{ runner.os }}-
       - name: Install XcodeGen
         run: brew install xcodegen
+      - name: Write secrets
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          # Optional: builds still work without it (film search reports "no key").
+          if [ -n "$TMDB_API_KEY" ]; then
+            printf 'TMDB_API_KEY = %s\n' "$TMDB_API_KEY" > Config/Secrets.xcconfig
+          else
+            echo "::notice::TMDB_API_KEY secret not set; building without a TMDB key"
+          fi
       - name: Generate project
         run: xcodegen generate
       - name: Build and test
-        env:
-          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
           set -o pipefail
           UDID=$(scripts/ci/pick-simulator.sh)
