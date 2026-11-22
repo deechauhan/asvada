@@ -66,11 +66,19 @@ jobs:
           restore-keys: spm-app-${{ runner.os }}-
       - name: Install XcodeGen
         run: brew install xcodegen
+      - name: Write secrets
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          # Optional: builds still work without it (film search reports "no key").
+          if [ -n "$TMDB_API_KEY" ]; then
+            printf 'TMDB_API_KEY = %s\n' "$TMDB_API_KEY" > Config/Secrets.xcconfig
+          else
+            echo "::notice::TMDB_API_KEY secret not set; building without a TMDB key"
+          fi
       - name: Generate project
         run: xcodegen generate
       - name: Build and test
-        env:
-          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
           set -o pipefail
           UDID=$(scripts/ci/pick-simulator.sh)

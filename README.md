@@ -33,6 +33,7 @@ Requirements: macOS with Xcode 26+, [XcodeGen](https://github.com/yonaskolb/Xcod
 
 ```bash
 brew install xcodegen
+cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig   # then paste your TMDB key (gitignored)
 xcodegen generate        # creates Asvada.xcodeproj from project.yml (not committed)
 open Asvada.xcodeproj
 ```
@@ -70,6 +71,7 @@ Progress screenshots live in [`screenshots/`](screenshots/).
 | `Packages/Features` | Feature screens (SwiftUI) |
 | `Packages/Core/*` | Model, Storage, Geo, Sources, Ranking, DesignSystem |
 | `project.yml` | XcodeGen spec for the app project |
+| `Config/` | xcconfig build settings; `Secrets.xcconfig` (gitignored) holds the TMDB key |
 | `screenshots/` | Per-issue screenshots from CI |
 
 ## Licence
