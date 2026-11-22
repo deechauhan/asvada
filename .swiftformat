@@ -1,0 +1,13 @@
+# SwiftFormat — https://github.com/nicklockwood/SwiftFormat/blob/main/Rules.md
+# Format locally with `swiftformat .`; CI runs `swiftformat --lint .`
+--swift-version 6.2
+--exclude **/.build,build,DerivedData
+--indent 4
+--max-width 130
+--wrap-arguments before-first
+--wrap-parameters before-first
+--wrap-collections before-first
+--header ignore
+--disable redundantReturn
+--import-grouping testable-last
+--disable swiftTestingTestCaseNames

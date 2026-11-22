@@ -7,17 +7,13 @@ let package = Package(
     products: [
         .library(name: "Geo", targets: ["Geo"]),
     ],
-    dependencies: [
-    ],
     targets: [
         .target(
             name: "Geo",
-            dependencies: [
-            ]
         ),
         .testTarget(
             name: "GeoTests",
-            dependencies: ["Geo"]
+            dependencies: ["Geo"],
         ),
-    ]
+    ],
 )

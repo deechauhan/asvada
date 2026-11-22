@@ -39,6 +39,16 @@ open Asvada.xcodeproj
 
 Run a module's unit tests without Xcode's UI: `swift test --package-path Packages/Core/Model`.
 
+### Code style
+
+[SwiftFormat](https://github.com/nicklockwood/SwiftFormat) and [SwiftLint](https://github.com/realm/SwiftLint) are enforced in CI (`.swiftformat`, `.swiftlint.yml`). Before pushing:
+
+```bash
+brew install swiftformat swiftlint
+swiftformat .                 # fixes formatting in place
+swiftlint lint --strict       # warnings fail CI
+```
+
 ### Automation (GitHub Actions)
 
 | Workflow | What it does |

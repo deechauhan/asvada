@@ -19,11 +19,11 @@ let package = Package(
                 "DesignSystem",
                 "Model",
                 "Storage",
-            ]
+            ],
         ),
         .testTarget(
             name: "FeaturesTests",
-            dependencies: ["Features"]
+            dependencies: ["Features"],
         ),
-    ]
+    ],
 )

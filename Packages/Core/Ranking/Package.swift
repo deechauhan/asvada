@@ -7,17 +7,13 @@ let package = Package(
     products: [
         .library(name: "Ranking", targets: ["Ranking"]),
     ],
-    dependencies: [
-    ],
     targets: [
         .target(
             name: "Ranking",
-            dependencies: [
-            ]
         ),
         .testTarget(
             name: "RankingTests",
-            dependencies: ["Ranking"]
+            dependencies: ["Ranking"],
         ),
-    ]
+    ],
 )
