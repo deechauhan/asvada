@@ -7,10 +7,9 @@ import Testing
     #expect(ModelModule.name == "Model")
 }
 
-/// An in-memory container with every model, for tests.
-@MainActor
-func makeContext() throws -> ModelContext {
+/// An in-memory container with every model, for tests. Keep the container alive for the
+/// whole test: a `ModelContext` doesn't retain its container.
+func makeContainer() throws -> ModelContainer {
     let config = ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none)
-    let container = try ModelContainer(for: Schema(ModelModule.models), configurations: config)
-    return container.mainContext
+    return try ModelContainer(for: Schema(ModelModule.models), configurations: config)
 }

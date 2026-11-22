@@ -1,6 +1,9 @@
 import Foundation
 import SwiftData
 
+// Relationships are set after objects are inserted into a context (SwiftData is fragile when
+// linking unmanaged objects), so initialisers take only attributes.
+//
 // CloudKit-compatible by design (see docs/ARCHITECTURE.md):
 // every attribute is optional or has a default, every relationship is optional and has an
 // inverse, and nothing is marked unique. Duplicates are handled in code via `externalRef`.
@@ -64,10 +67,9 @@ public final class Item {
     @Relationship(deleteRule: .cascade, inverse: \Entry.item)
     public var entries: [Entry]? = []
 
-    public init(name: String = "", externalRef: String? = nil, collection: ExperienceCollection? = nil) {
+    public init(name: String = "", externalRef: String? = nil) {
         self.name = name
         self.externalRef = externalRef
-        self.collection = collection
     }
 }
 
@@ -93,11 +95,10 @@ public final class Entry {
     @Relationship(inverse: \Person.entries)
     public var people: [Person]? = []
 
-    public init(date: Date = .now, rating: Double? = nil, notes: String = "", item: Item? = nil) {
+    public init(date: Date = .now, rating: Double? = nil, notes: String = "") {
         self.date = date
         self.rating = rating
         self.notes = notes
-        self.item = item
     }
 }
 
@@ -114,11 +115,10 @@ public final class Photo {
     public var longitude: Double?
     public var entry: Entry?
 
-    public init(imageData: Data? = nil, thumbnailData: Data? = nil, takenAt: Date? = nil, entry: Entry? = nil) {
+    public init(imageData: Data? = nil, thumbnailData: Data? = nil, takenAt: Date? = nil) {
         self.imageData = imageData
         self.thumbnailData = thumbnailData
         self.takenAt = takenAt
-        self.entry = entry
     }
 }
 

@@ -19,8 +19,10 @@ struct AsvadaStoreTests {
         do {
             let container = try AsvadaStore.makeContainer(.file(url))
             let countries = ExperienceCollection(name: "Countries", kind: .countries, ratingMode: .checklist)
-            _ = Item(name: "Japan", externalRef: "iso:JP", collection: countries)
+            let japan = Item(name: "Japan", externalRef: "iso:JP")
             container.mainContext.insert(countries)
+            container.mainContext.insert(japan)
+            japan.collection = countries
             try container.mainContext.save()
         }
 

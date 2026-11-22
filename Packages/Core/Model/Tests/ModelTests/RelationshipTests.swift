@@ -6,15 +6,20 @@ import Testing
 @MainActor
 struct RelationshipTests {
     @Test func buildsCollectionItemEntryGraph() throws {
-        let context = try makeContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let cafes = ExperienceCollection(name: "Cafés", kind: .cafes, ratingMode: .ranked, itemSource: .mapkit)
-        let cafe = Item(name: "Prufrock", externalRef: "mk:123", collection: cafes)
-        let visit = Entry(rating: 4.5, notes: "Flat white", item: cafe)
+        let cafe = Item(name: "Prufrock", externalRef: "mk:123")
+        let visit = Entry(rating: 4.5, notes: "Flat white")
         let tag = ModelTag(name: "coffee")
         let friend = Person(name: "Asha")
+        for model in [cafes, cafe, visit, tag, friend] as [any PersistentModel] {
+            context.insert(model)
+        }
+        cafe.collection = cafes
+        visit.item = cafe
         visit.tags = [tag]
         visit.people = [friend]
-        context.insert(cafes)
         try context.save()
 
         #expect(cafes.items?.count == 1)
@@ -24,14 +29,20 @@ struct RelationshipTests {
     }
 
     @Test func deletingCollectionCascadesToItemsEntriesAndPhotos() throws {
-        let context = try makeContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let films = ExperienceCollection(name: "Films", kind: .films, ratingMode: .log)
-        let film = Item(name: "Spirited Away", externalRef: "tmdb:129", collection: films)
-        let viewing = Entry(item: film)
-        _ = Photo(thumbnailData: Data([1, 2, 3]), entry: viewing)
+        let film = Item(name: "Spirited Away", externalRef: "tmdb:129")
+        let viewing = Entry()
+        let photo = Photo(thumbnailData: Data([1, 2, 3]))
         let tag = ModelTag(name: "anime")
+        for model in [films, film, viewing, photo, tag] as [any PersistentModel] {
+            context.insert(model)
+        }
+        film.collection = films
+        viewing.item = film
+        photo.entry = viewing
         viewing.tags = [tag]
-        context.insert(films)
         try context.save()
 
         context.delete(films)
@@ -45,11 +56,13 @@ struct RelationshipTests {
     }
 
     @Test func deletingTripKeepsItsEntries() throws {
-        let context = try makeContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let trip = Trip(name: "Japan 2026")
         let entry = Entry()
-        entry.trip = trip
         context.insert(trip)
+        context.insert(entry)
+        entry.trip = trip
         try context.save()
 
         context.delete(trip)
