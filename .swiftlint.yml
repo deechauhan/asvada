@@ -13,6 +13,7 @@ disabled_rules:
   - todo                     # TODOs are fine while we build; tracked in issues
   - trailing_comma           # SwiftFormat owns commas
   - opening_brace            # SwiftFormat owns brace placement
+  # Import order is enforced by SwiftFormat (sortImports), not SwiftLint.
 
 opt_in_rules:
   - empty_count
@@ -25,7 +26,6 @@ opt_in_rules:
   - implicitly_unwrapped_optional
   - modifier_order
   - redundant_nil_coalescing
-  - sorted_imports
   - toggle_bool
   - unneeded_parentheses_in_closure_argument
   - weak_delegate
@@ -35,9 +35,6 @@ line_length:
   error: 160
   ignores_urls: true
   ignores_comments: true
-
-sorted_imports:
-  grouping: attributes   # @testable imports last, matching SwiftFormat
 
 identifier_name:
   excluded: [id, x, y, i, j, db, ok]
