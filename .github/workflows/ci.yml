@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packages:
+    name: Package tests
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: swift test (each package)
+        run: |
+          set -e
+          for p in Packages/Core/* Packages/Features; do
+            echo "::group::$p"
+            swift test --package-path "$p"
+            echo "::endgroup::"
+          done
+
+  app:
+    name: App build + UI test
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build and test
+        run: |
+          set -o pipefail
+          UDID=$(scripts/ci/pick-simulator.sh)
+          xcodebuild test \
+            -project Asvada.xcodeproj -scheme Asvada \
+            -destination "id=$UDID" \
+            -resultBundlePath build/Asvada.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcresult
+          path: build/Asvada.xcresult
+          if-no-files-found: ignore

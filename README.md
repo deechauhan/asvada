@@ -25,11 +25,27 @@ Pre-development. Planning happens on the **Asvada** GitHub Project board; see
 | [Ways of working](docs/WAYS_OF_WORKING.md) | Agile process, Definition of Ready/Done, branching |
 | [Decisions](docs/DECISIONS/) | Architecture decision records |
 
-## Requirements (once development starts)
+## Getting started
 
-- macOS with Xcode (latest stable)
-- iOS 26+ device or simulator
-- A free TMDB API key for film search
+Requirements: macOS with Xcode 26+, [XcodeGen](https://github.com/yonaskolb/XcodeGen), and a free TMDB API key for film search (later).
+
+```bash
+brew install xcodegen
+xcodegen generate        # creates Asvada.xcodeproj from project.yml (not committed)
+open Asvada.xcodeproj
+```
+
+Run a module's unit tests without Xcode's UI: `swift test --package-path Packages/Core/Model`.
+
+### Layout
+
+| Path | What |
+|---|---|
+| `App/` | App target: `@main` entry point, assets |
+| `AppUITests/` | UI tests (launch + screenshot) |
+| `Packages/Features` | Feature screens (SwiftUI) |
+| `Packages/Core/*` | Model, Storage, Geo, Sources, Ranking, DesignSystem |
+| `project.yml` | XcodeGen spec for the app project |
 
 ## Licence
 
