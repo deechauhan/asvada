@@ -1,10 +1,15 @@
 name: Release
 
-# Tags main and publishes a GitHub Release when a milestone is closed.
-# M0 → v0.1.0, M1 → v0.2.0 … M4 → v0.5.0, M5 → v1.0.0. Can also be run by hand with a version.
-# After tagging it sweeps stale branches (scripts/ci/cleanup-branches.sh).
+# Publishes a GitHub Release with generated notes (PRs since the previous release, grouped by
+# type via .github/release.yml).
+#   - every push to main      → patch bump: v0.1.3 → v0.1.4 (first ever release: v0.0.1)
+#   - milestone M<k> closed   → v0.<k+1>.0 (M0 → v0.1.0 … M4 → v0.5.0); M5 → v1.0.0,
+#                               then stale branches are swept (scripts/ci/cleanup-branches.sh)
+#   - manual run              → the version you type
 
 on:
+  push:
+    branches: [main]
   milestone:
     types: [closed]
   workflow_dispatch:
@@ -17,8 +22,12 @@ permissions:
   contents: write
   pull-requests: read
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  tag:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -28,24 +37,40 @@ jobs:
       - name: Work out version
         id: v
         env:
+          EVENT: ${{ github.event_name }}
           TITLE: ${{ github.event.milestone.title }}
           INPUT: ${{ inputs.version }}
         run: |
-          if [ -n "$INPUT" ]; then v="$INPUT"; else
-            n=$(echo "$TITLE" | sed -nE 's/^M([0-9]+).*/\1/p')
-            if [ -z "$n" ]; then echo "::error::Milestone '$TITLE' is not M<n>"; exit 1; fi
-            if [ "$n" -ge 5 ]; then v="v1.0.0"; else v="v0.$((n + 1)).0"; fi
-          fi
+          latest=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -1)
+          echo "latest tag: ${latest:-none}"
+          case "$EVENT" in
+            workflow_dispatch) v="$INPUT" ;;
+            milestone)
+              n=$(echo "$TITLE" | sed -nE 's/^M([0-9]+).*/\1/p')
+              if [ -z "$n" ]; then echo "::error::Milestone '$TITLE' is not M<n>"; exit 1; fi
+              if [ "$n" -ge 5 ]; then v="v1.0.0"; else v="v0.$((n + 1)).0"; fi ;;
+            push)
+              if [ -z "$latest" ]; then v="v0.0.1"; else
+                IFS=. read -r major minor patch <<< "${latest#v}"
+                v="v$major.$minor.$((patch + 1))"
+              fi ;;
+          esac
           echo "version=$v" >> "$GITHUB_OUTPUT"
-      - name: Tag and release
+          echo "Releasing $v"
+      - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
           V: ${{ steps.v.outputs.version }}
           TITLE: ${{ github.event.milestone.title }}
         run: |
-          if git rev-parse "$V" >/dev/null 2>&1; then echo "$V already exists"; exit 0; fi
-          gh release create "$V" --target main --generate-notes --title "$V${TITLE:+ · $TITLE}"
+          if git rev-parse -q --verify "refs/tags/$V" >/dev/null; then echo "$V already exists"; exit 0; fi
+          title="$V"
+          [ -n "$TITLE" ] && title="$V · $TITLE"
+          flags=()
+          [[ "$V" == v0.* ]] && flags+=(--prerelease)
+          gh release create "$V" --target "$(git rev-parse HEAD)" --generate-notes --title "$title" "${flags[@]}"
       - name: Delete stale branches
+        if: github.event_name == 'milestone'
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/ci/cleanup-branches.sh
