@@ -11,7 +11,9 @@ public struct ColorToken: Sendable, Hashable, Identifiable {
     public let light: RGBColor
     public let dark: RGBColor
 
-    public var id: String { name }
+    public var id: String {
+        name
+    }
 
     public init(_ name: String, light: String, dark: String) {
         self.name = name
@@ -38,11 +40,15 @@ public struct ColorToken: Sendable, Hashable, Identifiable {
 
 #if canImport(UIKit)
     extension RGBColor {
-        var uiColor: UIColor { UIColor(red: red, green: green, blue: blue, alpha: 1) }
+        var uiColor: UIColor {
+            UIColor(red: red, green: green, blue: blue, alpha: 1)
+        }
     }
 
 #elseif canImport(AppKit)
     extension RGBColor {
-        var nsColor: NSColor { NSColor(srgbRed: red, green: green, blue: blue, alpha: 1) }
+        var nsColor: NSColor {
+            NSColor(srgbRed: red, green: green, blue: blue, alpha: 1)
+        }
     }
 #endif

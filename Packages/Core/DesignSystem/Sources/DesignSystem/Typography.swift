@@ -9,7 +9,9 @@ public enum TypeToken: String, CaseIterable, Sendable, Identifiable {
     case callout
     case caption
 
-    public var id: String { rawValue }
+    public var id: String {
+        rawValue
+    }
 
     public var textStyle: Font.TextStyle {
         switch self {

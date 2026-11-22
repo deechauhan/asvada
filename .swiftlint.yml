@@ -37,7 +37,7 @@ line_length:
   ignores_comments: true
 
 identifier_name:
-  excluded: [id, x, y, i, j, db, ok]
+  excluded: [id, x, y, i, j, db, ok, xs, xl]   # xs/xl: spacing scale
 
 type_body_length:
   warning: 300

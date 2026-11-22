@@ -9,7 +9,9 @@ public enum CollectionAccent: String, CaseIterable, Sendable, Identifiable {
     case film
     case custom
 
-    public var id: String { rawValue }
+    public var id: String {
+        rawValue
+    }
 
     public var token: ColorToken {
         switch self {
