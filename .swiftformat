@@ -9,3 +9,5 @@
 --wrap-collections before-first
 --header ignore
 --disable redundantReturn
+--import-grouping testable-last
+--disable swiftTestingTestCaseNames

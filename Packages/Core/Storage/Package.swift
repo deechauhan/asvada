@@ -15,11 +15,11 @@ let package = Package(
             name: "Storage",
             dependencies: [
                 "Model",
-            ]
+            ],
         ),
         .testTarget(
             name: "StorageTests",
-            dependencies: ["Storage"]
+            dependencies: ["Storage"],
         ),
-    ]
+    ],
 )
