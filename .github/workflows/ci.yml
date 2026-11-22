@@ -20,6 +20,14 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+      - name: Cache SwiftPM
+        uses: actions/cache@v5
+        with:
+          path: |
+            Packages/**/.build
+            ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('Packages/**/Package.swift', 'Packages/**/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
       - name: swift test (each package)
         run: |
           set -e
@@ -38,21 +46,42 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+      - name: Cache SwiftPM
+        uses: actions/cache@v5
+        with:
+          path: build/SourcePackages
+          key: spm-app-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift', 'Packages/**/Package.resolved') }}
+          restore-keys: spm-app-${{ runner.os }}-
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project
         run: xcodegen generate
       - name: Build and test
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
           set -o pipefail
           UDID=$(scripts/ci/pick-simulator.sh)
           xcodebuild test \
             -project Asvada.xcodeproj -scheme Asvada \
             -destination "id=$UDID" \
+            -clonedSourcePackagesDirPath build/SourcePackages \
             -resultBundlePath build/Asvada.xcresult \
             CODE_SIGNING_ALLOWED=NO
-      - name: Upload test results
+      - name: Export screenshots
         if: always()
+        run: |
+          [ -d build/Asvada.xcresult ] || exit 0
+          scripts/ci/export-screenshots.sh build/Asvada.xcresult build/screenshots
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: screenshots
+          path: build/screenshots
+          if-no-files-found: ignore
+      - name: Upload test results
+        if: failure()
         uses: actions/upload-artifact@v5
         with:
           name: xcresult

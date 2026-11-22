@@ -1,0 +1,58 @@
+name: Project board
+
+# Keeps the "Asvada" GitHub Project in sync.
+# Needs a repository secret PROJECT_TOKEN: a classic personal access token with
+# `repo` and `project` scopes (the default GITHUB_TOKEN cannot write to user projects).
+
+on:
+  issues:
+    types: [opened, reopened]
+  pull_request_target:
+    types: [opened, reopened]
+  workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: "Run scripts/bootstrap_github.py (creates/updates the board, fields and all items)"
+        type: boolean
+        default: true
+
+jobs:
+  add-to-project:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check token
+        id: token
+        env:
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          if [ -z "$PROJECT_TOKEN" ]; then
+            echo "::warning::PROJECT_TOKEN secret not set; skipping add-to-project"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/add-to-project@v1.0.2
+        if: steps.token.outputs.ok == 'true'
+        with:
+          project-url: https://github.com/users/${{ github.repository_owner }}/projects/${{ vars.PROJECT_NUMBER || '1' }}
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+
+  bootstrap:
+    if: github.event_name == 'workflow_dispatch' && inputs.bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Seed board from backlog/backlog.yaml
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Add a PROJECT_TOKEN secret (classic PAT with repo + project scopes) first"
+            exit 1
+          fi
+          python3 scripts/bootstrap_github.py

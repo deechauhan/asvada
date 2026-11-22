@@ -1,0 +1,30 @@
+# actions/labeler v5: labels PRs from changed paths and branch names.
+"area:infra":
+  - changed-files:
+      - any-glob-to-any-file: [".github/**", "scripts/**", "project.yml", ".swiftlint.yml", ".swiftformat"]
+"area:design":
+  - changed-files:
+      - any-glob-to-any-file: ["Packages/Core/DesignSystem/**"]
+"area:data":
+  - changed-files:
+      - any-glob-to-any-file: ["Packages/Core/Model/**", "Packages/Core/Storage/**"]
+"area:sources":
+  - changed-files:
+      - any-glob-to-any-file: ["Packages/Core/Sources/**"]
+"area:ranking":
+  - changed-files:
+      - any-glob-to-any-file: ["Packages/Core/Ranking/**"]
+"area:map":
+  - changed-files:
+      - any-glob-to-any-file: ["Packages/Core/Geo/**", "Packages/Features/Sources/Features/Map/**"]
+"area:quality":
+  - changed-files:
+      - any-glob-to-any-file: ["AppUITests/**", "**/Tests/**"]
+"type:story":
+  - head-branch: ["^feat/"]
+"type:bug":
+  - head-branch: ["^fix/"]
+"type:task":
+  - head-branch: ["^chore/", "^docs/", "^refactor/", "^test/"]
+"type:spike":
+  - head-branch: ["^spike/"]
