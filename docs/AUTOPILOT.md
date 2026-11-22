@@ -23,7 +23,8 @@ Read `CLAUDE.md` and `docs/WAYS_OF_WORKING.md` first. Everything there still app
      then the order in `backlog/backlog.yaml`.
    - Skip anything whose dependencies (stated in the issue or its epic) aren't merged yet.
 4. **Do the ticket.** Branch `<type>/<issue#>-slug` off `origin/main` (`feat/` story, `chore/` task,
-   `spike/` spike, `fix/` bug, `docs/` docs). Implement to the acceptance criteria with tests.
+   `spike/` spike, `fix/` bug, `docs/` docs) and **push it straight away** so the board card moves to
+   In progress (the PR moves it to In review; the merge to Done). Implement to the acceptance criteria with tests.
    Commit, push, open a PR using `.github/pull_request_template.md`, `Closes #<issue>`.
    Comment a short stand-up note on the issue (done / next / blocked).
 5. **Wait for CI** (it takes a few minutes on macOS runners), fix failures, then merge as in step 2.
