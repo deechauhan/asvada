@@ -10,8 +10,10 @@ struct SchemaVersionTests {
 
     @Test func planVersionsIncreaseStrictly() {
         let versions = AsvadaMigrationPlan.schemas.map(\.versionIdentifier)
-        #expect(versions == versions.sorted())
-        #expect(Set(versions).count == versions.count)
+            .map { [$0.major, $0.minor, $0.patch] }
+        for (older, newer) in zip(versions, versions.dropFirst()) {
+            #expect(older.lexicographicallyPrecedes(newer), "\(older) is not before \(newer)")
+        }
     }
 
     @Test func oneStagePerVersionStep() {
