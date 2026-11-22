@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import re
 import subprocess
 import sys
 import time
@@ -172,13 +173,15 @@ def ensure_issues(repo: str, b: dict, ms_numbers: dict) -> list[dict]:
         labels = ["type:epic", f"area:{epic['area']}", f"priority:{epic['priority']}"]
         iss = upsert(epic["title"], epic_body(epic), labels, ms_numbers[epic["milestone"]])
         records.append({"title": epic["title"], "number": iss["number"], "id": iss["id"],
-                        "node_id": iss["node_id"], "kind": "epic", "item": None, "epic": epic})
+                        "node_id": iss["node_id"], "kind": "epic", "item": None, "epic": epic,
+                        "state": iss.get("state", "open")})
         print(f"  ✓ #{iss['number']} {epic['title']}")
         for item in epic["items"]:
             labels = [f"type:{item['type']}", f"area:{epic['area']}", f"priority:{item['priority']}"]
             iss = upsert(item["title"], item_body(item, epic, b["sprints"]), labels, ms_numbers[epic["milestone"]])
             records.append({"title": item["title"], "number": iss["number"], "id": iss["id"],
-                            "node_id": iss["node_id"], "kind": "item", "item": item, "epic": epic})
+                            "node_id": iss["node_id"], "kind": "item", "item": item, "epic": epic,
+                            "state": iss.get("state", "open")})
             print(f"    ✓ #{iss['number']} {item['title']}")
 
     # Sprint 0 ceremony tracker
@@ -193,9 +196,45 @@ def ensure_issues(repo: str, b: dict, ms_numbers: dict) -> list[dict]:
     ])
     iss = upsert(title, body, ["ceremony"], ms_numbers["M0"])
     records.append({"title": title, "number": iss["number"], "id": iss["id"], "node_id": iss["node_id"],
-                    "kind": "ceremony", "item": None, "epic": None})
+                    "kind": "ceremony", "item": None, "epic": None, "state": iss.get("state", "open")})
     print(f"  ✓ #{iss['number']} {title}")
+
+    # Issues created outside backlog.yaml (bugs, ad-hoc tasks) still belong on the board.
+    seeded = {r["title"] for r in records}
+    for t, i in existing.items():
+        if t not in seeded:
+            records.append({"title": t, "number": i["number"], "id": i["id"], "node_id": i["node_id"],
+                            "kind": "extra", "item": None, "epic": None, "state": i["state"]})
+            print(f"  ✓ #{i['number']} {t} (not in backlog.yaml)")
     return records
+
+
+CLOSES_RE = re.compile(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)", re.I)
+
+
+def issues_in_review(repo: str) -> set[int]:
+    """Issue numbers referenced with Closes/Fixes/Resolves #N by open PRs."""
+    if DRY:
+        return set()
+    return {int(n) for pr in paginate(f"repos/{repo}/pulls?state=open") for n in CLOSES_RE.findall(pr.get("body") or "")}
+
+
+def board_status(r: dict, records: list[dict], in_review: set[int]) -> str:
+    """Status for a seeded card: closed → Done, open PR → In review, otherwise from the plan."""
+    if r["kind"] == "epic":
+        children = [c for c in records if c["kind"] == "item" and c["epic"]["key"] == r["epic"]["key"]]
+        if r["state"] == "closed" or (children and all(c["state"] == "closed" for c in children)):
+            return "Done"
+        return "In progress" if any(c["state"] == "closed" or c["number"] in in_review for c in children) else "Backlog"
+    if r["state"] == "closed":
+        return "Done"
+    if r["number"] in in_review:
+        return "In review"
+    if r["kind"] == "item":
+        return "Ready" if r["item"]["sprint"] == 0 else "Backlog"
+    if r["kind"] == "ceremony":
+        return "In progress"
+    return "Backlog"
 
 
 def link_sub_issues(repo: str, records: list[dict]):
@@ -288,13 +327,14 @@ def ensure_project(repo: str, b: dict, records: list[dict]):
             updateProjectV2ItemFieldValue(input:{projectId:$p,itemId:$i,fieldId:$f,value:$v}){ projectV2Item{ id } } }""",
                 {"p": pid, "i": item_id, "f": fs[field]["id"], "v": value})
 
+    in_review = issues_in_review(repo)
     for r in records:
         added = graphql("""mutation($p:ID!,$c:ID!){ addProjectV2ItemById(input:{projectId:$p,contentId:$c}){ item{ id } } }""",
                         {"p": pid, "c": r["node_id"]})
         item_id = added["addProjectV2ItemById"]["item"]["id"]
         if r["kind"] == "item":
             it = r["item"]
-            status_name = "Ready" if it["sprint"] == 0 else "Backlog"
+            status_name = board_status(r, records, in_review)
             set_field(item_id, "Status", {"singleSelectOptionId": opt("Status", status_name) or opt("Status", "Todo")})
             set_field(item_id, "Priority", {"singleSelectOptionId": opt("Priority", it["priority"])})
             set_field(item_id, "Points", {"number": it["points"]})
@@ -303,16 +343,21 @@ def ensure_project(repo: str, b: dict, records: list[dict]):
                 key = "iterationId" if sprint_field.get("dataType") == "ITERATION" else "singleSelectOptionId"
                 set_field(item_id, "Sprint", {key: sid})
         elif r["kind"] == "epic":
-            set_field(item_id, "Status", {"singleSelectOptionId": opt("Status", "Backlog") or opt("Status", "Todo")})
+            status_name = board_status(r, records, in_review)
+            set_field(item_id, "Status", {"singleSelectOptionId": opt("Status", status_name) or opt("Status", "Todo")})
             set_field(item_id, "Priority", {"singleSelectOptionId": opt("Priority", r["epic"]["priority"])})
             set_field(item_id, "Points", {"number": sum(i["points"] for i in r["epic"]["items"])})
+        elif r["kind"] == "extra":
+            status_name = board_status(r, records, in_review)
+            set_field(item_id, "Status", {"singleSelectOptionId": opt("Status", status_name) or opt("Status", "Todo")})
         else:
-            set_field(item_id, "Status", {"singleSelectOptionId": opt("Status", "In progress") or opt("Status", "Todo")})
+            status_name = board_status(r, records, in_review)
+            set_field(item_id, "Status", {"singleSelectOptionId": opt("Status", status_name) or opt("Status", "Todo")})
             sid = sprint_ids.get("Sprint 0")
             if sid:
                 key = "iterationId" if sprint_field.get("dataType") == "ITERATION" else "singleSelectOptionId"
                 set_field(item_id, "Sprint", {key: sid})
-        print(f"  ✓ board ← #{r['number']}")
+        print(f"  ✓ board ← #{r['number']} ({status_name})")
     print(f"\nBoard: {project['url']}")
 
 
