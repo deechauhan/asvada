@@ -5,7 +5,7 @@ Status moves Proposed → Accepted → (Superseded by NNNN).
 
 | ADR | Title | Status | Issue |
 |---|---|---|---|
-| 0001 | Minimum iOS version | Proposed | Spike in E1 |
+| [0001](0001-minimum-ios-version.md) | Minimum iOS version (iOS 26+) | Accepted | #7 |
 | 0002 | Sync strategy: SwiftData + CloudKit vs GRDB + CKSyncEngine | Proposed | Spike in E10 |
 | 0003 | Map clustering: MKMapView vs ClusterMap | Proposed | Spike in E9 |
 

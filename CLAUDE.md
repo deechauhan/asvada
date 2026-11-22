@@ -16,7 +16,7 @@ Owner: Deepak (`deechauhan`). Solo side project, run as an agile project on GitH
 
 | Area | Decision |
 |---|---|
-| Platform | Native **iOS 26+**, SwiftUI, Swift 6. iPhone first; iPad/Mac later. (Minimum OS to be confirmed in spike #ADR-0001.) |
+| Platform | Native **iOS 26+**, SwiftUI, Swift 6. iPhone first; iPad/Mac later. (Minimum OS confirmed in ADR-0001.) |
 | Storage | **Local-first**: SwiftData on device. No account, no server of our own. |
 | Cloud | **Optional** iCloud. MVP: iCloud Drive *backup/restore* (JSON + photos bundle). Later: CloudKit private-database sync. |
 | Schema | Must be CloudKit-compatible from day one: every attribute optional or defaulted, every relationship optional, no `@Attribute(.unique)`. |
