@@ -35,6 +35,9 @@ Anything bigger than 8 gets split.
 
 ## Board columns (Status)
 
+Cards move automatically (`.github/workflows/project.yml`): pushing the issue's branch → In progress,
+opening its PR → In review, merging (issue closed) → Done.
+
 `Backlog` → `Ready` → `In progress` → `In review` → `Done`
 
 - **Backlog** — captured, not yet refined.
