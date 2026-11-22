@@ -1,0 +1,51 @@
+name: Release
+
+# Tags main and publishes a GitHub Release when a milestone is closed.
+# M0 → v0.1.0, M1 → v0.2.0 … M4 → v0.5.0, M5 → v1.0.0. Can also be run by hand with a version.
+# After tagging it sweeps stale branches (scripts/ci/cleanup-branches.sh).
+
+on:
+  milestone:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to tag, e.g. v0.1.1"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Work out version
+        id: v
+        env:
+          TITLE: ${{ github.event.milestone.title }}
+          INPUT: ${{ inputs.version }}
+        run: |
+          if [ -n "$INPUT" ]; then v="$INPUT"; else
+            n=$(echo "$TITLE" | sed -nE 's/^M([0-9]+).*/\1/p')
+            if [ -z "$n" ]; then echo "::error::Milestone '$TITLE' is not M<n>"; exit 1; fi
+            if [ "$n" -ge 5 ]; then v="v1.0.0"; else v="v0.$((n + 1)).0"; fi
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - name: Tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.v.outputs.version }}
+          TITLE: ${{ github.event.milestone.title }}
+        run: |
+          if git rev-parse "$V" >/dev/null 2>&1; then echo "$V already exists"; exit 0; fi
+          gh release create "$V" --target main --generate-notes --title "$V${TITLE:+ · $TITLE}"
+      - name: Delete stale branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/cleanup-branches.sh
