@@ -21,16 +21,16 @@ public struct ColorToken: Sendable, Hashable, Identifiable {
 
     /// A SwiftUI colour that follows the current light/dark appearance.
     public var color: Color {
-        let light = light
-        let dark = dark
+        let lightValue = light
+        let darkValue = dark
         #if canImport(UIKit)
             return Color(uiColor: UIColor { traits in
-                (traits.userInterfaceStyle == .dark ? dark : light).uiColor
+                (traits.userInterfaceStyle == .dark ? darkValue : lightValue).uiColor
             })
         #elseif canImport(AppKit)
             return Color(nsColor: NSColor(name: nil) { appearance in
                 let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-                return (isDark ? dark : light).nsColor
+                return (isDark ? darkValue : lightValue).nsColor
             })
         #endif
     }
