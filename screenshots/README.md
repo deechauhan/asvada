@@ -19,6 +19,10 @@ git add screenshots && git commit -m "docs: screenshots for #<issue>"
 
 They then land on `main` with the squash merge.
 
+If artifact downloads are blocked (e.g. in a sandboxed session), CI also prints each PNG as
+base64 in the job log; recover them with
+`gh api repos/<owner>/<repo>/actions/jobs/<job-id>/logs | scripts/screenshots-from-log.py screenshots/<issue>`.
+
 To add one by hand, drop a PNG into the issue's folder in the same PR.
 
 To capture a new screen in a UI test:
