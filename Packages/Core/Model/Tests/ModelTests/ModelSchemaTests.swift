@@ -54,7 +54,7 @@ struct ModelSchemaTests {
         #expect(Entry().notes.isEmpty)
         #expect(Photo().imageData == nil)
         #expect(Trip().entries?.isEmpty == true)
-        #expect(Model.Tag().name.isEmpty)
+        #expect(ModelTag().name.isEmpty)
         #expect(Person().name.isEmpty)
     }
 }

@@ -10,7 +10,7 @@ struct RelationshipTests {
         let cafes = ExperienceCollection(name: "Cafés", kind: .cafes, ratingMode: .ranked, itemSource: .mapkit)
         let cafe = Item(name: "Prufrock", externalRef: "mk:123", collection: cafes)
         let visit = Entry(rating: 4.5, notes: "Flat white", item: cafe)
-        let tag = Model.Tag(name: "coffee")
+        let tag = ModelTag(name: "coffee")
         let friend = Person(name: "Asha")
         visit.tags = [tag]
         visit.people = [friend]
@@ -29,7 +29,7 @@ struct RelationshipTests {
         let film = Item(name: "Spirited Away", externalRef: "tmdb:129", collection: films)
         let viewing = Entry(item: film)
         _ = Photo(thumbnailData: Data([1, 2, 3]), entry: viewing)
-        let tag = Model.Tag(name: "anime")
+        let tag = ModelTag(name: "anime")
         viewing.tags = [tag]
         context.insert(films)
         try context.save()
@@ -41,7 +41,7 @@ struct RelationshipTests {
         #expect(try context.fetchCount(FetchDescriptor<Entry>()) == 0)
         #expect(try context.fetchCount(FetchDescriptor<Photo>()) == 0)
         // Tags are shared labels: they outlive the entries that used them.
-        #expect(try context.fetchCount(FetchDescriptor<Model.Tag>()) == 1)
+        #expect(try context.fetchCount(FetchDescriptor<ModelTag>()) == 1)
     }
 
     @Test func deletingTripKeepsItsEntries() throws {
