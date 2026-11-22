@@ -38,6 +38,7 @@ targets:
     dependencies:
       - package: Features
       - package: DesignSystem
+      - package: Storage
     configFiles:
       Debug: Config/App.xcconfig
       Release: Config/App.xcconfig

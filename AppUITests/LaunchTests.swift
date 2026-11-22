@@ -72,7 +72,8 @@ final class LaunchTests: XCTestCase {
     @MainActor
     private func launch(_ arguments: [String]) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = arguments
+        // UI tests never touch the on-disk store.
+        app.launchArguments = arguments + ["-inMemoryStore"]
         app.launch()
         return app
     }
