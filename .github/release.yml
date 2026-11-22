@@ -1,0 +1,15 @@
+# Groups auto-generated release notes by PR label.
+changelog:
+  exclude:
+    labels: [ceremony]
+  categories:
+    - title: ✨ Features
+      labels: ["type:story"]
+    - title: 🐛 Fixes
+      labels: ["type:bug"]
+    - title: 🔬 Spikes & decisions
+      labels: ["type:spike"]
+    - title: 🛠 Tasks & tooling
+      labels: ["type:task"]
+    - title: Other changes
+      labels: ["*"]
