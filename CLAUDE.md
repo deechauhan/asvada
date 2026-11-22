@@ -72,5 +72,6 @@ name and UX from sounding travel-only.
 - `docs/ROADMAP.md` — releases and sprint plan
 - `docs/WAYS_OF_WORKING.md` — agile process, DoR/DoD, branching, reviews
 - `docs/DECISIONS/` — ADRs (architecture decision records)
+- `docs/AUTOPILOT.md` — runbook for unattended scheduled sessions
 - `backlog/backlog.yaml` — source of truth used to seed the GitHub board
 - `scripts/bootstrap_github.py` — creates labels, milestones, issues and the Project board

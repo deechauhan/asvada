@@ -45,6 +45,7 @@ labels:
   - {name: "area:quality",     color: "c5def5", description: "Testing, a11y, performance, privacy"}
   - {name: "area:release",     color: "c5def5", description: "TestFlight, App Store"}
   - {name: "ceremony",         color: "ededed", description: "Sprint planning/review/retro tracking"}
+  - {name: "owner-only",       color: "000000", description: "Needs the owner (accounts, settings, money, decisions); autopilot skips it"}
 
 epics:
 
