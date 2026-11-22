@@ -8,7 +8,7 @@ struct SchemaVersionTests {
         #expect(newest.versionIdentifier == CurrentSchema.versionIdentifier)
     }
 
-    // Note: a `\.versionIdentifier` key path on `any VersionedSchema.Type` crashes the Swift 6.3 compiler; use a closure.
+    /// Note: a `\.versionIdentifier` key path on `any VersionedSchema.Type` crashes the Swift 6.3 compiler; use a closure.
     @Test func planVersionsIncreaseStrictly() {
         // swiftformat:disable:next preferKeyPath
         let versions = AsvadaMigrationPlan.schemas.map { $0.versionIdentifier }
