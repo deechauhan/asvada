@@ -4,7 +4,7 @@ import XCTest
 /// CI exports these attachments into `screenshots/`.
 final class LaunchTests: XCTestCase {
     @MainActor
-    func testLaunchShowsRootScreen() throws {
+    func testLaunchShowsRootScreen() {
         let app = XCUIApplication()
         app.launch()
         XCTAssertTrue(app.staticTexts["Asvada"].waitForExistence(timeout: 10))

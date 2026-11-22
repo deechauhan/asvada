@@ -69,7 +69,8 @@ opening its PR → In review, merging (issue closed) → Done.
 - One branch per issue: `feat/12-entry-model`, `fix/40-map-crash`, `chore/3-ci`, `docs/7-adr-sync`, `spike/9-clustering`.
 - PR title = Conventional Commit; body includes `Closes #<issue>`.
 - Squash merge; delete branch after merge.
-- Tags `vX.Y.Z` mark milestone releases.
+- Every merge to `main` publishes a patch release (`v0.<m>.<n>`) with generated notes; closing a
+  milestone publishes `v0.<k+1>.0` (M5 → `v1.0.0`). Releases are the changelog.
 
 ## Ceremonies (solo-sized)
 
