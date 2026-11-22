@@ -1,7 +1,7 @@
 import Testing
 @testable import Sources
 
-@Suite struct TMDBConfigurationTests {
+struct TMDBConfigurationTests {
     @Test func readsKeyFromInfoDictionary() {
         let config = TMDBConfiguration(infoDictionary: ["TMDBAPIKey": "abc123"])
         #expect(config?.apiKey == "abc123")
