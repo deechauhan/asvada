@@ -11,6 +11,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Lint (SwiftLint + SwiftFormat)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: SwiftFormat
+        run: docker run --rm -v "$PWD:/work" -w /work ghcr.io/nicklockwood/swiftformat:0.64.7 --lint .
+      - name: SwiftLint
+        run: docker run --rm -v "$PWD:/work" -w /work ghcr.io/realm/swiftlint:0.65.1 swiftlint lint --strict --reporter github-actions-logging
+
   packages:
     name: Package tests
     runs-on: macos-26
