@@ -63,14 +63,19 @@ public struct AppShellView: View {
     AppShellView()
 }
 
-private extension View {
-    /// iOS 26 tab-bar accessory; on macOS (package tests only) falls back to a bottom inset.
-    @ViewBuilder
-    func quickLogAccessory(_ button: some View) -> some View {
-        #if os(iOS)
+#if os(iOS)
+    private extension View {
+        /// iOS 26 tab-bar accessory: shown above the tab bar on every tab.
+        func quickLogAccessory(_ button: some View) -> some View {
             tabViewBottomAccessory { button }
-        #else
-            safeAreaInset(edge: .bottom) { button.padding() }
-        #endif
+        }
     }
-}
+
+#else
+    private extension View {
+        /// macOS (package tests only): a bottom inset instead of the iOS tab-bar accessory.
+        func quickLogAccessory(_ button: some View) -> some View {
+            safeAreaInset(edge: .bottom) { button.padding() }
+        }
+    }
+#endif

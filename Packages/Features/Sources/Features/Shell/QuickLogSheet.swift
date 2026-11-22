@@ -29,14 +29,19 @@ struct QuickLogSheet: View {
     }
 }
 
-private extension View {
-    /// Inline titles on iOS; no-op on macOS (where this package's tests also build).
-    @ViewBuilder
-    func navigationBarTitleDisplayModeInline() -> some View {
-        #if os(iOS)
+#if os(iOS)
+    private extension View {
+        /// Inline navigation titles on iOS.
+        func navigationBarTitleDisplayModeInline() -> some View {
             navigationBarTitleDisplayMode(.inline)
-        #else
-            self
-        #endif
+        }
     }
-}
+
+#else
+    private extension View {
+        /// No-op on macOS, where this package's tests also build.
+        func navigationBarTitleDisplayModeInline() -> some View {
+            self
+        }
+    }
+#endif
