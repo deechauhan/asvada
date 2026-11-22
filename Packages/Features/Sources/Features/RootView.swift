@@ -8,19 +8,22 @@ public struct RootView: View {
     public init() {}
 
     public var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Spacing.medium) {
             Text("Asvada")
-                .font(.largeTitle.bold())
+                .typeToken(.display)
+                .foregroundStyle(Palette.textPrimary.color)
                 .accessibilityAddTraits(.isHeader)
             Text("Savour what you've lived")
-                .font(.headline)
-                .foregroundStyle(.secondary)
+                .typeToken(.headline)
+                .foregroundStyle(Palette.textSecondary.color)
             Text(FeaturesModule.linkedModules.joined(separator: " · "))
-                .font(.footnote)
-                .foregroundStyle(.tertiary)
+                .typeToken(.caption)
+                .foregroundStyle(Palette.textSecondary.color)
                 .accessibilityLabel("Linked modules: \(FeaturesModule.linkedModules.joined(separator: ", "))")
         }
-        .padding()
+        .padding(Spacing.large)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Palette.background.color)
     }
 }
 

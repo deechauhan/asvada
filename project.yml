@@ -37,6 +37,7 @@ targets:
       - App/Resources
     dependencies:
       - package: Features
+      - package: DesignSystem
     configFiles:
       Debug: Config/App.xcconfig
       Release: Config/App.xcconfig
