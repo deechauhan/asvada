@@ -76,6 +76,9 @@ jobs:
           echo "issues: ${issues:-none} → ${status:-n/a}"
       - name: Update board
         if: steps.token.outputs.ok == 'true' && steps.what.outputs.issues != ''
+        # A board problem (e.g. a token without the `project` scope) shouldn't mark PRs red;
+        # the step still shows as failed in the run log.
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
           ISSUES: ${{ steps.what.outputs.issues }}
