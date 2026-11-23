@@ -36,6 +36,25 @@ struct ContrastTests {
         #expect(Palette.onBrand.light.contrastRatio(with: Palette.brand.light) >= 4.5)
         #expect(Palette.onBrand.dark.contrastRatio(with: Palette.brand.dark) >= 4.5)
     }
+
+    @Test func onSaffronMeetsWCAGAA() {
+        #expect(Palette.onSaffron.light.contrastRatio(with: Palette.saffron.light) >= 4.5)
+        #expect(Palette.onSaffron.dark.contrastRatio(with: Palette.saffron.dark) >= 4.5)
+    }
+
+    @Test(arguments: [Palette.onAubergine, Palette.saffron, Palette.brand])
+    func heroTextMeetsWCAGAAOnAubergine(token: ColorToken) {
+        for field in Palette.hero {
+            let ratio = token.dark.contrastRatio(with: field.dark)
+            #expect(ratio >= 4.5, "\(token.name) on \(field.name) is \(ratio)")
+        }
+    }
+
+    /// Saffron fill is decorative: it must stay out of the text tokens.
+    @Test func saffronFillIsNotATextToken() {
+        #expect(!Palette.text.contains(Palette.saffron))
+        #expect(Palette.saffron.light.contrastRatio(with: Palette.background.light) < 4.5)
+    }
 }
 
 struct TokenTests {
@@ -55,8 +74,17 @@ struct TokenTests {
         #expect(values.allSatisfy { $0.truncatingRemainder(dividingBy: 2) == 0 })
     }
 
-    @Test func displayAndTitleUseSerif() {
-        #expect(TypeToken.display.design == .serif)
+    @Test func voiceTokensUseNewYork() {
+        for token in [TypeToken.hero, .display, .masthead, .title, .voice] {
+            #expect(token.design == .serif, "\(token) should be serif")
+        }
         #expect(TypeToken.body.design == .default)
+        #expect(TypeToken.code.design == .monospaced)
+    }
+
+    @Test func italicsAndTicketLabels() {
+        #expect(TypeToken.masthead.isItalic && TypeToken.voice.isItalic)
+        #expect(!TypeToken.display.isItalic)
+        #expect(TypeToken.ticketLabel.isUppercase && TypeToken.ticketLabel.tracking > 0)
     }
 }
