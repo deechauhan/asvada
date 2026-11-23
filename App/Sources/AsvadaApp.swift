@@ -22,6 +22,12 @@ struct AsvadaApp: App {
             // Without a store the app can't do anything useful; surface the reason clearly.
             fatalError("Could not open the Asvada data store: \(error)")
         }
+        do {
+            try BuiltInCollections.seedIfNeeded(in: container.mainContext)
+        } catch {
+            // Not fatal: the app works without built-ins and seeding retries on next launch.
+            print("Seeding built-in collections failed: \(error)")
+        }
     }
 
     var body: some Scene {
