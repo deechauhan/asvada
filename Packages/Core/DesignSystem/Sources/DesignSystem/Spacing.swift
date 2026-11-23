@@ -16,8 +16,10 @@ public enum Spacing {
     ]
 }
 
-/// Corner radii.
+/// Corner radii. Glass chrome is rounded; keepsakes are nearly square, like real paper.
 public enum Radius {
+    /// Keepsakes (paper): sharp next to the rounded glass chrome.
+    public static let keepsake: CGFloat = 3
     public static let small: CGFloat = 6
     public static let medium: CGFloat = 12
     public static let large: CGFloat = 20
