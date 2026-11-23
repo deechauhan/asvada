@@ -91,13 +91,11 @@ final class LaunchTests: XCTestCase {
     @MainActor
     func testCreateCustomCollectionAppearsInListAndQuickLog() {
         let app = launch(["-resetState"])
-        app.tabBars.buttons["Collections"].tap()
-        let newButton = app.buttons["newCollectionButton"]
-        XCTAssertTrue(newButton.waitForExistence(timeout: 10))
-        newButton.tap()
+        openCollectionsAndWait(app)
+        app.buttons["newCollectionButton"].tap()
 
         let name = app.textFields["collectionNameField"]
-        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        XCTAssertTrue(name.waitForExistence(timeout: 15))
         let save = app.buttons["saveCollectionButton"]
         XCTAssertFalse(save.isEnabled, "Save should be disabled until a name is entered")
         name.tap()
@@ -131,6 +129,18 @@ final class LaunchTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Switches to Collections and waits until the list has loaded, so toolbar taps don't land
+    /// mid tab-transition (they're dropped while the glass toolbar is animating).
+    @MainActor
+    private func openCollectionsAndWait(_ app: XCUIApplication) {
+        app.tabBars.buttons["Collections"].tap()
+        XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Cafés"].waitForExistence(timeout: 10))
+        let newButton = app.buttons["newCollectionButton"]
+        XCTAssertTrue(newButton.waitForExistence(timeout: 10))
+        XCTAssertTrue(newButton.isHittable)
+    }
 
     @MainActor
     private func launch(_ arguments: [String]) -> XCUIApplication {
