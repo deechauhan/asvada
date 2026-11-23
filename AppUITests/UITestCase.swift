@@ -38,6 +38,14 @@ class UITestCase: XCTestCase {
         XCTAssertTrue(customise.exists, "The context menu did not appear for \(name)")
     }
 
+    /// Waits until `element`'s selected state is `selected` (rows expose `.isSelected`).
+    @MainActor
+    func waitUntilSelected(_ element: XCUIElement, _ selected: Bool, timeout: TimeInterval = 5) -> Bool {
+        let predicate = NSPredicate(format: "isSelected == %@", NSNumber(value: selected))
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+    }
+
     /// The first element of any type whose accessibility label is (or starts with) `label`.
     @MainActor
     func labelled(_ label: String, in app: XCUIApplication, prefix: Bool = false) -> XCUIElement {

@@ -49,18 +49,21 @@ final class KeepsakeUITests: UITestCase {
         let japan = app.buttons["country-JP"]
         XCTAssertTrue(japan.waitForExistence(timeout: 5))
         japan.tap()
-        XCTAssertTrue(app.navigationBars["1 stamped"].waitForExistence(timeout: 5))
+        // While searching, the search field takes over the navigation bar (and its "N stamped"
+        // title), so check the rows' selected state instead.
+        XCTAssertTrue(waitUntilSelected(japan, true))
         search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 5) + "portu")
-        app.buttons["country-PT"].tap()
-        XCTAssertTrue(app.navigationBars["2 stamped"].waitForExistence(timeout: 5))
+        let portugal = app.buttons["country-PT"]
+        portugal.tap()
+        XCTAssertTrue(waitUntilSelected(portugal, true))
         // The ink map floods with both.
         let map = app.descendants(matching: .any)["inkWorldMap"]
         XCTAssertTrue(map.exists)
         XCTAssertEqual(map.label, "World map, 2 countries inked: Japan and Portugal")
         attachScreenshot(of: app, named: "country-picker-search")
         // Tapping again unpicks.
-        app.buttons["country-PT"].tap()
-        XCTAssertTrue(app.navigationBars["1 stamped"].waitForExistence(timeout: 5))
+        portugal.tap()
+        XCTAssertTrue(waitUntilSelected(portugal, false))
     }
 
     @MainActor
