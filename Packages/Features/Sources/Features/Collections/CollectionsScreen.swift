@@ -20,6 +20,7 @@ struct CollectionsScreen: View {
     }
 
     @State private var isCreating = false
+    @State private var editing: ExperienceCollection?
 
     private var repository: Repository {
         Repository(context: context)
@@ -31,6 +32,17 @@ struct CollectionsScreen: View {
                 Section {
                     ForEach(visible) { collection in
                         CollectionRow(collection: collection)
+                            .swipeActions(edge: .leading) {
+                                Button("Edit", systemImage: "pencil") {
+                                    editing = collection
+                                }
+                                .tint(Palette.brand.color)
+                            }
+                            .contextMenu {
+                                Button("Edit", systemImage: "pencil") {
+                                    editing = collection
+                                }
+                            }
                             .swipeActions(edge: .trailing) {
                                 Button("Hide", systemImage: "eye.slash") {
                                     setHidden(true, collection)
@@ -76,7 +88,10 @@ struct CollectionsScreen: View {
             }
             .reorderButton()
             .sheet(isPresented: $isCreating) {
-                NewCollectionSheet()
+                CollectionEditor(mode: .create)
+            }
+            .sheet(item: $editing) { collection in
+                CollectionEditor(mode: .edit(collection))
             }
         }
     }
