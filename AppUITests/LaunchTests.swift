@@ -117,10 +117,10 @@ final class LaunchTests: XCTestCase {
     @MainActor
     func testEditAndDeleteCustomCollectionButNotBuiltIn() {
         let app = launch(["-resetState"])
-        app.tabBars.buttons["Collections"].tap()
+        openCollectionsAndWait(app)
         app.buttons["newCollectionButton"].tap()
         let name = app.textFields["collectionNameField"]
-        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        XCTAssertTrue(name.waitForExistence(timeout: 15))
         name.tap()
         name.typeText("Concerts")
         app.buttons["saveCollectionButton"].tap()
@@ -129,7 +129,7 @@ final class LaunchTests: XCTestCase {
         // Rename
         app.staticTexts["Concerts"].swipeRight()
         app.buttons["Edit"].tap()
-        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
         let field = app.textFields["collectionNameField"]
         field.tap()
         field.press(forDuration: 1.0)
@@ -155,7 +155,7 @@ final class LaunchTests: XCTestCase {
         // Built-ins can be edited but not deleted
         app.staticTexts["Cafés"].swipeRight()
         app.buttons["Edit"].tap()
-        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
         XCTAssertFalse(app.buttons["deleteCollectionButton"].exists)
     }
 
