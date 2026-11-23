@@ -77,21 +77,48 @@ final class LaunchTests: XCTestCase {
         for name in ["Cafés", "Restaurants", "Countries", "Cities", "Airlines", "Films"] {
             XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: 5), "\(name) missing")
         }
+        // An empty cabinet never shows a bare "0": empty drawers carry the ghost line instead.
+        XCTAssertFalse(app.staticTexts["0"].exists)
+        XCTAssertTrue(labelled("Nothing savoured yet", in: app).exists)
         attachScreenshot(of: app, named: "collections")
 
-        app.staticTexts["Airlines"].swipeLeft()
-        let hide = app.buttons["Hide"]
-        XCTAssertTrue(hide.waitForExistence(timeout: 5))
+        // Edit makes the drawers jiggle and gives each a hide badge.
+        app.buttons["arrangeButton"].tap()
+        let hide = app.buttons["hideCollection-Airlines"]
+        bringIntoView(hide, in: app)
+        attachScreenshot(of: app, named: "collections-arranging")
         hide.tap()
+        app.buttons["arrangeButton"].tap()
 
-        // Hidden collections stay listed (dimmed, in their own section) and can be shown again.
-        // Wait for the row to settle in the Hidden section before swiping it.
-        XCTAssertTrue(app.staticTexts["Hidden"].waitForExistence(timeout: 10))
-        let airlines = app.staticTexts["Airlines"]
-        XCTAssertTrue(airlines.waitForExistence(timeout: 5))
+        // Hidden collections sit below the cabinet, dimmed, and can be shown again.
+        let hiddenHeader = app.staticTexts["Hidden"]
+        bringIntoView(hiddenHeader, in: app)
         attachScreenshot(of: app, named: "collections-hidden")
-        airlines.swipeLeft()
-        XCTAssertTrue(app.buttons["Show"].waitForExistence(timeout: 10))
+        let show = app.buttons["showCollection-Airlines"]
+        bringIntoView(show, in: app)
+        show.tap()
+        XCTAssertTrue(hiddenHeader.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any)["collection-airlines-Airlines"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testCabinetFansKeepsakesOutOfFilledDrawers() {
+        let runs = [
+            (["-resetState", "-sampleData"], "cabinet"),
+            (["-resetState", "-sampleData", "-forceDarkMode"], "cabinet-dark"),
+        ]
+        for (args, name) in runs {
+            let app = launch(args)
+            openCollectionsAndWait(app)
+            // Ranked drawers name their No. 1; checklists show their share of the world.
+            XCTAssertTrue(labelled("4 ranked, number one Prufrock Coffee", in: app).waitForExistence(timeout: 5))
+            XCTAssertTrue(labelled("4 stamped", in: app, prefix: true).waitForExistence(timeout: 5))
+            // Restaurants and Cities are still empty: ghost line, not "0".
+            XCTAssertTrue(labelled("Nothing savoured yet", in: app).exists)
+            XCTAssertFalse(app.staticTexts["0"].exists)
+            attachScreenshot(of: app, named: name)
+            app.terminate()
+        }
     }
 
     @MainActor
@@ -133,8 +160,7 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
 
         // Rename
-        customise(app, "Concerts")
-        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+        customiseFromMenu(app, "Concerts")
         let field = app.textFields["collectionNameField"]
         field.tap()
         field.press(forDuration: 1.0)
@@ -223,13 +249,11 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(element.waitForExistence(timeout: 5), "\(element) never scrolled into view")
     }
 
-    /// Opens Customise from a collection row's context menu (long press). Used after a row has
-    /// already been customised once: SwiftUI can leave that row's swipe state stale, so a second
-    /// swipe doesn't always reveal the action.
+    /// Opens Customise from a collection drawer's context menu (long press).
     @MainActor
     private func customiseFromMenu(_ app: XCUIApplication, _ name: String) {
         let row = app.staticTexts[name]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "\(name) row missing")
+        bringIntoView(row, in: app)
         row.press(forDuration: 1.2)
         let action = app.buttons["Customise"]
         XCTAssertTrue(action.waitForExistence(timeout: 5), "Customise menu item did not appear for \(name)")
@@ -237,22 +261,27 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
     }
 
-    /// Swipes a collection row right and taps Customise. Retries the swipe once: a swipe that
-    /// lands while the list is still re-laying out (e.g. just after a sheet closes) is dropped.
+    /// The first element of any type whose accessibility label is (or starts with) `label`.
     @MainActor
-    private func customise(_ app: XCUIApplication, _ name: String) {
-        let row = app.staticTexts[name]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "\(name) row missing")
-        let action = app.buttons["Customise"]
-        for _ in 0 ..< 2 {
-            row.swipeRight()
-            if action.waitForExistence(timeout: 4) {
-                break
+    private func labelled(_ label: String, in app: XCUIApplication, prefix: Bool = false) -> XCUIElement {
+        let format = prefix ? "label BEGINSWITH %@" : "label == %@"
+        return app.descendants(matching: .any).matching(NSPredicate(format: format, label)).firstMatch
+    }
+
+    /// Scrolls the cabinet until `element` can be tapped, up or down depending on where it is.
+    /// The cabinet isn't lazy, so off-screen drawers exist and report their frames.
+    @MainActor
+    private func bringIntoView(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 8) {
+        XCTAssertTrue(element.waitForExistence(timeout: 10), "\(element) missing")
+        let screen = app.windows.firstMatch.frame
+        for _ in 0 ..< attempts where !element.isHittable {
+            if element.frame.midY < screen.midY {
+                app.swipeDown()
+            } else {
+                app.swipeUp()
             }
         }
-        XCTAssertTrue(action.exists, "Customise action did not appear for \(name)")
-        action.tap()
-        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+        XCTAssertTrue(element.isHittable, "\(element) never came into view")
     }
 
     /// Switches to Collections and waits until the list has loaded, so toolbar taps don't land

@@ -10,7 +10,8 @@ struct AsvadaApp: App {
     /// Launch arguments used by UI tests and for quick manual checks:
     /// `-resetState` clears restored UI state, `-designCatalog` opens the design catalogue,
     /// `-keepsakeGallery` opens the keepsake gallery, `-forceDarkMode` forces dark appearance,
-    /// `-inMemoryStore` keeps data off disk, `-disableTips` hides TipKit tips.
+    /// `-inMemoryStore` keeps data off disk, `-disableTips` hides TipKit tips, `-sampleData` fills
+    /// the built-ins with sample keepsakes (only together with `-inMemoryStore`).
     private let arguments = ProcessInfo.processInfo.arguments
     private let container: ModelContainer
 
@@ -34,6 +35,10 @@ struct AsvadaApp: App {
         } catch {
             // Not fatal: the app works without built-ins and seeding retries on next launch.
             print("Seeding built-in collections failed: \(error)")
+        }
+        // Sample keepsakes for screenshots; never written to the real store.
+        if arguments.contains("-sampleData"), arguments.contains("-inMemoryStore") {
+            try? PreviewData.fillBuiltIns(Repository(context: container.mainContext))
         }
     }
 
