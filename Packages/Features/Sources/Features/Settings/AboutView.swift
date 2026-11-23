@@ -62,9 +62,13 @@ struct AboutView: View {
 
 #if os(iOS)
     private extension View {
-        /// Light nav-bar text on the dark aubergine field.
+        /// Cream nav-bar text on the dark aubergine field. `toolbarColorScheme` only takes effect
+        /// when the bar has a visible background, so paint the bar the top of the gradient.
         func darkNavigationBar() -> some View {
-            toolbarColorScheme(.dark, for: .navigationBar)
+            navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(Palette.aubergineTop.color, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
     }
 
