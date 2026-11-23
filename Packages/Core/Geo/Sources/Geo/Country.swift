@@ -85,13 +85,13 @@ public struct Country: Sendable, Hashable, Identifiable {
         toSegment start: (x: Double, y: Double),
         _ end: (x: Double, y: Double),
     ) -> Double {
-        let dx = end.x - start.x
-        let dy = end.y - start.y
-        let lengthSquared = dx * dx + dy * dy
+        let runX = end.x - start.x
+        let runY = end.y - start.y
+        let lengthSquared = runX * runX + runY * runY
         let fraction = lengthSquared == 0
             ? 0
-            : min(max(((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared, 0), 1)
-        return hypot(point.x - (start.x + fraction * dx), point.y - (start.y + fraction * dy))
+            : min(max(((point.x - start.x) * runX + (point.y - start.y) * runY) / lengthSquared, 0), 1)
+        return hypot(point.x - (start.x + fraction * runX), point.y - (start.y + fraction * runY))
     }
 
     /// Even-odd ray casting.
