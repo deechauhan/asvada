@@ -30,6 +30,11 @@ struct KeepsakeTests {
         #expect(shapes.count == StampShape.allCases.count)
     }
 
+    @Test func stampDatesUseDayMonthYearWithMiddots() throws {
+        let date = try #require(Calendar(identifier: .gregorian).date(from: DateComponents(year: 2025, month: 4, day: 3)))
+        #expect(PassportStamp.stampDate(date) == "03·04·25")
+    }
+
     @Test func spokenSummaries() {
         let date = try? Date("2025-04-03", strategy: .iso8601.year().month().day())
         let stamp = PassportStamp(country: "Japan", code: "JP", date: date)

@@ -33,6 +33,14 @@ public struct PassportStamp: KeepsakeTemplate {
         self.ink = ink
     }
 
+    /// Stamps print dates like a real entry stamp, "03·04·25" (day·month·year), in every locale.
+    static func stampDate(_ date: Date) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        let parts = calendar.dateComponents([.day, .month, .year], from: date)
+        return String(format: "%02d·%02d·%02d", parts.day ?? 0, parts.month ?? 0, (parts.year ?? 0) % 100)
+    }
+
     var shape: StampShape {
         StampShape.forCode(code)
     }
@@ -55,15 +63,16 @@ public struct PassportStamp: KeepsakeTemplate {
                 .typeToken(.ticketLabel)
                 .opacity(0.8)
             if let date {
-                Text(date, format: .dateTime.day(.twoDigits).month(.twoDigits).year(.twoDigits))
+                Text(Self.stampDate(date))
                     .font(.system(.caption, design: .monospaced, weight: .medium))
             }
         }
         .foregroundStyle(ink.color)
-        .padding(.horizontal, shape == .triangle ? Spacing.large : Spacing.medium)
-        .padding(.top, shape == .triangle ? Spacing.xl : Spacing.medium)
-        .padding(.bottom, Spacing.medium)
-        .frame(minWidth: 96, minHeight: shape == .round ? 96 : 72)
+        // A triangle only has room near its base, so its text sits low with wide side margins.
+        .padding(.horizontal, shape == .triangle ? Spacing.xxl : Spacing.medium)
+        .padding(.top, shape == .triangle ? 52 : Spacing.medium)
+        .padding(.bottom, shape == .triangle ? Spacing.small : Spacing.medium)
+        .frame(minWidth: shape == .triangle ? 150 : 96, minHeight: shape == .round ? 96 : 72)
         .background { StampOutline(shape: shape, ink: ink.color) }
         .opacity(0.88)
         .rotationEffect(.degrees(reduceMotion ? 0 : Tilt.degrees(for: code, max: Tilt.stampMax)))
