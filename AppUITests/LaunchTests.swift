@@ -121,6 +121,56 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testEditAndDeleteCustomCollectionButNotBuiltIn() {
+        let app = launch(["-resetState"])
+        openCollectionsAndWait(app)
+        app.buttons["newCollectionButton"].tap()
+        let name = app.textFields["collectionNameField"]
+        XCTAssertTrue(name.waitForExistence(timeout: 15))
+        name.tap()
+        name.typeText("Concerts")
+        app.buttons["saveCollectionButton"].tap()
+        XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
+
+        // Rename
+        customise(app, "Concerts")
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+        let field = app.textFields["collectionNameField"]
+        field.tap()
+        field.press(forDuration: 1.0)
+        if app.menuItems["Select All"].waitForExistence(timeout: 2) {
+            app.menuItems["Select All"].tap()
+        }
+        field.typeText("Gigs")
+        attachScreenshot(of: app, named: "edit-collection")
+        app.buttons["saveCollectionButton"].tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForNonExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Gigs"].waitForExistence(timeout: 5))
+
+        // Delete with confirmation
+        customiseFromMenu(app, "Gigs")
+        let deleteButton = app.buttons["deleteCollectionButton"]
+        scrollUntilVisible(deleteButton, in: app)
+        deleteButton.tap()
+        // The dialog can expose its button in more than one container, so take the first match.
+        let confirm = app.buttons["confirmDeleteButton"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["This collection is empty."].exists)
+        attachScreenshot(of: app, named: "delete-confirmation")
+        confirm.tap()
+        XCTAssertTrue(app.staticTexts["Gigs"].waitForNonExistence(timeout: 5))
+
+        // Built-ins can be edited but not deleted
+        customiseFromMenu(app, "Cafés")
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+        let builtInDelete = app.buttons["deleteCollectionButton"]
+        for _ in 0 ..< 4 where !builtInDelete.exists {
+            app.swipeUp()
+        }
+        XCTAssertFalse(builtInDelete.exists, "Built-in collections must not offer delete")
+    }
+
+    @MainActor
     func testKeepsakeGallery() {
         let runs = [(["-keepsakeGallery"], "keepsakes-light"), (["-keepsakeGallery", "-forceDarkMode"], "keepsakes-dark")]
         for (args, name) in runs {
@@ -163,6 +213,47 @@ final class LaunchTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Scrolls the frontmost form until `element` is on screen (form rows load lazily).
+    @MainActor
+    private func scrollUntilVisible(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 6) {
+        for _ in 0 ..< attempts where !(element.exists && element.isHittable) {
+            app.swipeUp()
+        }
+        XCTAssertTrue(element.waitForExistence(timeout: 5), "\(element) never scrolled into view")
+    }
+
+    /// Opens Customise from a collection row's context menu (long press). Used after a row has
+    /// already been customised once: SwiftUI can leave that row's swipe state stale, so a second
+    /// swipe doesn't always reveal the action.
+    @MainActor
+    private func customiseFromMenu(_ app: XCUIApplication, _ name: String) {
+        let row = app.staticTexts[name]
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "\(name) row missing")
+        row.press(forDuration: 1.2)
+        let action = app.buttons["Customise"]
+        XCTAssertTrue(action.waitForExistence(timeout: 5), "Customise menu item did not appear for \(name)")
+        action.tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+    }
+
+    /// Swipes a collection row right and taps Customise. Retries the swipe once: a swipe that
+    /// lands while the list is still re-laying out (e.g. just after a sheet closes) is dropped.
+    @MainActor
+    private func customise(_ app: XCUIApplication, _ name: String) {
+        let row = app.staticTexts[name]
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "\(name) row missing")
+        let action = app.buttons["Customise"]
+        for _ in 0 ..< 2 {
+            row.swipeRight()
+            if action.waitForExistence(timeout: 4) {
+                break
+            }
+        }
+        XCTAssertTrue(action.exists, "Customise action did not appear for \(name)")
+        action.tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+    }
 
     /// Switches to Collections and waits until the list has loaded, so toolbar taps don't land
     /// mid tab-transition (they're dropped while the glass toolbar is animating).
