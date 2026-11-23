@@ -65,6 +65,26 @@ public struct Repository {
         return entry
     }
 
+    /// Moves collections within `ordered` (the list as the user sees it) and renumbers
+    /// `sortIndex` to match, mirroring SwiftUI's `onMove(fromOffsets:toOffset:)`.
+    public func reorder(_ ordered: [ExperienceCollection], moving source: IndexSet, to destination: Int) {
+        var list = ordered
+        let moving = source.map { list[$0] }
+        let insertAt = destination - source.count(in: 0 ..< destination)
+        for index in source.reversed() {
+            list.remove(at: index)
+        }
+        list.insert(contentsOf: moving, at: insertAt)
+        for (index, collection) in list.enumerated() {
+            collection.sortIndex = index
+        }
+    }
+
+    /// Hides or shows a collection (built-ins are hidden rather than deleted).
+    public func setHidden(_ hidden: Bool, for collection: ExperienceCollection) {
+        collection.isHidden = hidden
+    }
+
     /// Deletes a model. Collections cascade to their items, entries and photos.
     public func delete(_ model: some PersistentModel) {
         context.delete(model)
