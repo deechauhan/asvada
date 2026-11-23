@@ -117,6 +117,20 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testKeepsakeGallery() {
+        let runs = [(["-keepsakeGallery"], "keepsakes-light"), (["-keepsakeGallery", "-forceDarkMode"], "keepsakes-dark")]
+        for (args, name) in runs {
+            let app = launch(args)
+            XCTAssertTrue(app.navigationBars["Keepsakes"].waitForExistence(timeout: 10))
+            // Each keepsake is a single VoiceOver element with a spoken summary.
+            let peru = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Passport stamp, Peru"))
+            XCTAssertTrue(peru.firstMatch.waitForExistence(timeout: 5))
+            attachScreenshot(of: app, named: name)
+            app.terminate()
+        }
+    }
+
+    @MainActor
     func testDesignCatalogLight() {
         let app = launch(["-designCatalog"])
         XCTAssertTrue(app.navigationBars["Design catalogue"].waitForExistence(timeout: 10))
