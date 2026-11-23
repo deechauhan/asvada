@@ -130,7 +130,7 @@ final class LaunchTests: XCTestCase {
 
         // Rename
         app.staticTexts["Concerts"].swipeRight()
-        app.buttons["Edit"].tap()
+        app.buttons["Customise"].tap()
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
         let field = app.textFields["collectionNameField"]
         field.tap()
@@ -145,7 +145,7 @@ final class LaunchTests: XCTestCase {
 
         // Delete with confirmation
         app.staticTexts["Gigs"].swipeRight()
-        app.buttons["Edit"].tap()
+        app.buttons["Customise"].tap()
         app.buttons["deleteCollectionButton"].tap()
         let confirm = app.buttons["confirmDeleteButton"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
@@ -156,7 +156,7 @@ final class LaunchTests: XCTestCase {
 
         // Built-ins can be edited but not deleted
         app.staticTexts["Cafés"].swipeRight()
-        app.buttons["Edit"].tap()
+        app.buttons["Customise"].tap()
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
         XCTAssertFalse(app.buttons["deleteCollectionButton"].exists)
     }

@@ -33,13 +33,15 @@ struct CollectionsScreen: View {
                     ForEach(visible) { collection in
                         CollectionRow(collection: collection)
                             .swipeActions(edge: .leading) {
-                                Button("Edit", systemImage: "pencil") {
+                                // "Customise", not "Edit": the toolbar's Edit button is for reordering.
+                                Button("Customise", systemImage: "slider.horizontal.3") {
                                     editing = collection
                                 }
                                 .tint(Palette.brand.color)
+                                .accessibilityIdentifier("customiseCollectionAction")
                             }
                             .contextMenu {
-                                Button("Edit", systemImage: "pencil") {
+                                Button("Customise", systemImage: "slider.horizontal.3") {
                                     editing = collection
                                 }
                             }
