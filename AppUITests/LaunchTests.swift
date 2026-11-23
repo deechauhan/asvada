@@ -231,11 +231,9 @@ final class LaunchTests: XCTestCase {
     func testShareTopFiveFromTheCafesDrawer() {
         let app = launch(["-resetState", "-sampleData"])
         openCollectionsAndWait(app)
-        let cafes = app.staticTexts["Cafés"]
-        bringIntoView(cafes, in: app)
-        cafes.press(forDuration: 1.2)
+        openDrawerMenu(app, "Cafés")
         let share = app.buttons["Share"]
-        XCTAssertTrue(share.waitForExistence(timeout: 5), "Share missing from a filled drawer's menu")
+        XCTAssertTrue(share.exists, "Share missing from a filled drawer's menu")
         share.tap()
         XCTAssertTrue(app.descendants(matching: .any)["shareCardPreview"].waitForExistence(timeout: 15))
         // The card renders to an image before the share button appears.
