@@ -203,9 +203,26 @@ final class LaunchTests: XCTestCase {
             let app = launch(args)
             XCTAssertTrue(app.navigationBars["Keepsakes"].waitForExistence(timeout: 10))
             // Each keepsake is a single VoiceOver element with a spoken summary.
-            let peru = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Passport stamp, Peru"))
-            XCTAssertTrue(peru.firstMatch.waitForExistence(timeout: 5))
+            XCTAssertTrue(labelled("Passport stamp, Peru", in: app).waitForExistence(timeout: 5))
+            // Every template in the kit is present and speaks for itself.
+            let summaries = [
+                "Receipt, Prufrock Coffee",
+                "Menu card, Dishoom",
+                "Ticket stub, Perfect Days",
+                "Ticket stub, Past Lives",
+                "Boarding pass, British Airways",
+                "Postcard from Lisbon",
+                "Concerts, Radiohead",
+            ]
+            for summary in summaries {
+                XCTAssertTrue(labelled(summary, in: app, prefix: true).exists, "\(summary) keepsake missing")
+            }
+            // One screenshot per screenful, so every template is captured.
             attachScreenshot(of: app, named: name)
+            for page in 2 ... 5 {
+                app.swipeUp()
+                attachScreenshot(of: app, named: "\(name)-\(page)")
+            }
             app.terminate()
         }
     }
@@ -252,13 +269,23 @@ final class LaunchTests: XCTestCase {
     /// Opens Customise from a collection drawer's context menu (long press).
     @MainActor
     private func customiseFromMenu(_ app: XCUIApplication, _ name: String) {
+        openDrawerMenu(app, name)
+        app.buttons["Customise"].tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+    }
+
+    /// Long-presses a drawer until its context menu shows. A press that lands while the cabinet is
+    /// still settling (after a scroll or a new drawer) starts no menu, so it's retried once.
+    @MainActor
+    private func openDrawerMenu(_ app: XCUIApplication, _ name: String) {
         let row = app.staticTexts[name]
         bringIntoView(row, in: app)
-        row.press(forDuration: 1.2)
-        let action = app.buttons["Customise"]
-        XCTAssertTrue(action.waitForExistence(timeout: 5), "Customise menu item did not appear for \(name)")
-        action.tap()
-        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+        let customise = app.buttons["Customise"]
+        for _ in 0 ..< 2 where !customise.exists {
+            row.press(forDuration: 1.2)
+            _ = customise.waitForExistence(timeout: 4)
+        }
+        XCTAssertTrue(customise.exists, "The context menu did not appear for \(name)")
     }
 
     /// The first element of any type whose accessibility label is (or starts with) `label`.
@@ -274,7 +301,9 @@ final class LaunchTests: XCTestCase {
     private func bringIntoView(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 8) {
         XCTAssertTrue(element.waitForExistence(timeout: 10), "\(element) missing")
         let screen = app.windows.firstMatch.frame
-        for _ in 0 ..< attempts where !element.isHittable {
+        // Keep clear of the tab bar and the savour pill at the bottom, which float over content.
+        let floor = screen.maxY - 220
+        for _ in 0 ..< attempts where !element.isHittable || element.frame.maxY > floor {
             if element.frame.midY < screen.midY {
                 app.swipeDown()
             } else {
