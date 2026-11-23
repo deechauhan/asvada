@@ -19,6 +19,8 @@ struct CollectionsScreen: View {
         collections.filter(\.isHidden)
     }
 
+    @State private var isCreating = false
+
     private var repository: Repository {
         Repository(context: context)
     }
@@ -64,7 +66,18 @@ struct CollectionsScreen: View {
                 }
             }
             .navigationTitle(AppTab.collections.title)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("New collection", systemImage: "plus") {
+                        isCreating = true
+                    }
+                    .accessibilityIdentifier("newCollectionButton")
+                }
+            }
             .reorderButton()
+            .sheet(isPresented: $isCreating) {
+                NewCollectionSheet()
+            }
         }
     }
 
@@ -89,7 +102,7 @@ struct CollectionRow: View {
     let collection: ExperienceCollection
 
     private var accent: CollectionAccent {
-        CollectionAccent(kind: collection.kind)
+        collection.accent
     }
 
     private var count: Int {

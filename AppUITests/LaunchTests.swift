@@ -89,6 +89,32 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testCreateCustomCollectionAppearsInListAndQuickLog() {
+        let app = launch(["-resetState"])
+        openCollectionsAndWait(app)
+        app.buttons["newCollectionButton"].tap()
+
+        let name = app.textFields["collectionNameField"]
+        XCTAssertTrue(name.waitForExistence(timeout: 15))
+        let save = app.buttons["saveCollectionButton"]
+        XCTAssertFalse(save.isEnabled, "Save should be disabled until a name is entered")
+        name.tap()
+        name.typeText("Concerts")
+        app.buttons["music note"].tap()
+        app.buttons["Plum"].tap()
+        attachScreenshot(of: app, named: "new-collection")
+        XCTAssertTrue(save.isEnabled)
+        save.tap()
+
+        XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "collections-with-custom")
+
+        app.buttons["quickLogButton"].tap()
+        XCTAssertTrue(app.navigationBars["What did you savour?"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testDesignCatalogLight() {
         let app = launch(["-designCatalog"])
         XCTAssertTrue(app.navigationBars["Design catalogue"].waitForExistence(timeout: 10))
@@ -103,6 +129,18 @@ final class LaunchTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Switches to Collections and waits until the list has loaded, so toolbar taps don't land
+    /// mid tab-transition (they're dropped while the glass toolbar is animating).
+    @MainActor
+    private func openCollectionsAndWait(_ app: XCUIApplication) {
+        app.tabBars.buttons["Collections"].tap()
+        XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Cafés"].waitForExistence(timeout: 10))
+        let newButton = app.buttons["newCollectionButton"]
+        XCTAssertTrue(newButton.waitForExistence(timeout: 10))
+        XCTAssertTrue(newButton.isHittable)
+    }
 
     @MainActor
     private func launch(_ arguments: [String]) -> XCUIApplication {

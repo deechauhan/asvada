@@ -1,17 +1,24 @@
 import DesignSystem
+import Model
+import SwiftData
 import SwiftUI
 
-/// Placeholder quick-log sheet: pick what you're logging. The real flow arrives with E6.
+/// Quick-log, step 1: pick which collection you're logging into. The rest of the flow arrives with E6.
 struct QuickLogSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Query(
+        filter: #Predicate<ExperienceCollection> { !$0.isHidden },
+        sort: [SortDescriptor(\ExperienceCollection.sortIndex), SortDescriptor(\ExperienceCollection.name)],
+    )
+    private var collections: [ExperienceCollection]
 
     var body: some View {
         NavigationStack {
-            List(CollectionAccent.allCases) { accent in
+            List(collections) { collection in
                 Label {
-                    Text(accent.displayName).foregroundStyle(Palette.textPrimary.color)
+                    Text(collection.name).foregroundStyle(Palette.textPrimary.color)
                 } icon: {
-                    Image(systemName: accent.symbol).foregroundStyle(accent.token.color)
+                    Image(systemName: collection.icon).foregroundStyle(collection.accent.token.color)
                 }
                 .accessibilityElement(children: .combine)
             }

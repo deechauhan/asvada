@@ -15,3 +15,10 @@ extension CollectionAccent {
         }
     }
 }
+
+extension ExperienceCollection {
+    /// The collection's chosen accent, or its kind's accent if none was chosen.
+    var accent: CollectionAccent {
+        CollectionAccent(rawValue: accentName) ?? CollectionAccent(kind: kind)
+    }
+}
