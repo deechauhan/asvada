@@ -110,6 +110,29 @@ struct KeepsakeKitTests {
     }
 }
 
+struct ShareCardTests {
+    @Test func cardsRenderAt1080By1350() {
+        #expect(ShareCard.size.width * ShareCard.scale == 1080)
+        #expect(ShareCard.size.height * ShareCard.scale == 1350)
+    }
+
+    @Test func passportTitleCountsAndSharesTheWorld() {
+        #expect(PassportSpreadCard.title(count: 23, worldTotal: 195) == "23 countries · 12% of the world")
+        #expect(PassportSpreadCard.title(count: 1, worldTotal: 195) == "1 country · 1% of the world")
+    }
+
+    @Test func topMenuPrintsAtMostFive() {
+        let courses = (1 ... 7).map { TopMenuCard.Course(name: "Café \($0)") }
+        let card = TopMenuCard(collection: "Cafés", courses: courses)
+        #expect(card.courses.count == 5)
+        #expect(TopMenuCard.title(collection: "Cafés", count: 5) == "My top 5 cafés")
+    }
+
+    @Test func passportSpreadHoldsAtMostTwelveStamps() {
+        #expect(PassportSpreadCard.capacity == 12)
+    }
+}
+
 struct SealTests {
     @Test func holdMatchesTheConcept() {
         #expect(SealButton.holdDuration == 0.6)

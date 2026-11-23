@@ -16,6 +16,7 @@ struct CollectionsScreen: View {
     @State private var isCreating = false
     @State private var isArranging = false
     @State private var editing: ExperienceCollection?
+    @State private var sharing: ExperienceCollection?
 
     private var visible: [ExperienceCollection] {
         collections.filter { !$0.isHidden }
@@ -86,6 +87,11 @@ struct CollectionsScreen: View {
             .sheet(item: $editing, onDismiss: clearEditing) { collection in
                 CollectionEditor(mode: .edit(collection))
             }
+            .sheet(item: $sharing) { collection in
+                if let content = ShareContent(collection: collection) {
+                    ShareCardSheet(collection: collection, content: content)
+                }
+            }
         }
     }
 
@@ -135,11 +141,22 @@ struct CollectionsScreen: View {
             Button("Customise", systemImage: "slider.horizontal.3") {
                 editing = collection
             }
+            // Only filled drawers have something to share.
+            if ShareContent(collection: collection) != nil {
+                Button("Share", systemImage: "square.and.arrow.up") {
+                    sharing = collection
+                }
+            }
             Button("Hide", systemImage: "eye.slash") {
                 setHidden(true, collection)
             }
         }
         .accessibilityAction(named: "Customise") { editing = collection }
+        .accessibilityAction(named: "Share") {
+            if ShareContent(collection: collection) != nil {
+                sharing = collection
+            }
+        }
         .accessibilityAction(named: "Move earlier") { step(collection, by: -1) }
         .accessibilityAction(named: "Move later") { step(collection, by: 1) }
         .accessibilityAction(named: "Hide") { setHidden(true, collection) }
