@@ -1,7 +1,7 @@
 import XCTest
 
 /// The keepsake world: the template gallery, the seal, the design catalogue and the country
-/// picker.
+/// picker with its ink map.
 final class KeepsakeUITests: UITestCase {
     @MainActor
     func testKeepsakeGallery() {
@@ -56,6 +56,10 @@ final class KeepsakeUITests: UITestCase {
         let portugal = app.buttons["country-PT"]
         portugal.tap()
         XCTAssertTrue(waitUntilSelected(portugal, true))
+        // The ink map floods with both.
+        let map = app.descendants(matching: .any)["inkWorldMap"]
+        XCTAssertTrue(map.exists)
+        XCTAssertEqual(map.label, "World map, 2 countries inked: Japan and Portugal")
         attachScreenshot(of: app, named: "country-picker-search")
         // Tapping again unpicks.
         portugal.tap()
