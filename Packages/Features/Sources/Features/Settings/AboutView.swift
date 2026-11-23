@@ -56,9 +56,26 @@ struct AboutView: View {
             .ignoresSafeArea(),
         )
         .navigationTitle("About")
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .darkNavigationBar()
     }
 }
+
+#if os(iOS)
+    private extension View {
+        /// Light nav-bar text on the dark aubergine field.
+        func darkNavigationBar() -> some View {
+            toolbarColorScheme(.dark, for: .navigationBar)
+        }
+    }
+
+#else
+    private extension View {
+        /// macOS (package tests only) has no navigation bar to recolour.
+        func darkNavigationBar() -> some View {
+            self
+        }
+    }
+#endif
 
 /// The serif "a" with its saffron macron: the app's mark.
 struct AMark: View {
