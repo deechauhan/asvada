@@ -10,7 +10,6 @@ public protocol KeepsakeTemplate: View {
 /// Paper for keepsakes: matte `keepsakePaper`, a faint grain, a 3pt radius and a two-layer ink
 /// shadow, placed at a small deterministic tilt (none under Reduce Motion).
 public struct KeepsakeCard<Content: View>: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let id: String
     let tilt: Double
     let content: Content
@@ -30,7 +29,7 @@ public struct KeepsakeCard<Content: View>: View {
             .clipShape(RoundedRectangle(cornerRadius: Radius.keepsake))
             .shadow(color: Palette.textPrimary.color.opacity(0.08), radius: 1, y: 1)
             .shadow(color: Palette.textPrimary.color.opacity(0.12), radius: 12, y: 8)
-            .rotationEffect(.degrees(reduceMotion ? 0 : tilt))
+            .paperTilt(tilt)
     }
 }
 

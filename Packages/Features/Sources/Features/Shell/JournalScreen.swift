@@ -75,7 +75,7 @@ struct JournalScreen: View {
                 .strokeBorder(Palette.brand.color.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])),
         )
         .scaleEffect(breathe ? 1.02 : 1.0)
-        .rotationEffect(.degrees(reduceMotion ? 0 : -1))
+        .paperTilt(-1)
         .onAppear {
             guard !reduceMotion else { return }
             // Each breath is out and back; an odd count of halves ends smoothly on the out-breath
