@@ -95,14 +95,16 @@ private struct DrawerStat: View {
 }
 
 /// Up to three keepsakes fanned like cards: the best in front and centre, the next two behind it,
-/// leaning out. Under Reduce Motion they still fan (the lean is a layout, not an animation).
+/// leaning out. Countries are different: their stamps are inked across a passport page instead.
+/// Under Reduce Motion they still fan (the lean is a layout, not an animation).
 private struct DrawerFan: View {
     let collection: ExperienceCollection
     let items: [Item]
 
-    /// Where a keepsake sits in the fan: x offset, lean in degrees and stacking order.
+    /// Where a keepsake sits in the fan: offsets, lean in degrees and stacking order.
     private struct Spot {
         let x: CGFloat
+        var y: CGFloat = 0
         let angle: Double
         let layer: Double
     }
@@ -114,9 +116,26 @@ private struct DrawerFan: View {
         case (2, 0): Spot(x: -14, angle: -4, layer: 3)
         case (2, _): Spot(x: 18, angle: 6, layer: 2)
         case (_, 0): Spot(x: 0, angle: -1, layer: 3)
-        case (_, 1): Spot(x: -30, angle: -9, layer: 2)
-        default: Spot(x: 30, angle: 8, layer: 1)
+        case (_, 1): Spot(x: -36, angle: -11, layer: 2)
+        default: Spot(x: 36, angle: 10, layer: 1)
         }
+    }
+
+    /// Stamps scatter across the page rather than fan: the newest left of centre, the others
+    /// up and down the right-hand side, each at its own ink angle (set by the stamp itself).
+    private func stampPlacement(rank: Int, of count: Int) -> Spot {
+        switch (count, rank) {
+        case (1, _): Spot(x: 0, angle: 0, layer: 3)
+        case (2, 0): Spot(x: -28, y: 4, angle: 0, layer: 3)
+        case (2, _): Spot(x: 30, y: -6, angle: 0, layer: 2)
+        case (_, 0): Spot(x: -30, y: 2, angle: 0, layer: 3)
+        case (_, 1): Spot(x: 34, y: -18, angle: 0, layer: 2)
+        default: Spot(x: 30, y: 20, angle: 0, layer: 1)
+        }
+    }
+
+    private var isPassport: Bool {
+        collection.kind == .countries
     }
 
     var body: some View {
@@ -124,11 +143,14 @@ private struct DrawerFan: View {
             if items.isEmpty {
                 GhostSlip(kind: collection.kind)
             } else {
+                if isPassport {
+                    PassportPage()
+                }
                 ForEach(Array(items.enumerated()), id: \.element.id) { rank, item in
-                    let spot = placement(rank: rank, of: items.count)
+                    let spot = isPassport ? stampPlacement(rank: rank, of: items.count) : placement(rank: rank, of: items.count)
                     MiniKeepsake(item: item, collection: collection, rank: rank)
                         .rotationEffect(.degrees(spot.angle), anchor: .bottom)
-                        .offset(x: spot.x)
+                        .offset(x: spot.x, y: spot.y)
                         .zIndex(spot.layer)
                 }
             }
@@ -154,9 +176,10 @@ struct MiniKeepsake: View {
                 date: item.firstEncountered,
                 ink: collection.accent.token,
             )
-            .scaleEffect(0.62)
-            .frame(width: 96, height: 72)
-            .background(Palette.keepsakePaper.color.opacity(0.9), in: RoundedRectangle(cornerRadius: Radius.keepsake))
+            // Ink the stamp at full size so the country name isn't squeezed, then shrink it.
+            .fixedSize()
+            .scaleEffect(0.5)
+            .frame(width: 64, height: 44)
         } else {
             slip
         }
@@ -191,6 +214,23 @@ struct MiniKeepsake: View {
                 .accessibilityHidden(true)
         }
         .shadow(color: Palette.textPrimary.color.opacity(0.14), radius: 4, y: 2)
+    }
+}
+
+/// A passport page for country stamps: paper with a faint ruled guilloche border.
+private struct PassportPage: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: Radius.keepsake)
+            .fill(Palette.keepsakePaper.color)
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.keepsake)
+                    .inset(by: 4)
+                    .stroke(CollectionAccent.country.token.color.opacity(0.18), style: StrokeStyle(lineWidth: 1, dash: [2, 2])),
+            )
+            .frame(maxWidth: 150, maxHeight: .infinity)
+            .rotationEffect(.degrees(-1.5))
+            .shadow(color: Palette.textPrimary.color.opacity(0.1), radius: 4, y: 2)
+            .accessibilityHidden(true)
     }
 }
 
