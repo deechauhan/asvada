@@ -7,6 +7,10 @@ public struct DesignCatalogView: View {
     public var body: some View {
         NavigationStack {
             List {
+                Section {
+                    HeroFieldSample()
+                        .listRowInsets(EdgeInsets())
+                }
                 Section("Colours") {
                     ForEach(Palette.all) { ColorRow(token: $0) }
                 }
@@ -22,7 +26,7 @@ public struct DesignCatalogView: View {
                 }
                 Section("Type") {
                     ForEach(TypeToken.allCases) { token in
-                        Text("\(token.rawValue.capitalized) · Savour what you've lived")
+                        Text(token == .code ? "BA 0117 · LHR → HND" : "\(token.rawValue) · Savour what you've lived")
                             .typeToken(token)
                             .foregroundStyle(Palette.textPrimary.color)
                     }
@@ -45,6 +49,43 @@ public struct DesignCatalogView: View {
             .background(Palette.background.color)
             .navigationTitle("Design catalogue")
         }
+    }
+}
+
+/// The aubergine hero field with the serif ā and its saffron macron.
+private struct HeroFieldSample: View {
+    var body: some View {
+        HStack(spacing: Spacing.large) {
+            ZStack(alignment: .top) {
+                Text("a")
+                    .font(.system(size: 64, weight: .heavy, design: .serif))
+                    .foregroundStyle(Palette.onAubergine.color)
+                    .padding(.top, Spacing.small)
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(Palette.saffron.color)
+                    .frame(width: 30, height: 6)
+                    .offset(y: 10)
+            }
+            .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                Text("Savour what you've lived")
+                    .typeToken(.voice)
+                    .foregroundStyle(Palette.onAubergine.color)
+                Text("Aubergine field · plum ink · saffron spark")
+                    .typeToken(.caption)
+                    .foregroundStyle(Palette.saffron.color)
+            }
+        }
+        .padding(Spacing.large)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(
+                colors: [Palette.aubergineTop.color, Palette.aubergineBottom.color],
+                startPoint: .top,
+                endPoint: .bottom,
+            ),
+        )
+        .accessibilityElement(children: .combine)
     }
 }
 
