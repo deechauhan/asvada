@@ -105,6 +105,8 @@ def item_body(item: dict, epic: dict, sprints: dict) -> str:
     if item.get("body"):
         parts += ["## What and why" if item["type"] != "spike" else "## Question", "", item["body"], ""]
     parts += ["## Acceptance criteria", ""] + [f"- [ ] {a}" for a in item["ac"]] + [""]
+    if item.get("design"):
+        parts += ["## Design", "", item["design"], "", "See `docs/design/CONCEPT.md`.", ""]
     parts += [
         "---",
         f"**Epic:** {epic['key']} · {epic['title'].replace('Epic: ', '')}  ",
@@ -178,7 +180,10 @@ def ensure_issues(repo: str, b: dict, ms_numbers: dict) -> list[dict]:
         print(f"  ✓ #{iss['number']} {epic['title']}")
         for item in epic["items"]:
             labels = [f"type:{item['type']}", f"area:{epic['area']}", f"priority:{item['priority']}"]
-            iss = upsert(item["title"], item_body(item, epic, b["sprints"]), labels, ms_numbers[epic["milestone"]])
+            if item.get("owner_only"):
+                labels.append("owner-only")
+            milestone = ms_numbers[item.get("milestone", epic["milestone"])]
+            iss = upsert(item["title"], item_body(item, epic, b["sprints"]), labels, milestone)
             records.append({"title": item["title"], "number": iss["number"], "id": iss["id"],
                             "node_id": iss["node_id"], "kind": "item", "item": item, "epic": epic,
                             "state": iss.get("state", "open")})
@@ -370,6 +375,9 @@ def validate(b: dict):
                 problems.append(f"{e['key']}: unknown label {lab}")
         if e["milestone"] not in b["milestones"]:
             problems.append(f"{e['key']}: unknown milestone")
+        for it in e["items"]:
+            if it.get("milestone") and it["milestone"] not in b["milestones"]:
+                problems.append(f"{it['title']}: unknown milestone {it['milestone']}")
         for it in e["items"]:
             n += 1
             pts += it["points"]
