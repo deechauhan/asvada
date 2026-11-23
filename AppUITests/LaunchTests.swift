@@ -62,6 +62,10 @@ final class LaunchTests: UITestCase {
         aboutLink.tap()
         XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["appVersion"].label.hasPrefix("Version "))
+        // Bundled data is credited as its licences ask (Natural Earth, OpenFlights under ODbL).
+        let credits = app.staticTexts["dataCredits"]
+        XCTAssertTrue(credits.exists)
+        XCTAssertTrue(credits.label.contains("OpenFlights"))
         attachScreenshot(of: app, named: "about")
     }
 
