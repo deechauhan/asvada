@@ -245,6 +245,10 @@ final class LaunchTests: XCTestCase {
         search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 5) + "portu")
         app.buttons["country-PT"].tap()
         XCTAssertTrue(app.navigationBars["2 stamped"].waitForExistence(timeout: 5))
+        // The ink map floods with both.
+        let map = app.descendants(matching: .any)["inkWorldMap"]
+        XCTAssertTrue(map.exists)
+        XCTAssertEqual(map.label, "World map, 2 countries inked: Japan and Portugal")
         attachScreenshot(of: app, named: "country-picker-search")
         // Tapping again unpicks.
         app.buttons["country-PT"].tap()

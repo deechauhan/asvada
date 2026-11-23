@@ -86,8 +86,8 @@ struct CountryPicker: View {
     }
 }
 
-/// The picker on its own screen, with a running count in the title: for checking the catalog
-/// (launch argument `-countryPicker`) until onboarding hosts it.
+/// The picker on its own screen under the ink world map, with a running count in the title: for
+/// checking the catalog and map (launch argument `-countryPicker`) until onboarding hosts them.
 public struct CountryPickerScreen: View {
     @State private var selection: Set<String> = []
 
@@ -100,6 +100,15 @@ public struct CountryPickerScreen: View {
     public var body: some View {
         NavigationStack {
             CountryPicker(selection: $selection)
+                .safeAreaInset(edge: .top) {
+                    // The map floods as you pick; tapping a country on it picks it too.
+                    InkWorldMap(visited: selection) { code in
+                        selection = CountryPicker.toggled(selection, code)
+                    }
+                    .padding(.horizontal, Spacing.large)
+                    .padding(.vertical, Spacing.small)
+                    .background(Palette.background.color)
+                }
                 .navigationTitle(title)
         }
     }
