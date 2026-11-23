@@ -9,7 +9,8 @@ Usage:
 Writes Packages/Core/Geo/Sources/Geo/Resources/countries.json:
   {"source": ..., "countries": [{"code", "code3", "name", "continent", "rings"}], "land": [{"name", "rings"}]}
 Each ring is a flat [lon, lat, lon, lat, ...] list, simplified (Douglas-Peucker) and rounded to
-0.01 degrees (about 1 km), which keeps the file small but the coastlines recognisable.
+0.001 degrees (about 100 m): fine enough that coastal cities and enclaves look up correctly,
+still about 1 MB.
 
 Shapes whose ISO code is only in ISO_A2_EH (France, Norway, Kosovo) use it. Territories that
 share a code with their country (e.g. Australia's Indian Ocean territories) merge into it.
@@ -22,10 +23,10 @@ import sys
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[2] / "Packages/Core/Geo/Sources/Geo/Resources/countries.json"
-TOLERANCE = 0.04  # degrees
+TOLERANCE = 0.01  # degrees
 # Everyday names where Natural Earth's are formal.
 NAMES = {"US": "United States", "CZ": "Czechia", "BA": "Bosnia and Herzegovina", "VA": "Vatican City"}
-PRECISION = 2
+PRECISION = 3
 
 
 def perpendicular(p, a, b):

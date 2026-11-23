@@ -44,9 +44,29 @@ public struct CountryCatalog: Sendable {
         byCode[code.uppercased()]
     }
 
-    /// The country whose outline contains `point`, if any (none at sea).
+    /// The country whose outline contains `point`, if any (none at sea). When outlines overlap,
+    /// the smallest wins: outlines are outer rings only, so Italy's also covers San Marino and
+    /// South Africa's covers Lesotho.
     public func country(containing point: GeoPoint) -> Country? {
-        countries.first { $0.contains(point) }
+        countries.filter { $0.contains(point) }.min { $0.bounds.area < $1.bounds.area }
+    }
+
+    /// The country a place is in: the one containing it, or else the nearest coast within
+    /// `coastKilometres`. The outlines are simplified, so a harbour, a beach or a small island's
+    /// capital can sit just off its own coastline; open sea still returns nil.
+    public func country(at point: GeoPoint, coastKilometres: Double = 20) -> Country? {
+        if let inside = country(containing: point) {
+            return inside
+        }
+        let margin = coastKilometres / 80 // degrees; generous at every latitude we draw
+        var best: (country: Country, distance: Double)?
+        for country in countries where country.bounds.expanded(by: margin).contains(point) {
+            let distance = country.distanceInKilometres(to: point)
+            if distance <= coastKilometres, distance < best?.distance ?? .infinity {
+                best = (country, distance)
+            }
+        }
+        return best?.country
     }
 
     /// Countries matching `query` by name (ignoring case and accents) or ISO code, names that start

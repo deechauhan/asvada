@@ -1,7 +1,7 @@
 # Sources/Geo/Resources/countries.json
 
 Built from **Natural Earth** 1:50m *Admin 0 – Countries* by `scripts/geo/build_countries.py`
-(Douglas–Peucker simplification at 0.04°, coordinates rounded to 0.01°, outer rings only).
+(Douglas–Peucker simplification at 0.01°, coordinates rounded to 0.001°, outer rings only).
 
 Natural Earth is in the **public domain**: "No permission is needed to use Natural Earth. Crediting
 the authors is unnecessary." (<https://www.naturalearthdata.com/about/terms-of-use/>). We credit it

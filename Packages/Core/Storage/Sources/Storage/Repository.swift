@@ -56,12 +56,14 @@ public struct Repository {
         return item
     }
 
-    /// Adds an entry (one encounter) for an item.
+    /// Adds an entry (one encounter) for an item. If the item is a place with coordinates, its
+    /// country is stamped in Countries too (see `stampCountry(of:on:)`).
     @discardableResult
     public func addEntry(to item: Item, date: Date = .now, rating: Double? = nil, notes: String = "") -> Entry {
         let entry = Entry(date: date, rating: rating, notes: notes)
         context.insert(entry)
         entry.item = item
+        stampCountry(of: item, on: date)
         return entry
     }
 

@@ -8,18 +8,20 @@ let package = Package(
         .library(name: "Storage", targets: ["Storage"]),
     ],
     dependencies: [
+        .package(path: "../Geo"),
         .package(path: "../Model"),
     ],
     targets: [
         .target(
             name: "Storage",
             dependencies: [
+                "Geo",
                 "Model",
             ],
         ),
         .testTarget(
             name: "StorageTests",
-            dependencies: ["Storage"],
+            dependencies: ["Geo", "Storage"],
         ),
     ],
 )
