@@ -11,15 +11,15 @@ project_title: Asvada
 sprints:
   start: 2026-11-23      # Monday
   length_days: 14
-  count: 21              # Sprint 0 … Sprint 20
+  count: 23              # Sprint 0 … Sprint 22
 
 milestones:
   M0: {title: "M0 · Foundations", due: 2027-01-03, description: "Repo, CI, Xcode workspace, design tokens, app shell and the data model."}
-  M1: {title: "M1 · Log & Rank (MVP core)", due: 2027-04-25, description: "Collections, item sources, quick-log, entries, rating modes incl. pairwise ranking, timeline and collection views."}
-  M2: {title: "M2 · Map Collage", due: 2027-05-23, description: "Map tab with country fill, clustered photo stacks and pins."}
-  M3: {title: "M3 · Backup & Sync", due: 2027-07-04, description: "iCloud Drive backup/restore, Files export, optional CloudKit sync."}
-  M4: {title: "M4 · Look Back", due: 2027-08-15, description: "Photo-library backfill, trips, stats, on-this-day, year in review, poster export."}
-  M5: {title: "M5 · v1.0 Launch", due: 2027-09-12, description: "Quality pass, accessibility, TestFlight and App Store release."}
+  M1: {title: "M1 · Log & Rank (MVP core)", due: 2027-05-23, description: "Collections, item sources, quick-log, entries, rating modes incl. pairwise ranking, timeline and collection views."}
+  M2: {title: "M2 · Map Collage", due: 2027-06-20, description: "Map tab with country fill, clustered photo stacks and pins."}
+  M3: {title: "M3 · Backup & Sync", due: 2027-08-01, description: "iCloud Drive backup/restore, Files export, optional CloudKit sync."}
+  M4: {title: "M4 · Look Back", due: 2027-09-12, description: "Photo-library backfill, trips, stats, on-this-day, year in review, poster export."}
+  M5: {title: "M5 · v1.0 Launch", due: 2027-10-10, description: "Quality pass, accessibility, TestFlight and App Store release."}
 
 labels:
   - {name: "type:epic",   color: "5319e7", description: "Large outcome made of several stories"}
@@ -100,6 +100,7 @@ epics:
           - "App reads the key from Info.plist build setting"
           - "CI reads the key from a GitHub Actions secret"
       - title: "Protect main: branch rules and merge settings"
+        owner_only: true
         type: task
         points: 1
         priority: P1
@@ -119,6 +120,7 @@ epics:
           - "ADR-0001 written in docs/DECISIONS with decision and consequences"
           - "Deployment target set in the Xcode project"
       - title: "Confirm name availability: App Store, domain, trademark"
+        owner_only: true
         type: task
         points: 1
         priority: P1
@@ -224,6 +226,7 @@ epics:
     summary: "Users can see, create, customise and manage collections."
     items:
       - title: "Collections screen: list, reorder, hide"
+        design: "Keepsakes: restyled as the Collections cabinet (E15); reorder/hide logic stays."
         type: story
         points: 3
         priority: P0
@@ -244,6 +247,7 @@ epics:
           - "Item source can be manual or place search"
           - "New collection appears in Collections and in quick-log"
       - title: "Edit and delete a collection safely"
+        design: "Keepsakes: build the editor in the v2 style (tokens v2, keepsake template preview)."
         type: story
         points: 2
         priority: P1
@@ -253,15 +257,171 @@ epics:
           - "Edit name/icon/colour/modes"
           - "Delete asks for confirmation showing how many items/entries will be removed"
       - title: "Custom fields for collections"
+        milestone: M4
         type: story
         points: 5
         priority: P1
-        sprint: 4
+        sprint: 19
         story: "As a user I want to add my own fields (e.g. 'Seat', 'Dish ordered', 'Cabin class') so that each collection records what matters to me."
         ac:
           - "Field types: text, number, single choice, date, yes/no"
           - "Fields appear in the entry form for that collection"
           - "Values stored in Entry.extraJSON and survive app restart"
+
+  - key: E15
+    title: "Epic: Keepsakes design language"
+    milestone: M1
+    area: design
+    priority: P0
+    summary: "Make Asvada distinctive: entries become category-shaped keepsakes sealed with the ā, in the Aubergine & Saffron palette (docs/design/CONCEPT.md)."
+    items:
+      - title: "Design tokens v2: Aubergine & Saffron"
+        type: task
+        points: 2
+        priority: P0
+        sprint: 4
+        body: "Replace the v1 palette with the v2 tokens from docs/design/CONCEPT.md §9 (paper, ink, plum, saffron, aubergine, keepsakePaper, washes; Films → Rose, Countries darker Jade) and add the v2 type scale (New York hero/masthead/voice, SF Expanded ticket labels, SF Mono codes)."
+        ac:
+          - "All v2 colour and type tokens in Core/DesignSystem; v1 names migrated"
+          - "CI contrast test covers every v2 text token on every background in both modes (WCAG AA)"
+          - "Design catalogue shows the v2 tokens; screenshots in light and dark"
+      - title: "App icon v2 and Colophon About"
+        type: task
+        points: 1
+        priority: P1
+        sprint: 4
+        body: "Cream serif ā with a saffron macron on the aubergine field (light, dark, tinted); About becomes a Colophon on aubergine with the privacy seal."
+        ac:
+          - "Icon regenerated by scripts/design/make_app_icon.py in all variants"
+          - "Colophon shows ā, āsvāda · आस्वाद, meaning, version and the privacy seal"
+      - title: "Keepsake kit I: base card, paper material, stamp and luggage-tag templates"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 4
+        story: "As a user I want my entries to look like real keepsakes, not rows, so that browsing feels like opening a cabinet of memories."
+        ac:
+          - "KeepsakeCard + KeepsakeTemplate protocol; paper fill, grain, 3pt radius, two-layer ink shadow"
+          - "Deterministic tilt from the entry id (±2°, stamps ±8°); none under Reduce Motion"
+          - "Passport stamp and luggage-tag templates, drawn as SwiftUI Shapes, Dynamic Type safe"
+          - "Each keepsake is one VoiceOver element with a spoken summary"
+      - title: "ā Seal: hold to savour"
+        type: story
+        points: 3
+        priority: P0
+        sprint: 4
+        story: "As a user I want saving a memory to feel like pressing a seal so that logging is a small ritual, not a form."
+        ac:
+          - "SealButton: 0.6s hold fills plum ink; release early cancels"
+          - "Core Haptics ramp ending in a transient; .sensoryFeedback fallback"
+          - "Wax ā lands on the keepsake with the thunk keyframes; VoiceOver 'Savour' action"
+          - "TipKit tip teaches the hold; plain tap allowed after the tip"
+      - title: "Shell v2: Journal, Collections, Atlas and the savour accessory"
+        type: story
+        points: 2
+        priority: P0
+        sprint: 4
+        story: "As a user I want three clear places (Journal, Collections, Atlas) and a savour pill always at hand so that I can log from anywhere."
+        ac:
+          - "Tabs Journal / Collections / Atlas; Settings behind the ā avatar in the Journal toolbar"
+          - "Glass 'Savour something' accessory tinted plum; opens quick-log"
+          - "Tab restoration from v1 still works"
+      - title: "Collections cabinet"
+        type: story
+        points: 3
+        priority: P0
+        sprint: 5
+        story: "As a user I want my collections to look like drawers showing their best keepsakes so that I see what I've savoured, not a list of zeros."
+        ac:
+          - "Two-column drawers with fanned top-3 keepsakes and a key stat in serif numerals"
+          - "Empty drawer shows a ghost keepsake and 'Nothing savoured yet', never '0'"
+          - "Reorder (Edit jiggle) and hide/unhide keep working"
+      - title: "Keepsake kit II: receipt, menu card, ticket stub, boarding pass, postcard"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 5
+        story: "As a user I want each category to have its own artefact so that cafés, meals, films, flights and cities each feel different."
+        ac:
+          - "Receipt (zig-zag foot), menu card, ticket stub (perforation), boarding pass (IATA codes, barcode), postcard (postmark)"
+          - "Templates chosen by collection kind; custom collections use the luggage tag"
+          - "Snapshot/UI screenshots of every template in light and dark"
+      - title: "Share cards: keepsake, passport spread, top-5 menu"
+        type: story
+        points: 3
+        priority: P1
+        sprint: 5
+        story: "As a user I want to share any keepsake, my passport or my top 5 as a beautiful image so that I can show friends."
+        ac:
+          - "ImageRenderer at 3x with ShareLink; aubergine frame with ā colophon"
+          - "Keepsake, passport spread and ranked top-5 menu cards"
+      - title: "Motion and haptics kit with Reduce Motion fallbacks"
+        type: task
+        points: 2
+        priority: P0
+        sprint: 5
+        body: "Shared Motion (settle, thunk, flip, stagger) and Haptics (seal, stamp, pick, relishStep, done) tokens so every screen uses the same paper physics."
+        ac:
+          - "Motion and Haptics enums in DesignSystem used by seal, stamps and duel"
+          - "Reduce Motion: no tilt or fly-to, crossfade only; haptics kept"
+      - title: "Ink world map (offline Canvas renderer of bundled polygons)"
+        type: story
+        points: 3
+        priority: P0
+        sprint: 6
+        story: "As a user I want to see my countries flood with ink on a world map, offline, so that my travels feel tangible instantly."
+        ac:
+          - "Canvas draws simplified Natural Earth polygons from cached Paths (equirectangular or Robinson)"
+          - "Visited countries filled plum; tap hit-testing via Path.contains"
+          - "Renders 250 countries smoothly; no MapKit or network"
+      - title: "Onboarding: stamp your passport"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 6
+        story: "As a new user I want to stamp the countries I've been to and see my map fill in under a minute so that the app wows me before I've logged anything."
+        ac:
+          - "Aubergine welcome with the ā; 'Where have you been?' map, continent chips, search and flag grid"
+          - "Each tap stamps and floods a country with a heavy haptic; counter shows countries and % of world"
+          - "Passport spread + share card; then one pre-filled quick-log ending in Hold to Savour"
+          - "Every step skippable; replaces 'Onboarding: pick your collections'"
+      - title: "Duel polish: stamped result and list re-flow"
+        type: story
+        points: 2
+        priority: P1
+        sprint: 11
+        story: "As a user I want ranking to feel like a game so that comparing places is fun rather than a chore."
+        ac:
+          - "Keepsake cards duel with 'Which did you savour more?'; loser tilts away"
+          - "'No. n' stamps in and the ranked list re-flows with matched geometry"
+          - "Saffron macron steps show comparisons left; Too close / Skip"
+      - title: "Spike: Atlas styling — muted map, ink overlays, snapshot pins"
+        type: spike
+        points: 2
+        priority: P0
+        sprint: 12
+        body: "Decide how to render plum ink overlays, fanned keepsake stacks and mini keepsake pins at 5k entries (pre-rendered images vs hosted views)."
+        ac:
+          - "Prototype at 5k entries with frame timings"
+          - "Decision recorded as an ADR"
+      - title: "Tear the stub (films) and split-flap codes (flights)"
+        type: story
+        points: 2
+        priority: P2
+        sprint: 20
+        story: "As a user I want logging a film or a flight to have its own finishing gesture so that it stays fun on the hundredth time."
+        ac:
+          - "Drag along the perforation to tear; light haptic tick per notch"
+          - "IATA codes roll in with numericText content transitions"
+      - title: "Sound pack: paper, stamp, seal"
+        type: task
+        points: 1
+        priority: P2
+        sprint: 20
+        body: "Three short sounds on an ambient audio session (silent switch mutes them) with a Settings toggle."
+        ac:
+          - "Paper, stamp and seal sounds play on their moments"
+          - "Settings toggle; respects the silent switch"
 
   - key: E5
     title: "Epic: Item sources — search and catalogs"
@@ -274,7 +434,7 @@ epics:
         type: story
         points: 5
         priority: P0
-        sprint: 4
+        sprint: 6
         story: "As a user I want to search for a café or restaurant by name, near me or anywhere, so that I don't have to type addresses."
         ac:
           - "MKLocalSearch with results near current location and a free-text search"
@@ -284,7 +444,7 @@ epics:
         type: task
         points: 3
         priority: P0
-        sprint: 4
+        sprint: 6
         body: "Ship ISO-3166 countries (names, flags, continents) and simplified Natural Earth admin-0 polygons in Core/Geo."
         ac:
           - "Catalog of countries with ISO codes and flag emoji"
@@ -294,7 +454,7 @@ epics:
         type: task
         points: 2
         priority: P0
-        sprint: 5
+        sprint: 7
         body: "Static list of airlines with IATA/ICAO codes and country."
         ac:
           - "Searchable by name and code"
@@ -303,7 +463,7 @@ epics:
         type: story
         points: 2
         priority: P0
-        sprint: 5
+        sprint: 7
         story: "As a user I want to add an item by hand when search can't find it."
         ac:
           - "Name required; optional location picked on a map"
@@ -312,7 +472,7 @@ epics:
         type: story
         points: 5
         priority: P0
-        sprint: 5
+        sprint: 7
         story: "As a user I want to find a film by title and see its poster so that my film log looks great."
         ac:
           - "Search TMDB by title; show year and poster"
@@ -322,7 +482,7 @@ epics:
         type: story
         points: 3
         priority: P0
-        sprint: 5
+        sprint: 7
         story: "As a user I want places I log to count towards the countries I've visited automatically."
         ac:
           - "Point-in-polygon lookup returns ISO code for a coordinate offline"
@@ -337,10 +497,11 @@ epics:
     summary: "Logging an experience takes seconds; entries hold the details and photos."
     items:
       - title: "Quick-log flow (under 15 seconds)"
+        design: "Keepsakes: four beats — Pick (blank keepsakes) · Find (details print onto the keepsake) · Savour (mode-specific) · Seal (hold the ā). Build on the keepsake kit and ā Seal."
         type: story
         points: 8
         priority: P0
-        sprint: 6
+        sprint: 8
         story: "As a user I want to log something in a few taps — pick a collection, find the item, rate it, save — so that logging never feels like a chore."
         ac:
           - "Flow: collection → search/pick item → rating (per mode) → optional details → save"
@@ -351,7 +512,7 @@ epics:
         type: story
         points: 5
         priority: P0
-        sprint: 6
+        sprint: 8
         story: "As a user I want to add when it was, who I was with, notes and tags so that the memory is complete."
         ac:
           - "Date (defaults to now, editable, supports past dates)"
@@ -361,7 +522,7 @@ epics:
         type: story
         points: 5
         priority: P0
-        sprint: 7
+        sprint: 9
         story: "As a user I want to attach photos to an entry so that I can see the moment again."
         ac:
           - "PhotosPicker multi-select; images downscaled and thumbnails generated"
@@ -371,7 +532,7 @@ epics:
         type: story
         points: 3
         priority: P1
-        sprint: 7
+        sprint: 9
         story: "As a user I want to open a café or airline and see every visit/flight, my average rating and photos."
         ac:
           - "Header with name, location/poster, rank or rating"
@@ -381,7 +542,7 @@ epics:
         type: story
         points: 2
         priority: P1
-        sprint: 7
+        sprint: 9
         story: "As a user I want to fix or remove an entry and undo mistakes."
         ac:
           - "Swipe to delete with undo toast"
@@ -395,19 +556,21 @@ epics:
     summary: "Each collection rates in the way that fits it: stars, checklist, log or pairwise ranking."
     items:
       - title: "Rating mode: stars"
+        design: "Keepsakes: present as the Relish scale — five ā marks with words (Forgettable · Fine · Good · Lovely · Unforgettable)."
         type: story
-        points: 2
+        points: 3
         priority: P0
-        sprint: 7
+        sprint: 9
         story: "As a user I want to give a quick 1–5 star rating (with halves) where ranking is overkill."
         ac:
           - "Half-star input, accessible with VoiceOver adjustable action"
           - "Average shown on item detail"
       - title: "Rating mode: checklist with completion progress"
+        design: "Keepsakes: the Passport spread (rotated stamps) plus continent MacronBars; visited = plum ink."
         type: story
         points: 3
         priority: P0
-        sprint: 8
+        sprint: 10
         story: "As a user I want to tick off countries and see '47 of 195' so that I can see how much of the world I've seen."
         ac:
           - "Visited/not visited toggle per catalog item"
@@ -416,7 +579,7 @@ epics:
         type: story
         points: 2
         priority: P0
-        sprint: 8
+        sprint: 10
         story: "As a user I want to log the same film or airline many times and see counts."
         ac:
           - "Multiple entries per item allowed and counted"
@@ -425,17 +588,18 @@ epics:
         type: task
         points: 5
         priority: P0
-        sprint: 8
+        sprint: 10
         body: "Core/Ranking: place a new item with ~log2(n) 'which was better?' comparisons; gap-based rankScore with rebalance."
         ac:
           - "Places an item in ≤ ceil(log2(n+1)) comparisons"
           - "Gap-based scores; rebalance when gaps run out"
           - "Property-based tests for ordering invariants"
       - title: "Rating mode: ranked via 'which was better?'"
+        design: "Keepsakes: the 'This or That?' duel on keepsake cards; result stamps 'No. n' (polish in E15)."
         type: story
         points: 5
         priority: P0
-        sprint: 9
+        sprint: 11
         story: "As a user I want to rank cafés by answering 'better or worse than X?' so that my list reflects real preferences instead of inflated stars."
         ac:
           - "Comparison sheet shows two items with photos; skip and 'too close' options"
@@ -450,20 +614,22 @@ epics:
     summary: "Looking back is the reward: a mixed timeline and beautiful per-collection views."
     items:
       - title: "Timeline home grouped by month"
+        design: "Keepsakes: the Journal — keepsake cards with New York italic month mastheads, face-down 'on this day' cards; never a plain list."
         type: story
         points: 5
         priority: P0
-        sprint: 9
+        sprint: 11
         story: "As a user I want a single timeline of everything I've logged so that the app feels like a memory book, not a set of lists."
         ac:
           - "Mixed feed across collections grouped by month/year"
           - "Cards show photo, item, collection colour and rating"
           - "Smooth scrolling with 5,000 entries"
       - title: "Collection views: list, poster grid, ranked, progress"
+        design: "Keepsakes: The Menu (ranked), Passport (checklist), Ticket box (log), Shelf (custom)."
         type: story
         points: 5
         priority: P0
-        sprint: 10
+        sprint: 12
         story: "As a user I want each collection to show in the layout that suits it — posters for films, a ranked list for cafés, a progress grid for countries."
         ac:
           - "Four view modes; default per collection, switchable"
@@ -472,23 +638,11 @@ epics:
         type: story
         points: 3
         priority: P1
-        sprint: 10
+        sprint: 12
         story: "As a user I want to search all my items, notes, people and tags from one place."
         ac:
           - "Search field on Timeline and Collections"
           - "Results grouped by collection; tapping opens item/entry"
-      - title: "Onboarding: pick your collections"
-        type: story
-        points: 3
-        priority: P1
-        sprint: 10
-        story: "As a new user I want to pick which collections I care about and log my first few items quickly."
-        ac:
-          - "First-run screen to choose built-in collections"
-          - "Shortcut to tick visited countries in one go"
-          - "Skippable; shown once"
-
-  # ───────────────────────────── M2 ─────────────────────────────
   - key: E9
     title: "Epic: Map collage"
     milestone: M2
@@ -500,45 +654,49 @@ epics:
         type: spike
         points: 2
         priority: P0
-        sprint: 10
+        sprint: 12
         body: "SwiftUI Map has no clustering API. Compare MKMapView + MKClusterAnnotation via UIViewRepresentable against the ClusterMap package. Time-box: 1 evening."
         ac:
           - "Prototype with 2,000 synthetic pins on device"
           - "ADR-0003 records choice, performance notes and trade-offs"
       - title: "Map: fill visited countries"
+        design: "Keepsakes: plum ink wash with grain on a muted map."
         type: story
         points: 5
         priority: P0
-        sprint: 11
+        sprint: 13
         story: "As a user I want to see the countries I've been to coloured in on a world map."
         ac:
           - "Visited countries rendered as polygon overlays from bundled data"
           - "Tapping a country shows its entries"
           - "Renders in < 500 ms on a recent iPhone"
       - title: "Map: clustered photo stacks with counts"
+        design: "Keepsakes: fanned keepsake stacks (−6°/0°/+6°) with a saffron count tag; pre-rendered images, not live SwiftUI."
         type: story
         points: 8
         priority: P0
-        sprint: 11
+        sprint: 13
         story: "As a user I want places to group into stacks of my photos as I zoom out so that the map feels like a collage."
         ac:
           - "Clusters render as overlapping photo thumbnails with a count badge"
           - "Clusters split smoothly on zoom"
           - "Falls back to collection icon when an entry has no photo"
       - title: "Map: individual pins tinted by collection"
+        design: "Keepsakes: mini keepsake pins with an accent-ink ring."
         type: story
         points: 3
         priority: P0
-        sprint: 12
+        sprint: 14
         story: "As a user I want to see each café, restaurant and place as a pin coloured by its collection when zoomed in."
         ac:
           - "Pins use collection accent colour and icon"
           - "Tap opens a preview card linking to item detail"
       - title: "Map filters: collection, year, trip"
+        milestone: M4
         type: story
         points: 3
         priority: P1
-        sprint: 12
+        sprint: 20
         story: "As a user I want to filter the map to, say, restaurants in 2025 or one trip."
         ac:
           - "Filter sheet with collections, year range and trip"
@@ -547,7 +705,7 @@ epics:
         type: task
         points: 2
         priority: P1
-        sprint: 12
+        sprint: 14
         body: "Measure frame rate and memory with a large synthetic dataset; fix hotspots."
         ac:
           - "Instruments run recorded; ≥ 55 fps while panning on target device"
@@ -565,7 +723,7 @@ epics:
         type: spike
         points: 3
         priority: P0
-        sprint: 12
+        sprint: 14
         body: "Evaluate runtime toggling, account sign-out behaviour, photo assets, conflict handling and migration cost. Time-box: 2 evenings."
         ac:
           - "Prototype toggling sync on/off without losing local data"
@@ -574,7 +732,7 @@ epics:
         type: task
         points: 5
         priority: P0
-        sprint: 13
+        sprint: 15
         body: "Versioned export: manifest.json (schema version, counts, checksum), data.json, photos/ folder."
         ac:
           - "Round-trip test: export → wipe → import gives identical data"
@@ -583,7 +741,7 @@ epics:
         type: story
         points: 5
         priority: P0
-        sprint: 13
+        sprint: 15
         story: "As a user I want my memories backed up to my iCloud so that I don't lose them if I lose my phone."
         ac:
           - "Settings toggle; off by default; checks iCloud account status"
@@ -593,7 +751,7 @@ epics:
         type: story
         points: 5
         priority: P0
-        sprint: 14
+        sprint: 16
         story: "As a user I want to restore my data on a new phone, merging with anything already there."
         ac:
           - "Pick a backup; preview counts before restoring"
@@ -602,7 +760,7 @@ epics:
         type: story
         points: 2
         priority: P1
-        sprint: 14
+        sprint: 16
         story: "As a user I want to export my data as a file I own, without iCloud."
         ac:
           - "Share sheet export of the backup bundle"
@@ -611,7 +769,7 @@ epics:
         type: story
         points: 3
         priority: P1
-        sprint: 14
+        sprint: 16
         story: "As a user I want to see exactly what leaves my device and be able to delete everything."
         ac:
           - "Privacy page lists network use (TMDB, map tiles, iCloud if enabled)"
@@ -620,7 +778,7 @@ epics:
         type: story
         points: 8
         priority: P1
-        sprint: 15
+        sprint: 17
         story: "As a user with an iPad I want my data to sync between devices when I turn it on."
         ac:
           - "Off by default; enabling never deletes local data"
@@ -630,7 +788,7 @@ epics:
         type: task
         points: 3
         priority: P0
-        sprint: 15
+        sprint: 17
         body: "Scripted manual + automated tests for the scary paths."
         ac:
           - "Checklist in docs/TEST_PLAN.md run and recorded"
@@ -648,7 +806,7 @@ epics:
         type: story
         points: 8
         priority: P1
-        sprint: 16
+        sprint: 18
         story: "As a new user I want the app to find the places and countries in my existing photos so that my map isn't empty."
         ac:
           - "Requests limited/full Photos access with clear explanation"
@@ -658,7 +816,7 @@ epics:
         type: story
         points: 5
         priority: P1
-        sprint: 16
+        sprint: 18
         story: "As a user I want to accept or dismiss suggested visits in one tap."
         ac:
           - "Suggestions show place, dates and sample photos"
@@ -667,7 +825,7 @@ epics:
         type: story
         points: 5
         priority: P1
-        sprint: 17
+        sprint: 19
         story: "As a user I want to group a flight, restaurants and cafés into a trip and see it on one page and map."
         ac:
           - "Create trip with dates; auto-suggest entries in date range"
@@ -684,34 +842,37 @@ epics:
         type: story
         points: 5
         priority: P2
-        sprint: 17
+        sprint: 19
         story: "As a user I want stats like countries %, most-flown airline and top cafés per city."
         ac:
           - "Stats per collection and overall"
           - "Charts accessible with VoiceOver summaries"
       - title: "On this day"
+        design: "Keepsakes: a face-down keepsake in the Journal that flips to reveal 'A year ago, you savoured…'."
         type: story
         points: 3
         priority: P2
-        sprint: 17
+        sprint: 19
         story: "As a user I want to be reminded what I did on this day in past years."
         ac:
           - "Card on the timeline when matches exist"
           - "Optional local notification, off by default"
       - title: "Year in review"
+        design: "Keepsakes: 'The Tasting Menu' — the year set as a printed degustation menu."
         type: story
         points: 5
         priority: P2
-        sprint: 18
+        sprint: 20
         story: "As a user I want a beautiful recap of my year: new countries, top films, best meals."
         ac:
           - "Swipeable story-style screens"
           - "Export as images"
       - title: "Poster export of a trip or year"
+        design: "Keepsakes: aubergine frame with the ā colophon."
         type: story
         points: 5
         priority: P2
-        sprint: 18
+        sprint: 20
         story: "As a user I want to export a map collage poster of a trip or year to share or print."
         ac:
           - "MKMapSnapshotter + photo collage rendered at print resolution"
@@ -729,16 +890,17 @@ epics:
         type: task
         points: 5
         priority: P0
-        sprint: 19
+        sprint: 21
         body: "XCUITests: first launch, quick-log, ranking comparison, backup/restore."
         ac:
           - "Tests run in CI on every PR"
           - "Flaky tests quarantined with an issue"
       - title: "Accessibility pass"
+        design: "Keepsakes: audit paper-physics motion under Reduce Motion and keepsake VoiceOver summaries; test templates at AX3+."
         type: story
         points: 5
         priority: P0
-        sprint: 19
+        sprint: 21
         story: "As a VoiceOver or large-text user I want to use every feature comfortably."
         ac:
           - "All controls labelled; rotor works on timeline and map lists"
@@ -748,7 +910,7 @@ epics:
         type: task
         points: 3
         priority: P1
-        sprint: 19
+        sprint: 21
         body: "Launch time, scroll performance and memory with a large dataset."
         ac:
           - "Cold launch < 1 s on target device"
@@ -757,7 +919,7 @@ epics:
         type: story
         points: 3
         priority: P2
-        sprint: 20
+        sprint: 22
         story: "As a user I want to lock the app with Face ID because my memories are private."
         ac:
           - "Toggle in Settings; locks on background after a chosen delay"
@@ -773,7 +935,7 @@ epics:
         type: task
         points: 2
         priority: P0
-        sprint: 20
+        sprint: 22
         body: "Archive, upload and distribute to internal testers."
         ac:
           - "Build distributed; feedback collected as issues"
@@ -781,7 +943,7 @@ epics:
         type: task
         points: 3
         priority: P0
-        sprint: 20
+        sprint: 22
         body: "Name, subtitle, keywords, screenshots, description and 'Data not collected' privacy label."
         ac:
           - "Listing complete in App Store Connect"
@@ -790,7 +952,7 @@ epics:
         type: task
         points: 2
         priority: P0
-        sprint: 20
+        sprint: 22
         body: "Simple static site on the domain with privacy policy and support contact."
         ac:
           - "Pages live and linked from the app and listing"
@@ -798,7 +960,7 @@ epics:
         type: task
         points: 1
         priority: P0
-        sprint: 20
+        sprint: 22
         body: "Submit for review, tag v1.0.0, write release notes."
         ac:
           - "App approved and live"
