@@ -81,7 +81,9 @@ struct CollectionsScreen: View {
             .sheet(isPresented: $isCreating) {
                 CollectionEditor(mode: .create)
             }
-            .sheet(item: $editing) { collection in
+            // Clear the item explicitly on dismiss: customising the same drawer twice in a row
+            // must change `editing`, or the second sheet never presents.
+            .sheet(item: $editing, onDismiss: { editing = nil }) { collection in
                 CollectionEditor(mode: .edit(collection))
             }
         }

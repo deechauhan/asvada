@@ -7,6 +7,8 @@ struct JournalScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isShowingSettings = false
     @State private var breathe = false
+    /// How many slow breaths the ghost keepsake takes when the Journal appears.
+    static let breaths = 3
     let onSavour: () -> Void
 
     private var month: String {
@@ -55,7 +57,9 @@ struct JournalScreen: View {
         }
     }
 
-    /// A dashed outline where the first keepsake will land, breathing gently.
+    /// A dashed outline where the first keepsake will land. It breathes a few times when the
+    /// Journal appears, then rests: ambient motion that never stops costs battery and attention,
+    /// and keeps the app from ever going idle (which stalls UI tests).
     private var ghostKeepsake: some View {
         VStack(spacing: Spacing.small) {
             Text("your first keepsake")
@@ -74,7 +78,16 @@ struct JournalScreen: View {
         .rotationEffect(.degrees(reduceMotion ? 0 : -1))
         .onAppear {
             guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) { breathe = true }
+            // Each breath is out and back; an odd count of halves ends smoothly on the out-breath
+            // (an even count would snap there at the end).
+            let halves = Self.breaths * 2 - 1
+            withAnimation(.easeInOut(duration: 1.2).repeatCount(halves, autoreverses: true)) { breathe = true }
+        }
+        .onDisappear {
+            // Reset without animating, so the next appearance breathes again from rest.
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) { breathe = false }
         }
         .accessibilityElement(children: .combine)
     }
