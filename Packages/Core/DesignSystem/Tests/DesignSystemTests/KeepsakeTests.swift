@@ -112,7 +112,6 @@ struct KeepsakeKitTests {
     }
 }
 
-<<<<<<< HEAD
 @MainActor
 struct ShareCardTests {
     @Test func cardsRenderAt1080By1350() {
@@ -137,9 +136,6 @@ struct ShareCardTests {
     }
 }
 
-=======
-@MainActor
->>>>>>> feat/114-keepsake-kit-ii
 @MainActor
 struct SealTests {
     @Test func holdMatchesTheConcept() {
