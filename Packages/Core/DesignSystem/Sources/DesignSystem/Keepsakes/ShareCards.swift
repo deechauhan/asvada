@@ -184,7 +184,7 @@ private struct PassportPageView: View {
             }
         }
         .padding(Spacing.small)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -230,16 +230,21 @@ public struct TopMenuCard: View {
                             .font(.system(.callout, design: .serif, weight: .bold))
                             .foregroundStyle(Palette.brand.color)
                             .frame(width: 44, alignment: .leading)
+                        // The name wins space first; the dotted leader gives way, then the name
+                        // shrinks a little before it would truncate.
                         Text(course.name)
                             .font(.system(.body, design: .serif, weight: index == 0 ? .bold : .regular))
                             .foregroundStyle(Palette.textPrimary.color)
                             .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                            .layoutPriority(2)
                         DottedLeader()
                         if let detail = course.detail {
                             Text(detail)
                                 .font(.system(.caption, design: .serif).italic())
                                 .foregroundStyle(Palette.textSecondary.color)
                                 .lineLimit(1)
+                                .layoutPriority(1)
                         }
                     }
                     .overlay(alignment: .bottomLeading) {
@@ -252,7 +257,8 @@ public struct TopMenuCard: View {
                     }
                 }
             }
-            .padding(Spacing.xl)
+            .padding(.horizontal, Spacing.large)
+            .padding(.vertical, Spacing.xl)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(KeepsakePaper(seed: collection))
             .clipShape(DeckledRectangle(seed: collection))
