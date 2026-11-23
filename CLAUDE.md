@@ -27,6 +27,7 @@ Owner: Deepak (`deechauhan`). Solo side project, run as an agile project on GitH
 | Airlines | Bundled static airline list (IATA/ICAO codes). |
 | Photos | Store downscaled copies in-app (`@Attribute(.externalStorage)`), not PHAsset references. |
 | Privacy | No analytics SDKs, no tracking. Network only for TMDB, map tiles, and user-enabled iCloud. |
+| Design | **"Keepsakes"** (approved Nov 2026, `docs/design/CONCEPT.md`): entries are category-shaped keepsakes (receipt, menu card, passport stamp, postcard, boarding pass, ticket stub, luggage tag) sealed by holding the serif **ā**. Palette **Aubergine & Saffron**: plum ink `#6B2D8C` on warm paper `#FAF6F0`, saffron `#F2A93B` for macron bars only (never text), aubergine hero field. New York serif for voice, SF for UI. Never ship a plain CRUD list or a bare "0" — use keepsakes, ghost states and serif numerals. |
 
 ## Domain model
 
@@ -72,6 +73,7 @@ name and UX from sounding travel-only.
 - `docs/ROADMAP.md` — releases and sprint plan
 - `docs/WAYS_OF_WORKING.md` — agile process, DoR/DoD, branching, reviews
 - `docs/DECISIONS/` — ADRs (architecture decision records)
+- `docs/design/CONCEPT.md` — the approved "Keepsakes" design: language, signature moments, screens, tokens v2
 - `docs/AUTOPILOT.md` — runbook for unattended scheduled sessions
 - `backlog/backlog.yaml` — source of truth used to seed the GitHub board
 - `scripts/bootstrap_github.py` — creates labels, milestones, issues and the Project board
