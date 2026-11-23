@@ -35,10 +35,7 @@ public struct PassportStamp: KeepsakeTemplate {
 
     /// Stamps print dates like a real entry stamp, "03·04·25" (day·month·year), in every locale.
     static func stampDate(_ date: Date) -> String {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = .current
-        let parts = calendar.dateComponents([.day, .month, .year], from: date)
-        return String(format: "%02d·%02d·%02d", parts.day ?? 0, parts.month ?? 0, (parts.year ?? 0) % 100)
+        KeepsakeDate.short(date)
     }
 
     var shape: StampShape {

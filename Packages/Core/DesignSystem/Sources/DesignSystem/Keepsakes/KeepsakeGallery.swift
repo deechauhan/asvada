@@ -32,6 +32,50 @@ public struct KeepsakeGallery: View {
                         }
                         .padding(Spacing.large)
                     }
+                    Text("Receipts & menus")
+                        .typeToken(.masthead)
+                        .foregroundStyle(Palette.textPrimary.color)
+                    Receipt(
+                        name: "Prufrock Coffee",
+                        district: "Clerkenwell",
+                        date: Self.date("2026-11-23"),
+                        visits: 4,
+                        rank: 2,
+                    )
+                    .rotationEffect(.degrees(Tilt.degrees(for: "prufrock")))
+                    .frame(maxWidth: .infinity)
+                    MenuCard(
+                        name: "Dishoom",
+                        cuisine: "Bombay café",
+                        dishes: ["House black daal", "Bacon naan roll", "Chai"],
+                        date: Self.date("2026-10-02"),
+                        rank: 1,
+                    )
+                    .rotationEffect(.degrees(Tilt.degrees(for: "dishoom")))
+                    .frame(maxWidth: .infinity)
+                    Text("Tickets & passes")
+                        .typeToken(.masthead)
+                        .foregroundStyle(Palette.textPrimary.color)
+                    TicketStub(title: "Perfect Days", year: 2023, date: Self.date("2026-03-08"), seat: "F12", relish: "Lovely")
+                        .rotationEffect(.degrees(Tilt.degrees(for: "perfect-days")))
+                    TicketStub(title: "Past Lives", year: 2023, date: Self.date("2026-06-21"), rewatches: 3)
+                        .rotationEffect(.degrees(Tilt.degrees(for: "past-lives")))
+                    BoardingPass(
+                        airline: "British Airways",
+                        code: "BA",
+                        from: "LHR",
+                        destination: "HND",
+                        seat: "14A",
+                        date: Self.date("2025-04-02"),
+                        flights: 3,
+                        barcodeSeed: "ba-sample",
+                    )
+                    .rotationEffect(.degrees(Tilt.degrees(for: "ba-sample")))
+                    Text("Postcards")
+                        .typeToken(.masthead)
+                        .foregroundStyle(Palette.textPrimary.color)
+                    Postcard(city: "Lisbon", country: "Portugal", date: Self.date("2024-09-14"), relish: "Unforgettable")
+                        .rotationEffect(.degrees(Tilt.degrees(for: "lisbon")))
                     Text("Tags")
                         .typeToken(.masthead)
                         .foregroundStyle(Palette.textPrimary.color)

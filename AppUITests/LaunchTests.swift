@@ -203,9 +203,26 @@ final class LaunchTests: XCTestCase {
             let app = launch(args)
             XCTAssertTrue(app.navigationBars["Keepsakes"].waitForExistence(timeout: 10))
             // Each keepsake is a single VoiceOver element with a spoken summary.
-            let peru = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Passport stamp, Peru"))
-            XCTAssertTrue(peru.firstMatch.waitForExistence(timeout: 5))
+            XCTAssertTrue(labelled("Passport stamp, Peru", in: app).waitForExistence(timeout: 5))
+            // Every template in the kit is present and speaks for itself.
+            let summaries = [
+                "Receipt, Prufrock Coffee",
+                "Menu card, Dishoom",
+                "Ticket stub, Perfect Days",
+                "Ticket stub, Past Lives",
+                "Boarding pass, British Airways",
+                "Postcard from Lisbon",
+                "Concerts, Radiohead",
+            ]
+            for summary in summaries {
+                XCTAssertTrue(labelled(summary, in: app, prefix: true).exists, "\(summary) keepsake missing")
+            }
+            // One screenshot per screenful, so every template is captured.
             attachScreenshot(of: app, named: name)
+            for page in 2 ... 5 {
+                app.swipeUp()
+                attachScreenshot(of: app, named: "\(name)-\(page)")
+            }
             app.terminate()
         }
     }
