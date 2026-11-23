@@ -1,12 +1,8 @@
 import XCTest
 
-/// Launches the app, checks key screens and attaches screenshots.
-/// CI exports these attachments into `screenshots/<issue>/`.
-final class LaunchTests: XCTestCase {
-    override func setUp() {
-        continueAfterFailure = false
-    }
-
+/// The shell and Collections: launch, tabs, Settings, the cabinet and editing collections.
+/// CI exports the attached screenshots into `screenshots/<issue>/`.
+final class LaunchTests: UITestCase {
     @MainActor
     func testLaunchShowsJournal() {
         let app = launch(["-resetState"])
@@ -197,37 +193,6 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
-    func testKeepsakeGallery() {
-        let runs = [(["-keepsakeGallery"], "keepsakes-light"), (["-keepsakeGallery", "-forceDarkMode"], "keepsakes-dark")]
-        for (args, name) in runs {
-            let app = launch(args)
-            XCTAssertTrue(app.navigationBars["Keepsakes"].waitForExistence(timeout: 10))
-            // Each keepsake is a single VoiceOver element with a spoken summary.
-            XCTAssertTrue(labelled("Passport stamp, Peru", in: app).waitForExistence(timeout: 5))
-            // Every template in the kit is present and speaks for itself.
-            let summaries = [
-                "Receipt, Prufrock Coffee",
-                "Menu card, Dishoom",
-                "Ticket stub, Perfect Days",
-                "Ticket stub, Past Lives",
-                "Boarding pass, British Airways",
-                "Postcard from Lisbon",
-                "Concerts, Radiohead",
-            ]
-            for summary in summaries {
-                XCTAssertTrue(labelled(summary, in: app, prefix: true).exists, "\(summary) keepsake missing")
-            }
-            // One screenshot per screenful, so every template is captured.
-            attachScreenshot(of: app, named: name)
-            for page in 2 ... 8 {
-                app.swipeUp()
-                attachScreenshot(of: app, named: "\(name)-\(page)")
-            }
-            app.terminate()
-        }
-    }
-
-    @MainActor
     func testShareTopFiveFromTheCafesDrawer() {
         let app = launch(["-resetState", "-sampleData"])
         openCollectionsAndWait(app)
@@ -242,120 +207,5 @@ final class LaunchTests: XCTestCase {
         let title = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "My top 4 cafés"))
         XCTAssertTrue(title.firstMatch.exists)
         attachScreenshot(of: app, named: "share-top-menu")
-    }
-
-    @MainActor
-    func testHoldToSavourSealsTheKeepsake() {
-        let app = launch(["-keepsakeGallery", "-resetState"])
-        let seal = app.descendants(matching: .any)["sealButton"]
-        XCTAssertTrue(seal.waitForExistence(timeout: 10))
-        // A quick tap doesn't seal before the hold has been learned.
-        seal.tap()
-        XCTAssertFalse(app.descendants(matching: .any)["waxSeal"].waitForExistence(timeout: 2))
-        // Holding past 0.6 s seals it.
-        seal.press(forDuration: 1.2)
-        XCTAssertTrue(app.descendants(matching: .any)["waxSeal"].waitForExistence(timeout: 5))
-        attachScreenshot(of: app, named: "sealed")
-    }
-
-    @MainActor
-    func testDesignCatalogLight() {
-        let app = launch(["-designCatalog"])
-        XCTAssertTrue(app.navigationBars["Design catalogue"].waitForExistence(timeout: 10))
-        attachScreenshot(of: app, named: "design-catalog-light")
-    }
-
-    @MainActor
-    func testDesignCatalogDark() {
-        let app = launch(["-designCatalog", "-forceDarkMode"])
-        XCTAssertTrue(app.navigationBars["Design catalogue"].waitForExistence(timeout: 10))
-        attachScreenshot(of: app, named: "design-catalog-dark")
-    }
-
-    // MARK: - Helpers
-
-    /// Scrolls the frontmost form until `element` is on screen (form rows load lazily).
-    @MainActor
-    private func scrollUntilVisible(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 6) {
-        for _ in 0 ..< attempts where !(element.exists && element.isHittable) {
-            app.swipeUp()
-        }
-        XCTAssertTrue(element.waitForExistence(timeout: 5), "\(element) never scrolled into view")
-    }
-
-    /// Opens Customise from a collection drawer's context menu (long press).
-    @MainActor
-    private func customiseFromMenu(_ app: XCUIApplication, _ name: String) {
-        openDrawerMenu(app, name)
-        app.buttons["Customise"].tap()
-        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
-    }
-
-    /// Long-presses a drawer until its context menu shows. A press that lands while the cabinet is
-    /// still settling (after a scroll or a new drawer) starts no menu, so it's retried once.
-    @MainActor
-    private func openDrawerMenu(_ app: XCUIApplication, _ name: String) {
-        let row = app.staticTexts[name]
-        bringIntoView(row, in: app)
-        let customise = app.buttons["Customise"]
-        for _ in 0 ..< 2 where !customise.exists {
-            row.press(forDuration: 1.2)
-            _ = customise.waitForExistence(timeout: 4)
-        }
-        XCTAssertTrue(customise.exists, "The context menu did not appear for \(name)")
-    }
-
-    /// The first element of any type whose accessibility label is (or starts with) `label`.
-    @MainActor
-    private func labelled(_ label: String, in app: XCUIApplication, prefix: Bool = false) -> XCUIElement {
-        let format = prefix ? "label BEGINSWITH %@" : "label == %@"
-        return app.descendants(matching: .any).matching(NSPredicate(format: format, label)).firstMatch
-    }
-
-    /// Scrolls the cabinet until `element` can be tapped, up or down depending on where it is.
-    /// The cabinet isn't lazy, so off-screen drawers exist and report their frames.
-    @MainActor
-    private func bringIntoView(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 8) {
-        XCTAssertTrue(element.waitForExistence(timeout: 10), "\(element) missing")
-        let screen = app.windows.firstMatch.frame
-        // Keep clear of the tab bar and the savour pill at the bottom, which float over content.
-        let floor = screen.maxY - 220
-        for _ in 0 ..< attempts where !element.isHittable || element.frame.maxY > floor {
-            if element.frame.midY < screen.midY {
-                app.swipeDown()
-            } else {
-                app.swipeUp()
-            }
-        }
-        XCTAssertTrue(element.isHittable, "\(element) never came into view")
-    }
-
-    /// Switches to Collections and waits until the list has loaded, so toolbar taps don't land
-    /// mid tab-transition (they're dropped while the glass toolbar is animating).
-    @MainActor
-    private func openCollectionsAndWait(_ app: XCUIApplication) {
-        app.tabBars.buttons["Collections"].tap()
-        XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Cafés"].waitForExistence(timeout: 10))
-        let newButton = app.buttons["newCollectionButton"]
-        XCTAssertTrue(newButton.waitForExistence(timeout: 10))
-        XCTAssertTrue(newButton.isHittable)
-    }
-
-    @MainActor
-    private func launch(_ arguments: [String]) -> XCUIApplication {
-        let app = XCUIApplication()
-        // UI tests never touch the on-disk store.
-        app.launchArguments = arguments + ["-inMemoryStore", "-disableTips"]
-        app.launch()
-        return app
-    }
-
-    @MainActor
-    private func attachScreenshot(of app: XCUIApplication, named name: String) {
-        let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
     }
 }

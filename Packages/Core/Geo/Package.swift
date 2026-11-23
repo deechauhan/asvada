@@ -10,6 +10,7 @@ let package = Package(
     targets: [
         .target(
             name: "Geo",
+            resources: [.process("Resources")],
         ),
         .testTarget(
             name: "GeoTests",

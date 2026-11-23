@@ -11,7 +11,8 @@ struct AsvadaApp: App {
     /// `-resetState` clears restored UI state, `-designCatalog` opens the design catalogue,
     /// `-keepsakeGallery` opens the keepsake gallery, `-forceDarkMode` forces dark appearance,
     /// `-inMemoryStore` keeps data off disk, `-disableTips` hides TipKit tips, `-sampleData` fills
-    /// the built-ins with sample keepsakes (only together with `-inMemoryStore`).
+    /// the built-ins with sample keepsakes (only together with `-inMemoryStore`), `-countryPicker`
+    /// opens the country picker on its own.
     private let arguments = ProcessInfo.processInfo.arguments
     private let container: ModelContainer
 
@@ -49,6 +50,8 @@ struct AsvadaApp: App {
                     DesignCatalogView()
                 } else if arguments.contains("-keepsakeGallery") {
                     KeepsakeGallery()
+                } else if arguments.contains("-countryPicker") {
+                    CountryPickerScreen()
                 } else {
                     RootView()
                 }
