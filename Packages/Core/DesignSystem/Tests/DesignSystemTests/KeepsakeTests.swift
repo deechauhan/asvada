@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import DesignSystem
 
+@MainActor
 struct KeepsakeTests {
     @Test func seedIsStableAcrossCalls() {
         #expect(Seed.hash("JP") == Seed.hash("JP"))
@@ -51,6 +52,7 @@ struct KeepsakeTests {
     }
 }
 
+@MainActor
 struct SealTests {
     @Test func holdMatchesTheConcept() {
         #expect(SealButton.holdDuration == 0.6)

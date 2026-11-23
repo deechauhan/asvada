@@ -2,6 +2,7 @@ import SwiftUI
 import Testing
 @testable import DesignSystem
 
+@MainActor
 struct MotionTests {
     @Test func tokensMatchTheConcept() {
         #expect(Motion.sealHold == 0.6)
@@ -34,6 +35,7 @@ struct MotionTests {
     }
 }
 
+@MainActor
 struct HapticTests {
     @Test func eachMomentHasItsFeedback() {
         #expect(Haptic.stamp.feedback == .impact(weight: .heavy))
