@@ -11,7 +11,7 @@ import TipKit
 /// - VoiceOver: a "Savour" action seals immediately.
 /// - After the first successful hold a plain tap also seals (the tip has taught the gesture).
 public struct SealButton: View {
-    public static let holdDuration = 0.6
+    public static let holdDuration = Motion.sealHold
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("seal.hasLearnedHold") private var hasLearnedHold = false
@@ -55,7 +55,7 @@ public struct SealButton: View {
                 complete()
             }
         })
-        .sensoryFeedback(.success, trigger: sealed)
+        .haptic(.seal, trigger: sealed)
         .popoverTip(tip)
         .accessibilityElement()
         .accessibilityLabel("Hold to savour")
@@ -71,7 +71,7 @@ public struct SealButton: View {
         tip.invalidate(reason: .actionPerformed)
         sealed += 1
         action()
-        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.3).delay(0.25)) { progress = 0 }
+        withAnimation(Motion.animation(.easeOut(duration: 0.3).delay(0.25), reduceMotion: reduceMotion)) { progress = 0 }
     }
 }
 
@@ -95,7 +95,6 @@ struct AMarkGlyph: View {
 
 /// A small plum wax seal with the ā, stamped onto a keepsake's corner with the "thunk".
 public struct WaxSeal: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var landed = false
 
     public init() {}
@@ -117,16 +116,7 @@ public struct WaxSeal: View {
                 .foregroundStyle(Palette.onBrand.color)
         }
         .frame(width: 38, height: 38)
-        .keyframeAnimator(initialValue: reduceMotion ? 1.0 : 1.6, trigger: landed) { content, scale in
-            content.scaleEffect(scale)
-        } keyframes: { _ in
-            // The "thunk": 1.6 → 1.18 → 0.97 → 1 (flat under Reduce Motion).
-            KeyframeTrack {
-                CubicKeyframe(reduceMotion ? 1.0 : 1.18, duration: 0.09)
-                CubicKeyframe(reduceMotion ? 1.0 : 0.97, duration: 0.07)
-                SpringKeyframe(1.0, duration: 0.12)
-            }
-        }
+        .thunk(trigger: landed)
         .onAppear { landed = true }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Sealed")

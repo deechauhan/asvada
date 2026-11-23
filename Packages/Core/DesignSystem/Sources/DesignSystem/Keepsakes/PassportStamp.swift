@@ -15,7 +15,6 @@ public enum StampShape: CaseIterable, Sendable {
 
 /// A country keepsake: single-colour ink stamp with the country, "ENTRY" and a date.
 public struct PassportStamp: KeepsakeTemplate {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let country: String
     let code: String
     let date: Date?
@@ -75,7 +74,7 @@ public struct PassportStamp: KeepsakeTemplate {
         .frame(minWidth: shape == .triangle ? 150 : 96, minHeight: shape == .round ? 96 : 72)
         .background { StampOutline(shape: shape, ink: ink.color) }
         .opacity(0.88)
-        .rotationEffect(.degrees(reduceMotion ? 0 : Tilt.degrees(for: code, max: Tilt.stampMax)))
+        .paperTilt(Tilt.degrees(for: code, max: Tilt.stampMax))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilitySummary)
     }

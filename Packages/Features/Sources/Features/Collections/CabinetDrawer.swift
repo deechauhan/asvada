@@ -96,7 +96,7 @@ private struct DrawerStat: View {
 
 /// Up to three keepsakes fanned like cards: the best in front and centre, the next two behind it,
 /// leaning out. Countries are different: their stamps are inked across a passport page instead.
-/// Under Reduce Motion they still fan (the lean is a layout, not an animation).
+/// Under Reduce Motion the keepsakes stay upright (no tilt), still spread side by side.
 private struct DrawerFan: View {
     let collection: ExperienceCollection
     let items: [Item]
@@ -149,7 +149,7 @@ private struct DrawerFan: View {
                 ForEach(Array(items.enumerated()), id: \.element.id) { rank, item in
                     let spot = isPassport ? stampPlacement(rank: rank, of: items.count) : placement(rank: rank, of: items.count)
                     MiniKeepsake(item: item, collection: collection, rank: rank)
-                        .rotationEffect(.degrees(spot.angle), anchor: .bottom)
+                        .paperTilt(spot.angle, anchor: .bottom)
                         .offset(x: spot.x, y: spot.y)
                         .zIndex(spot.layer)
                 }
@@ -228,7 +228,7 @@ private struct PassportPage: View {
                     .stroke(CollectionAccent.country.token.color.opacity(0.18), style: StrokeStyle(lineWidth: 1, dash: [2, 2])),
             )
             .frame(maxWidth: 150, maxHeight: .infinity)
-            .rotationEffect(.degrees(-1.5))
+            .paperTilt(-1.5)
             .shadow(color: Palette.textPrimary.color.opacity(0.1), radius: 4, y: 2)
             .accessibilityHidden(true)
     }
@@ -250,7 +250,7 @@ struct GhostSlip: View {
                     .frame(width: 90, height: 66)
             }
         }
-        .rotationEffect(.degrees(-3))
+        .paperTilt(-3)
         .accessibilityHidden(true)
     }
 }

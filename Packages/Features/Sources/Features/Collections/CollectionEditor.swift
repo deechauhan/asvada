@@ -217,7 +217,7 @@ private struct KeepsakePreview: View {
         .padding(Spacing.large)
         .background(Palette.keepsakePaper.color, in: RoundedRectangle(cornerRadius: Radius.keepsake))
         .shadow(color: Palette.textPrimary.color.opacity(0.12), radius: 10, y: 6)
-        .rotationEffect(.degrees(-1.2))
+        .paperTilt(-1.2)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Preview: \(name.isEmpty ? "untitled collection" : name)")
     }
