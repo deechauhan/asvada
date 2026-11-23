@@ -11,6 +11,11 @@ public struct DesignCatalogView: View {
                     HeroFieldSample()
                         .listRowInsets(EdgeInsets())
                 }
+                Section("Keepsakes") {
+                    NavigationLink("Keepsake gallery") {
+                        KeepsakeGallery()
+                    }
+                }
                 Section("Colours") {
                     ForEach(Palette.all) { ColorRow(token: $0) }
                 }
