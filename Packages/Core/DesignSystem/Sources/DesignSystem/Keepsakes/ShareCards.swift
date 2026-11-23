@@ -137,7 +137,7 @@ public struct PassportSpreadCard: View {
     }
 
     /// "23 countries · 12% of the world" (never rounds a real visit down to 0%).
-    static func title(count: Int, worldTotal: Int) -> String {
+    public static func title(count: Int, worldTotal: Int) -> String {
         let noun = count == 1 ? "country" : "countries"
         guard worldTotal > 0, count > 0 else { return "\(count) \(noun)" }
         let percent = max(1, Int((Double(count) / Double(worldTotal) * 100).rounded()))
