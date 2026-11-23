@@ -228,6 +228,30 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testCountryPickerSearchesAndMultiSelects() {
+        let app = launch(["-countryPicker"])
+        XCTAssertTrue(app.navigationBars["Countries"].waitForExistence(timeout: 10))
+        // Grouped by continent, with flags, before searching.
+        XCTAssertTrue(app.staticTexts["Europe"].waitForExistence(timeout: 5) || app.staticTexts["EUROPE"].exists)
+        attachScreenshot(of: app, named: "country-picker")
+        let search = app.searchFields["Search countries"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("japan")
+        let japan = app.buttons["country-JP"]
+        XCTAssertTrue(japan.waitForExistence(timeout: 5))
+        japan.tap()
+        XCTAssertTrue(app.navigationBars["1 stamped"].waitForExistence(timeout: 5))
+        search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 5) + "portu")
+        app.buttons["country-PT"].tap()
+        XCTAssertTrue(app.navigationBars["2 stamped"].waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "country-picker-search")
+        // Tapping again unpicks.
+        app.buttons["country-PT"].tap()
+        XCTAssertTrue(app.navigationBars["1 stamped"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testHoldToSavourSealsTheKeepsake() {
         let app = launch(["-keepsakeGallery", "-resetState"])
         let seal = app.descendants(matching: .any)["sealButton"]
