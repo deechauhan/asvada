@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Generates the placeholder app icon (light, dark and tinted variants) into the asset catalog.
 
-A serif "ā" (the first letter of āsvāda) on the brand saffron. Re-run after changing colours:
+v2 (Keepsakes): a cream serif "a" with a saffron macron bar, i.e. "ā", on the aubergine field.
+Re-run after changing colours:
     python3 scripts/design/make_app_icon.py
 Requires Pillow and the DejaVu Serif Bold font (or pass a .ttf path as the first argument).
 """
@@ -32,24 +33,32 @@ def gradient(top: str, bottom: str) -> Image.Image:
     return img
 
 
-def draw_glyph(img: Image.Image, colour, alpha: bool = False) -> Image.Image:
-    font = ImageFont.truetype(FONT, 700)
+def draw_mark(img: Image.Image, glyph, macron) -> Image.Image:
+    """A serif "a" with a separate macron bar above it, so the bar can take its own colour."""
+    font = ImageFont.truetype(FONT, 640)
     draw = ImageDraw.Draw(img)
-    box = draw.textbbox((0, 0), "ā", font=font)
+    box = draw.textbbox((0, 0), "a", font=font)
     w, h = box[2] - box[0], box[3] - box[1]
-    pos = ((SIZE - w) / 2 - box[0], (SIZE - h) / 2 - box[1] + 10)
-    draw.text(pos, "ā", font=font, fill=colour)
+    x = (SIZE - w) / 2 - box[0]
+    y = (SIZE - h) / 2 - box[1] + 70
+    draw.text((x, y), "a", font=font, fill=glyph)
+    bar_w, bar_h = 300, 62
+    top = y + box[1] - 150
+    draw.rounded_rectangle(
+        [(SIZE - bar_w) / 2, top, (SIZE + bar_w) / 2, top + bar_h], radius=10, fill=macron,
+    )
     return img
 
 
 def main():
-    # Light: cream glyph on saffron (Palette.brand light → a deeper shade).
-    draw_glyph(gradient("#C2562A", "#A8401C"), hex_rgb("#FAF7F2")).save(OUT / "AppIcon.png")
-    # Dark: saffron glyph on near-black (Palette.background dark).
-    draw_glyph(gradient("#1E1B18", "#141210"), hex_rgb("#F08A5D")).save(OUT / "AppIcon-Dark.png")
-    # Tinted: white glyph on transparent; the system applies the user's tint.
+    cream, saffron = hex_rgb("#FAF6F0"), hex_rgb("#F2A93B")
+    # Light: cream "a" with a saffron macron on the aubergine field (Palette.aubergineTop → Bottom).
+    draw_mark(gradient("#3A1748", "#24102E"), cream, saffron).save(OUT / "AppIcon.png")
+    # Dark: a deeper aubergine so it sits quietly on a dark home screen.
+    draw_mark(gradient("#2A1035", "#160A1C"), cream, hex_rgb("#F5B54A")).save(OUT / "AppIcon-Dark.png")
+    # Tinted: white mark on transparent; the system applies the user's tint.
     tinted = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-    draw_glyph(tinted, (255, 255, 255, 255)).save(OUT / "AppIcon-Tinted.png")
+    draw_mark(tinted, (255, 255, 255, 255), (255, 255, 255, 255)).save(OUT / "AppIcon-Tinted.png")
     print("wrote", *(p.name for p in sorted(OUT.glob("*.png"))))
 
 
