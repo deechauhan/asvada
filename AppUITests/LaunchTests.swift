@@ -231,8 +231,9 @@ final class LaunchTests: XCTestCase {
     func testCountryPickerSearchesAndMultiSelects() {
         let app = launch(["-countryPicker"])
         XCTAssertTrue(app.navigationBars["Countries"].waitForExistence(timeout: 10))
-        // Grouped by continent, with flags, before searching.
-        XCTAssertTrue(app.staticTexts["Europe"].waitForExistence(timeout: 5) || app.staticTexts["EUROPE"].exists)
+        // Grouped by continent, with flags, before searching. The list is lazy, so check the first
+        // continent (Africa); later ones aren't built until scrolled to.
+        XCTAssertTrue(app.staticTexts["Africa"].waitForExistence(timeout: 5) || app.staticTexts["AFRICA"].exists)
         attachScreenshot(of: app, named: "country-picker")
         let search = app.searchFields["Search countries"]
         XCTAssertTrue(search.waitForExistence(timeout: 5))
