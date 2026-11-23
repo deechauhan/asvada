@@ -148,7 +148,8 @@ final class LaunchTests: XCTestCase {
         let deleteButton = app.buttons["deleteCollectionButton"]
         scrollUntilVisible(deleteButton, in: app)
         deleteButton.tap()
-        let confirm = app.buttons["confirmDeleteButton"]
+        // The dialog can expose its button in more than one container, so take the first match.
+        let confirm = app.buttons["confirmDeleteButton"].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["This collection is empty."].exists)
         attachScreenshot(of: app, named: "delete-confirmation")
