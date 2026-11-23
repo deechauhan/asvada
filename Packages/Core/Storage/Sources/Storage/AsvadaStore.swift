@@ -7,8 +7,9 @@ import SwiftData
 /// Local-only for now (`cloudKitDatabase: .none`): iCloud backup arrives in M3 and sync is an
 /// explicit opt-in later, so the store must never start syncing just because an entitlement exists.
 public enum AsvadaStore {
+    /// The current versioned schema (see `CurrentSchema` and `AsvadaMigrationPlan` in Model).
     public static var schema: Schema {
-        Schema(ModelModule.models)
+        Schema(versionedSchema: CurrentSchema.self)
     }
 
     /// Where the store lives on disk.
@@ -30,6 +31,6 @@ public enum AsvadaStore {
         case .inMemory:
             ModelConfiguration("Asvada", schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         }
-        return try ModelContainer(for: schema, configurations: configuration)
+        return try ModelContainer(for: schema, migrationPlan: AsvadaMigrationPlan.self, configurations: configuration)
     }
 }
