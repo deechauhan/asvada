@@ -117,6 +117,51 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testEditAndDeleteCustomCollectionButNotBuiltIn() {
+        let app = launch(["-resetState"])
+        app.tabBars.buttons["Collections"].tap()
+        app.buttons["newCollectionButton"].tap()
+        let name = app.textFields["collectionNameField"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.tap()
+        name.typeText("Concerts")
+        app.buttons["saveCollectionButton"].tap()
+        XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
+
+        // Rename
+        app.staticTexts["Concerts"].swipeRight()
+        app.buttons["Edit"].tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 5))
+        let field = app.textFields["collectionNameField"]
+        field.tap()
+        field.press(forDuration: 1.0)
+        if app.menuItems["Select All"].waitForExistence(timeout: 2) {
+            app.menuItems["Select All"].tap()
+        }
+        field.typeText("Gigs")
+        attachScreenshot(of: app, named: "edit-collection")
+        app.buttons["saveCollectionButton"].tap()
+        XCTAssertTrue(app.staticTexts["Gigs"].waitForExistence(timeout: 5))
+
+        // Delete with confirmation
+        app.staticTexts["Gigs"].swipeRight()
+        app.buttons["Edit"].tap()
+        app.buttons["deleteCollectionButton"].tap()
+        let confirm = app.buttons["confirmDeleteButton"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["This collection is empty."].exists)
+        attachScreenshot(of: app, named: "delete-confirmation")
+        confirm.tap()
+        XCTAssertTrue(app.staticTexts["Gigs"].waitForNonExistence(timeout: 5))
+
+        // Built-ins can be edited but not deleted
+        app.staticTexts["Cafés"].swipeRight()
+        app.buttons["Edit"].tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["deleteCollectionButton"].exists)
+    }
+
+    @MainActor
     func testDesignCatalogLight() {
         let app = launch(["-designCatalog"])
         XCTAssertTrue(app.navigationBars["Design catalogue"].waitForExistence(timeout: 10))
