@@ -145,7 +145,9 @@ final class LaunchTests: XCTestCase {
 
         // Delete with confirmation
         customiseFromMenu(app, "Gigs")
-        app.buttons["deleteCollectionButton"].tap()
+        let deleteButton = app.buttons["deleteCollectionButton"]
+        scrollUntilVisible(deleteButton, in: app)
+        deleteButton.tap()
         let confirm = app.buttons["confirmDeleteButton"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["This collection is empty."].exists)
@@ -156,7 +158,11 @@ final class LaunchTests: XCTestCase {
         // Built-ins can be edited but not deleted
         customiseFromMenu(app, "Cafés")
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
-        XCTAssertFalse(app.buttons["deleteCollectionButton"].exists)
+        let builtInDelete = app.buttons["deleteCollectionButton"]
+        for _ in 0 ..< 4 where !builtInDelete.exists {
+            app.swipeUp()
+        }
+        XCTAssertFalse(builtInDelete.exists, "Built-in collections must not offer delete")
     }
 
     @MainActor
@@ -174,6 +180,15 @@ final class LaunchTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Scrolls the frontmost form until `element` is on screen (form rows load lazily).
+    @MainActor
+    private func scrollUntilVisible(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 6) {
+        for _ in 0 ..< attempts where !(element.exists && element.isHittable) {
+            app.swipeUp()
+        }
+        XCTAssertTrue(element.waitForExistence(timeout: 5), "\(element) never scrolled into view")
+    }
 
     /// Opens Customise from a collection row's context menu (long press). Used after a row has
     /// already been customised once: SwiftUI can leave that row's swipe state stale, so a second
