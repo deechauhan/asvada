@@ -7,6 +7,25 @@ public struct KeepsakeGallery: View {
 
     public init() {}
 
+    private static let topCafes = [
+        TopMenuCard.Course(name: "Prufrock Coffee", detail: "Clerkenwell"),
+        TopMenuCard.Course(name: "Monmouth", detail: "Borough"),
+        TopMenuCard.Course(name: "Kaffeine", detail: "Fitzrovia"),
+        TopMenuCard.Course(name: "Workshop", detail: "Marylebone"),
+        TopMenuCard.Course(name: "Origin", detail: "Shoreditch"),
+    ]
+
+    private static var sampleStamps: [StampEntry] {
+        [
+            StampEntry(country: "Japan", code: "JP", date: date("2025-04-03")),
+            StampEntry(country: "Portugal", code: "PT", date: date("2024-09-14")),
+            StampEntry(country: "India", code: "IN", date: date("2023-12-22")),
+            StampEntry(country: "Iceland", code: "IS", date: date("2022-06-06")),
+            StampEntry(country: "Peru", code: "PE"),
+            StampEntry(country: "Kenya", code: "KE", date: date("2021-02-11")),
+        ]
+    }
+
     private static func date(_ string: String) -> Date {
         (try? Date(string, strategy: .iso8601.year().month().day())) ?? .now
     }
@@ -76,6 +95,17 @@ public struct KeepsakeGallery: View {
                         .foregroundStyle(Palette.textPrimary.color)
                     Postcard(city: "Lisbon", country: "Portugal", date: Self.date("2024-09-14"), relish: "Unforgettable")
                         .rotationEffect(.degrees(Tilt.degrees(for: "lisbon")))
+                    Text("Share cards")
+                        .typeToken(.masthead)
+                        .foregroundStyle(Palette.textPrimary.color)
+                    TopMenuCard(collection: "Cafés", courses: Self.topCafes)
+                        .frame(maxWidth: .infinity)
+                    PassportSpreadCard(stamps: Self.sampleStamps)
+                        .frame(maxWidth: .infinity)
+                    KeepsakeShareCard(eyebrow: "Films", title: "Perfect Days") {
+                        TicketStub(title: "Perfect Days", year: 2023, date: Self.date("2026-03-08"), relish: "Lovely")
+                    }
+                    .frame(maxWidth: .infinity)
                     Text("Tags")
                         .typeToken(.masthead)
                         .foregroundStyle(Palette.textPrimary.color)
