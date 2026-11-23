@@ -59,6 +59,41 @@ public struct Country: Sendable, Hashable, Identifiable {
         bounds.contains(point) && outlines.contains { Self.ring($0, contains: point) }
     }
 
+    /// The shortest distance from `point` to the country's outline, in kilometres (an
+    /// equirectangular approximation; good to a few percent at the distances that matter here).
+    public func distanceInKilometres(to point: GeoPoint) -> Double {
+        let scale = cos(point.latitude * .pi / 180)
+        func flat(_ geo: GeoPoint) -> (x: Double, y: Double) {
+            (geo.longitude * 111.32 * scale, geo.latitude * 110.57)
+        }
+        let target = flat(point)
+        var best = Double.infinity
+        for ring in outlines where ring.count > 1 {
+            var previous = flat(ring[ring.count - 1])
+            for geo in ring {
+                let current = flat(geo)
+                best = min(best, Self.distance(from: target, toSegment: previous, current))
+                previous = current
+            }
+        }
+        return best
+    }
+
+    /// Distance from `point` to the segment `start`–`end` in the plane.
+    static func distance(
+        from point: (x: Double, y: Double),
+        toSegment start: (x: Double, y: Double),
+        _ end: (x: Double, y: Double),
+    ) -> Double {
+        let runX = end.x - start.x
+        let runY = end.y - start.y
+        let lengthSquared = runX * runX + runY * runY
+        let fraction = lengthSquared == 0
+            ? 0
+            : min(max(((point.x - start.x) * runX + (point.y - start.y) * runY) / lengthSquared, 0), 1)
+        return hypot(point.x - (start.x + fraction * runX), point.y - (start.y + fraction * runY))
+    }
+
     /// Even-odd ray casting.
     static func ring(_ ring: [GeoPoint], contains point: GeoPoint) -> Bool {
         var inside = false
@@ -87,6 +122,13 @@ public struct GeoBounds: Sendable, Hashable {
     public let maxLongitude: Double
     public let maxLatitude: Double
 
+    init(minLongitude: Double, minLatitude: Double, maxLongitude: Double, maxLatitude: Double) {
+        self.minLongitude = minLongitude
+        self.minLatitude = minLatitude
+        self.maxLongitude = maxLongitude
+        self.maxLatitude = maxLatitude
+    }
+
     init(_ rings: [[GeoPoint]]) {
         let points = rings.joined()
         minLongitude = points.map(\.longitude).min() ?? 0
@@ -97,5 +139,20 @@ public struct GeoBounds: Sendable, Hashable {
 
     public func contains(_ point: GeoPoint) -> Bool {
         (minLongitude ... maxLongitude).contains(point.longitude) && (minLatitude ... maxLatitude).contains(point.latitude)
+    }
+
+    /// The box's area in square degrees (for comparing sizes, not for measuring land).
+    public var area: Double {
+        (maxLongitude - minLongitude) * (maxLatitude - minLatitude)
+    }
+
+    /// The box grown by `degrees` on every side.
+    public func expanded(by degrees: Double) -> GeoBounds {
+        GeoBounds(
+            minLongitude: minLongitude - degrees,
+            minLatitude: minLatitude - degrees,
+            maxLongitude: maxLongitude + degrees,
+            maxLatitude: maxLatitude + degrees,
+        )
     }
 }
