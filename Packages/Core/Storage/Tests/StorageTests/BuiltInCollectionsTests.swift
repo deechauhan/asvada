@@ -19,7 +19,9 @@ struct BuiltInCollectionsTests {
         #expect(created == 6)
         let collections = try repository.collections()
         #expect(collections.map(\.name) == ["Cafés", "Restaurants", "Countries", "Cities", "Airlines", "Films"])
-        #expect(collections.allSatisfy(\.isBuiltIn))
+        // Evaluated outside #expect: the macro mis-handles rethrowing calls like allSatisfy.
+        let allBuiltIn = collections.allSatisfy(\.isBuiltIn)
+        #expect(allBuiltIn)
     }
 
     @Test func builtInsHaveSensibleModes() throws {
@@ -53,7 +55,8 @@ struct BuiltInCollectionsTests {
         try BuiltInCollections.seedIfNeeded(in: repository.context)
 
         let all = try repository.collections(includeHidden: true)
-        #expect(all.count(where: { $0.kind == .airlines }) == 1)
+        let airlinesCount = all.count { $0.kind == .airlines }
+        #expect(airlinesCount == 1)
         #expect(all.first { $0.kind == .airlines }?.isHidden == true)
         #expect(try !repository.collections().contains { $0.kind == .airlines })
     }
