@@ -8,7 +8,8 @@ import SwiftUI
 struct AsvadaApp: App {
     /// Launch arguments used by UI tests and for quick manual checks:
     /// `-resetState` clears restored UI state, `-designCatalog` opens the design catalogue,
-    /// `-keepsakeGallery` opens the keepsake gallery, `-forceDarkMode` forces dark appearance, `-inMemoryStore` keeps data off disk.
+    /// `-keepsakeGallery` opens the keepsake gallery, `-forceDarkMode` forces dark appearance,
+    /// `-inMemoryStore` keeps data off disk.
     private let arguments = ProcessInfo.processInfo.arguments
     private let container: ModelContainer
 
