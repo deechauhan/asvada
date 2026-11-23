@@ -26,7 +26,7 @@ final class KeepsakeUITests: UITestCase {
             }
             // One screenshot per screenful, so every template is captured.
             attachScreenshot(of: app, named: name)
-            for page in 2 ... 5 {
+            for page in 2 ... 8 {
                 app.swipeUp()
                 attachScreenshot(of: app, named: "\(name)-\(page)")
             }

@@ -73,7 +73,8 @@ public struct Postcard: KeepsakeTemplate {
             .padding(Spacing.large)
         }
         .overlay(alignment: .topTrailing) {
-            HStack(alignment: .top, spacing: -18) {
+            // The stamp only just kisses the postmark, so the city and country stay legible.
+            HStack(alignment: .top, spacing: -4) {
                 Postmark(city: city, country: country, date: date)
                 PostageStamp(ink: ink.color)
             }
