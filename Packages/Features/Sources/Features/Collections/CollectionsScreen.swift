@@ -83,7 +83,7 @@ struct CollectionsScreen: View {
             }
             // Clear the item explicitly on dismiss: customising the same drawer twice in a row
             // must change `editing`, or the second sheet never presents.
-            .sheet(item: $editing, onDismiss: { editing = nil }) { collection in
+            .sheet(item: $editing, onDismiss: clearEditing) { collection in
                 CollectionEditor(mode: .edit(collection))
             }
         }
@@ -184,6 +184,10 @@ struct CollectionsScreen: View {
             repository.reorder(visible, moving: IndexSet(integer: source), to: destination)
         }
         save()
+    }
+
+    private func clearEditing() {
+        editing = nil
     }
 
     private func setHidden(_ isHidden: Bool, _ collection: ExperienceCollection) {
