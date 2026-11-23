@@ -100,15 +100,22 @@ private struct DrawerFan: View {
     let collection: ExperienceCollection
     let items: [Item]
 
-    /// Position for the keepsake at `rank` (0 = best): x offset, lean and stacking order.
-    private func placement(rank: Int, of count: Int) -> (x: CGFloat, angle: Double, layer: Double) {
+    /// Where a keepsake sits in the fan: x offset, lean in degrees and stacking order.
+    private struct Spot {
+        let x: CGFloat
+        let angle: Double
+        let layer: Double
+    }
+
+    /// The spot for the keepsake at `rank` (0 = best) in a fan of `count`.
+    private func placement(rank: Int, of count: Int) -> Spot {
         switch (count, rank) {
-        case (1, _): (0, -2, 3)
-        case (2, 0): (-14, -4, 3)
-        case (2, _): (18, 6, 2)
-        case (_, 0): (0, -1, 3)
-        case (_, 1): (-30, -9, 2)
-        default: (30, 8, 1)
+        case (1, _): Spot(x: 0, angle: -2, layer: 3)
+        case (2, 0): Spot(x: -14, angle: -4, layer: 3)
+        case (2, _): Spot(x: 18, angle: 6, layer: 2)
+        case (_, 0): Spot(x: 0, angle: -1, layer: 3)
+        case (_, 1): Spot(x: -30, angle: -9, layer: 2)
+        default: Spot(x: 30, angle: 8, layer: 1)
         }
     }
 

@@ -161,8 +161,9 @@ struct CollectionsScreen: View {
 
     /// Drops the dragged drawer into the slot of the drawer it was dropped on.
     private func move(_ draggedID: String, onto target: ExperienceCollection) -> Bool {
-        guard let source = visible.firstIndex(where: { $0.id.uuidString == draggedID }) else { return false }
-        guard let slot = visible.firstIndex(where: { $0.id == target.id }), slot != source else { return false }
+        let source = visible.firstIndex(where: { $0.id.uuidString == draggedID })
+        let slot = visible.firstIndex(where: { $0.id == target.id })
+        guard let source, let slot, slot != source else { return false }
         let destination = CabinetOrder.destination(moving: source, onto: slot)
         withAnimation(.snappy) {
             repository.reorder(visible, moving: IndexSet(integer: source), to: destination)

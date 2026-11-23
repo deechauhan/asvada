@@ -99,4 +99,3 @@ struct BuiltInCollectionsTests {
         #expect(byKind[.cities]?.items?.isEmpty == true)
     }
 }
-

@@ -79,7 +79,7 @@ struct DrawerItemsTests {
         #expect(restaurants.drawerSummary.numeral == nil)
     }
 
-    @Test func countryItemsKnowTheirIsoCode() throws {
+    @Test func countryItemsKnowTheirIsoCode() {
         let item = Item(name: "Japan", externalRef: "iso:JP")
         #expect(item.isoCode == "JP")
     }

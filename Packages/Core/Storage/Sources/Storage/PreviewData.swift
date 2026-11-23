@@ -81,8 +81,9 @@ public enum PreviewData {
             }
         }
         if let countries = byKind[.countries] {
-            let visited = [("Japan", "JP", 400.0), ("Peru", "PE", 900.0), ("Kenya", "KE", 1300.0), ("Portugal", "PT", 60.0)]
-            for (name, code, daysAgo) in visited {
+            let visited = [("Japan", "JP"), ("Peru", "PE"), ("Kenya", "KE"), ("Portugal", "PT")]
+            let daysAgo = [400.0, 900.0, 1300.0, 60.0]
+            for ((name, code), daysAgo) in zip(visited, daysAgo) {
                 let item = repository.upsertItem(named: name, externalRef: "iso:\(code)", in: countries)
                 item.countryCode = code
                 repository.addEntry(to: item, date: .now.addingTimeInterval(-daysAgo * day))
