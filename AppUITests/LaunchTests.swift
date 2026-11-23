@@ -54,6 +54,18 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testAboutExplainsNameAndShowsVersion() {
+        let app = launch(["-resetState"])
+        app.tabBars.buttons["Settings"].tap()
+        let aboutLink = app.buttons["aboutLink"]
+        XCTAssertTrue(aboutLink.waitForExistence(timeout: 10))
+        aboutLink.tap()
+        XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["appVersion"].label.hasPrefix("Version "))
+        attachScreenshot(of: app, named: "about")
+    }
+
+    @MainActor
     func testDesignCatalogLight() {
         let app = launch(["-designCatalog"])
         XCTAssertTrue(app.navigationBars["Design catalogue"].waitForExistence(timeout: 10))

@@ -21,16 +21,18 @@ struct PlaceholderScreen: View {
     }
 }
 
-/// Settings placeholder with an About section and a link to the design catalogue.
+/// Settings placeholder with About and a link to the design catalogue.
 struct SettingsScreen: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("About") {
-                    LabeledContent("App", value: "Asvada")
-                    Text("āsvāda (आस्वाद), Sanskrit: savouring, relish.")
-                        .typeToken(.callout)
-                        .foregroundStyle(Palette.textSecondary.color)
+                Section {
+                    NavigationLink {
+                        AboutView()
+                    } label: {
+                        LabeledContent("About Asvada", value: AppVersion.current.version)
+                    }
+                    .accessibilityIdentifier("aboutLink")
                 }
                 Section("Developer") {
                     NavigationLink("Design catalogue") {

@@ -5,5 +5,11 @@
 <dict>
 	<key>TMDBAPIKey</key>
 	<string>$(TMDB_API_KEY)</string>
+	<key>UILaunchScreen</key>
+	<dict>
+		<!-- Plain background matching Palette.background (light and dark) so launch blends into the app. -->
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
 </dict>
 </plist>
