@@ -145,12 +145,12 @@ struct CollectionsScreen: View {
         // A long press shows this menu; moving the finger instead lifts the drawer to drag.
         .contextMenu {
             Button("Customise", systemImage: "slider.horizontal.3") {
-                editing = collection
+                afterMenuCloses { editing = collection }
             }
             // Only filled drawers have something to share.
             if ShareContent(collection: collection) != nil {
                 Button("Share", systemImage: "square.and.arrow.up") {
-                    sharing = collection
+                    afterMenuCloses { sharing = collection }
                 }
             }
             Button("Hide", systemImage: "eye.slash") {
@@ -208,6 +208,19 @@ struct CollectionsScreen: View {
         }
         save()
     }
+
+    /// Runs `present` once a context menu has finished closing. Presenting a sheet straight from a
+    /// menu action races the menu's dismissal, and UIKit then drops the sheet (seen as a second
+    /// Customise that did nothing).
+    private func afterMenuCloses(_ present: @escaping @MainActor () -> Void) {
+        Task { @MainActor in
+            try? await Task.sleep(for: Self.menuDismissal)
+            present()
+        }
+    }
+
+    /// Long enough for the context menu's closing animation.
+    static let menuDismissal = Duration.milliseconds(400)
 
     private func clearEditing() {
         editing = nil
