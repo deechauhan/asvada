@@ -144,7 +144,7 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Gigs"].waitForExistence(timeout: 5))
 
         // Delete with confirmation
-        customise(app, "Gigs")
+        customiseFromMenu(app, "Gigs")
         app.buttons["deleteCollectionButton"].tap()
         let confirm = app.buttons["confirmDeleteButton"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
@@ -154,7 +154,7 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Gigs"].waitForNonExistence(timeout: 5))
 
         // Built-ins can be edited but not deleted
-        customise(app, "Cafés")
+        customiseFromMenu(app, "Cafés")
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
         XCTAssertFalse(app.buttons["deleteCollectionButton"].exists)
     }
@@ -174,6 +174,20 @@ final class LaunchTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Opens Customise from a collection row's context menu (long press). Used after a row has
+    /// already been customised once: SwiftUI can leave that row's swipe state stale, so a second
+    /// swipe doesn't always reveal the action.
+    @MainActor
+    private func customiseFromMenu(_ app: XCUIApplication, _ name: String) {
+        let row = app.staticTexts[name]
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "\(name) row missing")
+        row.press(forDuration: 1.2)
+        let action = app.buttons["Customise"]
+        XCTAssertTrue(action.waitForExistence(timeout: 5), "Customise menu item did not appear for \(name)")
+        action.tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+    }
 
     /// Swipes a collection row right and taps Customise. Retries the swipe once: a swipe that
     /// lands while the list is still re-laying out (e.g. just after a sheet closes) is dropped.
