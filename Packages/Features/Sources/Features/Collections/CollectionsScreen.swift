@@ -17,6 +17,7 @@ struct CollectionsScreen: View {
     @State private var isCreating = false
     @State private var isArranging = false
     @State private var editing: ExperienceCollection?
+    @State private var sharing: ExperienceCollection?
 
     private var visible: [ExperienceCollection] {
         collections.filter { !$0.isHidden }
@@ -92,6 +93,11 @@ struct CollectionsScreen: View {
             .sheet(item: $editing, onDismiss: clearEditing) { collection in
                 CollectionEditor(mode: .edit(collection))
             }
+            .sheet(item: $sharing) { collection in
+                if let content = ShareContent(collection: collection) {
+                    ShareCardSheet(collection: collection, content: content)
+                }
+            }
         }
     }
 
@@ -139,13 +145,24 @@ struct CollectionsScreen: View {
         // A long press shows this menu; moving the finger instead lifts the drawer to drag.
         .contextMenu {
             Button("Customise", systemImage: "slider.horizontal.3") {
-                editing = collection
+                afterMenuCloses { editing = collection }
+            }
+            // Only filled drawers have something to share.
+            if ShareContent(collection: collection) != nil {
+                Button("Share", systemImage: "square.and.arrow.up") {
+                    afterMenuCloses { sharing = collection }
+                }
             }
             Button("Hide", systemImage: "eye.slash") {
                 setHidden(true, collection)
             }
         }
         .accessibilityAction(named: "Customise") { editing = collection }
+        .accessibilityAction(named: "Share") {
+            if ShareContent(collection: collection) != nil {
+                sharing = collection
+            }
+        }
         .accessibilityAction(named: "Move earlier") { step(collection, by: -1) }
         .accessibilityAction(named: "Move later") { step(collection, by: 1) }
         .accessibilityAction(named: "Hide") { setHidden(true, collection) }
@@ -191,6 +208,19 @@ struct CollectionsScreen: View {
         }
         save()
     }
+
+    /// Runs `present` once a context menu has finished closing. Presenting a sheet straight from a
+    /// menu action races the menu's dismissal, and UIKit then drops the sheet (seen as a second
+    /// Customise that did nothing).
+    private func afterMenuCloses(_ present: @escaping @MainActor () -> Void) {
+        Task { @MainActor in
+            try? await Task.sleep(for: Self.menuDismissal)
+            present()
+        }
+    }
+
+    /// Long enough for the context menu's closing animation.
+    static let menuDismissal = Duration.milliseconds(400)
 
     private func clearEditing() {
         editing = nil
