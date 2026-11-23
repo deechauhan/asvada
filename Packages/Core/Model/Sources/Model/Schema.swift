@@ -2,6 +2,9 @@ import SwiftData
 
 /// Version 1 of the store schema: the models as first shipped.
 ///
+/// Until the first TestFlight build there are no real stores, so V1 may still change in place.
+/// From the first TestFlight build on, V1 is frozen and every change needs a new version.
+///
 /// How to change the schema later:
 /// 1. Copy today's model classes into `SchemaV1` as nested types (freezing V1 exactly).
 /// 2. Change the top-level models and add `SchemaV2` listing them.

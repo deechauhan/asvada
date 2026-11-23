@@ -89,6 +89,34 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testCreateCustomCollectionAppearsInListAndQuickLog() {
+        let app = launch(["-resetState"])
+        app.tabBars.buttons["Collections"].tap()
+        let newButton = app.buttons["newCollectionButton"]
+        XCTAssertTrue(newButton.waitForExistence(timeout: 10))
+        newButton.tap()
+
+        let name = app.textFields["collectionNameField"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        let save = app.buttons["saveCollectionButton"]
+        XCTAssertFalse(save.isEnabled, "Save should be disabled until a name is entered")
+        name.tap()
+        name.typeText("Concerts")
+        app.buttons["music note"].tap()
+        app.buttons["Plum"].tap()
+        attachScreenshot(of: app, named: "new-collection")
+        XCTAssertTrue(save.isEnabled)
+        save.tap()
+
+        XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "collections-with-custom")
+
+        app.buttons["quickLogButton"].tap()
+        XCTAssertTrue(app.navigationBars["What did you savour?"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testDesignCatalogLight() {
         let app = launch(["-designCatalog"])
         XCTAssertTrue(app.navigationBars["Design catalogue"].waitForExistence(timeout: 10))

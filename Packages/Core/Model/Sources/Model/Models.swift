@@ -15,6 +15,8 @@ public final class ExperienceCollection {
     public var id: UUID = UUID()
     public var name: String = ""
     public var icon: String = "star"
+    /// Design-system accent name (e.g. "film"); empty means "use the kind's accent".
+    public var accentName: String = ""
     public var kind: CollectionKind = CollectionKind.custom
     public var ratingMode: RatingMode = RatingMode.stars
     public var defaultView: ViewMode = ViewMode.list

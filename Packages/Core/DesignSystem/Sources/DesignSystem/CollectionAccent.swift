@@ -38,6 +38,19 @@ public enum CollectionAccent: String, CaseIterable, Sendable, Identifiable {
         }
     }
 
+    /// The colour's own name, for colour pickers.
+    public var colorName: String {
+        switch self {
+        case .cafe: "Coffee"
+        case .restaurant: "Tomato"
+        case .country: "Jade"
+        case .city: "Indigo"
+        case .airline: "Sky"
+        case .film: "Plum"
+        case .custom: "Slate"
+        }
+    }
+
     public var displayName: String {
         switch self {
         case .cafe: "Cafés"
