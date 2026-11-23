@@ -86,8 +86,10 @@ class UITestCase: XCTestCase {
     @MainActor
     func launch(_ arguments: [String]) -> XCUIApplication {
         let app = XCUIApplication()
-        // UI tests never touch the on-disk store.
-        app.launchArguments = arguments + ["-inMemoryStore", "-disableTips"]
+        // UI tests never touch the on-disk store, and skip first-launch onboarding unless a test
+        // is about it (`-onboarding`).
+        let onboarding = arguments.contains("-onboarding") ? [] : ["-skipOnboarding"]
+        app.launchArguments = arguments + ["-inMemoryStore", "-disableTips"] + onboarding
         app.launch()
         return app
     }

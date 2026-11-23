@@ -12,7 +12,7 @@ struct AsvadaApp: App {
     /// `-keepsakeGallery` opens the keepsake gallery, `-forceDarkMode` forces dark appearance,
     /// `-inMemoryStore` keeps data off disk, `-disableTips` hides TipKit tips, `-sampleData` fills
     /// the built-ins with sample keepsakes (only together with `-inMemoryStore`), `-countryPicker`
-    /// opens the country picker on its own.
+    /// opens the country picker on its own, `-skipOnboarding` keeps first-launch onboarding away.
     private let arguments = ProcessInfo.processInfo.arguments
     private let container: ModelContainer
 
@@ -20,6 +20,7 @@ struct AsvadaApp: App {
         if arguments.contains("-resetState") {
             UserDefaults.standard.removeObject(forKey: AppTab.storageKey)
             UserDefaults.standard.removeObject(forKey: "seal.hasLearnedHold")
+            UserDefaults.standard.removeObject(forKey: "onboarding.completed")
         }
         do {
             container = try AsvadaStore.makeContainer(arguments.contains("-inMemoryStore") ? .inMemory : .standard)
