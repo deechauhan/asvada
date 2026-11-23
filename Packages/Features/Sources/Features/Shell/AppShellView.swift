@@ -1,4 +1,6 @@
 import DesignSystem
+import Storage
+import SwiftData
 import SwiftUI
 
 /// The navigation skeleton: four tabs plus an always-available "Log" button that opens quick-log.
@@ -61,6 +63,7 @@ public struct AppShellView: View {
 
 #Preview {
     AppShellView()
+        .modelContainer(PreviewData.container)
 }
 
 #if os(iOS)
