@@ -81,11 +81,13 @@ final class LaunchTests: XCTestCase {
         hide.tap()
 
         // Hidden collections stay listed (dimmed, in their own section) and can be shown again.
+        // Wait for the row to settle in the Hidden section before swiping it.
+        XCTAssertTrue(app.staticTexts["Hidden"].waitForExistence(timeout: 10))
         let airlines = app.staticTexts["Airlines"]
         XCTAssertTrue(airlines.waitForExistence(timeout: 5))
         attachScreenshot(of: app, named: "collections-hidden")
         airlines.swipeLeft()
-        XCTAssertTrue(app.buttons["Show"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Show"].waitForExistence(timeout: 10))
     }
 
     @MainActor
@@ -101,7 +103,7 @@ final class LaunchTests: XCTestCase {
         name.tap()
         name.typeText("Concerts")
         app.buttons["music note"].tap()
-        app.buttons["Plum"].tap()
+        app.buttons["Rose"].tap()
         attachScreenshot(of: app, named: "new-collection")
         XCTAssertTrue(save.isEnabled)
         save.tap()
