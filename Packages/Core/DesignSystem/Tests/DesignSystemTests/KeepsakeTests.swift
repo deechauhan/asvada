@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import DesignSystem
 
+@MainActor
 struct KeepsakeTests {
     @Test func seedIsStableAcrossCalls() {
         #expect(Seed.hash("JP") == Seed.hash("JP"))
@@ -51,6 +52,7 @@ struct KeepsakeTests {
     }
 }
 
+@MainActor
 struct KeepsakeKitTests {
     private static let date = Calendar(identifier: .gregorian).date(
         from: DateComponents(year: 2026, month: 11, day: 23, hour: 8, minute: 5),
@@ -110,6 +112,8 @@ struct KeepsakeKitTests {
     }
 }
 
+<<<<<<< HEAD
+@MainActor
 struct ShareCardTests {
     @Test func cardsRenderAt1080By1350() {
         #expect(ShareCard.size.width * ShareCard.scale == 1080)
@@ -133,6 +137,10 @@ struct ShareCardTests {
     }
 }
 
+=======
+@MainActor
+>>>>>>> feat/114-keepsake-kit-ii
+@MainActor
 struct SealTests {
     @Test func holdMatchesTheConcept() {
         #expect(SealButton.holdDuration == 0.6)
