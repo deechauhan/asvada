@@ -66,7 +66,8 @@ struct InkWorldMap: View {
         GeometryReader { proxy in
             Canvas { context, size in
                 let scale = CGAffineTransform(scaleX: size.width, y: size.height)
-                let paper = Palette.surfaceRaised.color
+                // Unvisited land needs enough tone to read as a map before anything is inked.
+                let paper = Palette.separator.color
                 let edge = Palette.background.color
                 for land in world.unassigned {
                     context.fill(land.applying(scale), with: .color(paper))
