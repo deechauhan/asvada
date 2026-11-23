@@ -191,4 +191,21 @@ final class LaunchTests: UITestCase {
         }
         XCTAssertFalse(builtInDelete.exists, "Built-in collections must not offer delete")
     }
+
+    @MainActor
+    func testShareTopFiveFromTheCafesDrawer() {
+        let app = launch(["-resetState", "-sampleData"])
+        openCollectionsAndWait(app)
+        openDrawerMenu(app, "Cafés")
+        let share = app.buttons["Share"]
+        XCTAssertTrue(share.exists, "Share missing from a filled drawer's menu")
+        share.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["shareCardPreview"].waitForExistence(timeout: 15))
+        // The card renders to an image before the share button appears.
+        XCTAssertTrue(app.buttons["shareCardButton"].waitForExistence(timeout: 10))
+        // The card is one accessibility element whose label includes its title.
+        let title = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "My top 4 cafés"))
+        XCTAssertTrue(title.firstMatch.exists)
+        attachScreenshot(of: app, named: "share-top-menu")
+    }
 }
