@@ -21,25 +21,25 @@ struct ReorderTests {
 
     @Test func movesDown() throws {
         // Cafés → after Countries (SwiftUI destination is the index *before* removal).
-        repository.reorder(try repository.collections(includeHidden: true), moving: [0], to: 3)
+        try repository.reorder(repository.collections(includeHidden: true), moving: [0], to: 3)
         try repository.save()
         #expect(try names() == ["Restaurants", "Countries", "Cafés", "Cities", "Airlines", "Films"])
     }
 
     @Test func movesUp() throws {
-        repository.reorder(try repository.collections(includeHidden: true), moving: [5], to: 0)
+        try repository.reorder(repository.collections(includeHidden: true), moving: [5], to: 0)
         try repository.save()
         #expect(try names() == ["Films", "Cafés", "Restaurants", "Countries", "Cities", "Airlines"])
     }
 
     @Test func movesSeveral() throws {
-        repository.reorder(try repository.collections(includeHidden: true), moving: [0, 2], to: 6)
+        try repository.reorder(repository.collections(includeHidden: true), moving: [0, 2], to: 6)
         try repository.save()
         #expect(try names() == ["Restaurants", "Cities", "Airlines", "Films", "Cafés", "Countries"])
     }
 
     @Test func orderPersistsAcrossContexts() throws {
-        repository.reorder(try repository.collections(includeHidden: true), moving: [4], to: 0)
+        try repository.reorder(repository.collections(includeHidden: true), moving: [4], to: 0)
         try repository.save()
         let fresh = Repository(context: ModelContext(container))
         #expect(try fresh.collections(includeHidden: true).first?.name == "Airlines")
