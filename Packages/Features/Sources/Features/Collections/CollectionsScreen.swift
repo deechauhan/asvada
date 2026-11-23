@@ -10,6 +10,7 @@ import SwiftUI
 /// customise or hide it.
 struct CollectionsScreen: View {
     @Environment(\.modelContext) private var context
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: [SortDescriptor(\ExperienceCollection.sortIndex), SortDescriptor(\ExperienceCollection.name)])
     private var collections: [ExperienceCollection]
 
@@ -28,6 +29,11 @@ struct CollectionsScreen: View {
 
     private var repository: Repository {
         Repository(context: context)
+    }
+
+    /// Drawers move with paper physics; under Reduce Motion they crossfade.
+    private var settle: Animation {
+        Motion.animation(Motion.settle, reduceMotion: reduceMotion)
     }
 
     var body: some View {
@@ -54,8 +60,8 @@ struct CollectionsScreen: View {
                 }
                 .padding(.horizontal, Spacing.large)
                 .padding(.vertical, Spacing.medium)
-                .animation(.snappy, value: visible.map(\.id))
-                .animation(.snappy, value: isArranging)
+                .animation(settle, value: visible.map(\.id))
+                .animation(settle, value: isArranging)
             }
             .background(Palette.background.color)
             .overlay {
@@ -73,7 +79,7 @@ struct CollectionsScreen: View {
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button(isArranging ? "Done" : "Edit") {
-                        withAnimation(.snappy) { isArranging.toggle() }
+                        withAnimation(settle) { isArranging.toggle() }
                     }
                     .fontWeight(isArranging ? .semibold : .regular)
                     .accessibilityIdentifier("arrangeButton")
@@ -184,7 +190,7 @@ struct CollectionsScreen: View {
         let slot = visible.firstIndex(where: { $0.id == target.id })
         guard let source, let slot, slot != source else { return false }
         let destination = CabinetOrder.destination(moving: source, onto: slot)
-        withAnimation(.snappy) {
+        withAnimation(settle) {
             repository.reorder(visible, moving: IndexSet(integer: source), to: destination)
         }
         save()
@@ -197,7 +203,7 @@ struct CollectionsScreen: View {
         let slot = source + offset
         guard visible.indices.contains(slot) else { return }
         let destination = CabinetOrder.destination(moving: source, onto: slot)
-        withAnimation(.snappy) {
+        withAnimation(settle) {
             repository.reorder(visible, moving: IndexSet(integer: source), to: destination)
         }
         save()
@@ -208,7 +214,7 @@ struct CollectionsScreen: View {
     }
 
     private func setHidden(_ isHidden: Bool, _ collection: ExperienceCollection) {
-        withAnimation(.snappy) {
+        withAnimation(settle) {
             repository.setHidden(isHidden, for: collection)
         }
         save()
