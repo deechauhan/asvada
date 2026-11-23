@@ -131,6 +131,20 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testHoldToSavourSealsTheKeepsake() {
+        let app = launch(["-keepsakeGallery", "-resetState"])
+        let seal = app.descendants(matching: .any)["sealButton"]
+        XCTAssertTrue(seal.waitForExistence(timeout: 10))
+        // A quick tap doesn't seal before the hold has been learned.
+        seal.tap()
+        XCTAssertFalse(app.descendants(matching: .any)["waxSeal"].waitForExistence(timeout: 2))
+        // Holding past 0.6 s seals it.
+        seal.press(forDuration: 1.2)
+        XCTAssertTrue(app.descendants(matching: .any)["waxSeal"].waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "sealed")
+    }
+
+    @MainActor
     func testDesignCatalogLight() {
         let app = launch(["-designCatalog"])
         XCTAssertTrue(app.navigationBars["Design catalogue"].waitForExistence(timeout: 10))
@@ -162,7 +176,7 @@ final class LaunchTests: XCTestCase {
     private func launch(_ arguments: [String]) -> XCUIApplication {
         let app = XCUIApplication()
         // UI tests never touch the on-disk store.
-        app.launchArguments = arguments + ["-inMemoryStore"]
+        app.launchArguments = arguments + ["-inMemoryStore", "-disableTips"]
         app.launch()
         return app
     }

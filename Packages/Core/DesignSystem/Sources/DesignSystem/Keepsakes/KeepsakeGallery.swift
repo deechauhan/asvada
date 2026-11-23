@@ -3,6 +3,8 @@ import SwiftUI
 /// Every keepsake template with sample content, in the Keepsakes paper world. Open it from the
 /// design catalogue or launch the app with `-keepsakeGallery`.
 public struct KeepsakeGallery: View {
+    @State private var isSealed = false
+
     public init() {}
 
     private static func date(_ string: String) -> Date {
@@ -49,6 +51,33 @@ public struct KeepsakeGallery: View {
                         ink: CollectionAccent.country.token,
                     )
                     .rotationEffect(.degrees(Tilt.degrees(for: "scafell")))
+                    Text("Savour")
+                        .typeToken(.masthead)
+                        .foregroundStyle(Palette.textPrimary.color)
+                    LuggageTag(
+                        collection: "Cafés",
+                        title: "Prufrock Coffee",
+                        detail: "Clerkenwell · today",
+                        icon: "cup.and.saucer.fill",
+                        ink: CollectionAccent.cafe.token,
+                    )
+                    .overlay(alignment: .bottomTrailing) {
+                        if isSealed {
+                            WaxSeal().padding(Spacing.small)
+                        }
+                    }
+                    VStack(spacing: Spacing.small) {
+                        SealButton { isSealed = true }
+                        Text(isSealed ? "Savoured" : "Hold to savour")
+                            .typeToken(.voice)
+                            .foregroundStyle(Palette.textSecondary.color)
+                        if isSealed {
+                            Button("Unseal") { isSealed = false }
+                                .typeToken(.callout)
+                                .tint(Palette.brand.color)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
                 }
                 .padding(Spacing.large)
             }

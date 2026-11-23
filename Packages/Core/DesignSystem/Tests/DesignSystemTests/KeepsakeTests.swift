@@ -45,3 +45,9 @@ struct KeepsakeTests {
         #expect(tag.accessibilitySummary == "Concerts, Radiohead, 12·07·26")
     }
 }
+
+struct SealTests {
+    @Test func holdMatchesTheConcept() {
+        #expect(SealButton.holdDuration == 0.6)
+    }
+}
