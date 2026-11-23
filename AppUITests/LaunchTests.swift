@@ -242,14 +242,17 @@ final class LaunchTests: XCTestCase {
         let japan = app.buttons["country-JP"]
         XCTAssertTrue(japan.waitForExistence(timeout: 5))
         japan.tap()
-        XCTAssertTrue(app.navigationBars["1 stamped"].waitForExistence(timeout: 5))
+        // While searching, the search field takes over the navigation bar (and its "N stamped"
+        // title), so check the rows' selected state instead.
+        XCTAssertTrue(waitUntilSelected(japan, true))
         search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 5) + "portu")
-        app.buttons["country-PT"].tap()
-        XCTAssertTrue(app.navigationBars["2 stamped"].waitForExistence(timeout: 5))
+        let portugal = app.buttons["country-PT"]
+        portugal.tap()
+        XCTAssertTrue(waitUntilSelected(portugal, true))
         attachScreenshot(of: app, named: "country-picker-search")
         // Tapping again unpicks.
-        app.buttons["country-PT"].tap()
-        XCTAssertTrue(app.navigationBars["1 stamped"].waitForExistence(timeout: 5))
+        portugal.tap()
+        XCTAssertTrue(waitUntilSelected(portugal, false))
     }
 
     @MainActor
@@ -311,6 +314,14 @@ final class LaunchTests: XCTestCase {
             _ = customise.waitForExistence(timeout: 4)
         }
         XCTAssertTrue(customise.exists, "The context menu did not appear for \(name)")
+    }
+
+    /// Waits until `element`'s selected state is `selected` (rows expose `.isSelected`).
+    @MainActor
+    private func waitUntilSelected(_ element: XCUIElement, _ selected: Bool, timeout: TimeInterval = 5) -> Bool {
+        let predicate = NSPredicate(format: "isSelected == %@", NSNumber(value: selected))
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 
     /// The first element of any type whose accessibility label is (or starts with) `label`.
