@@ -62,4 +62,44 @@ public enum PreviewData {
         repository.addEntry(to: film, date: .now.addingTimeInterval(-7 * day), rating: 5, notes: "Quietly wonderful.")
         try repository.save()
     }
+
+    /// Fills the seeded built-in collections with a few sample items and entries, so screenshots
+    /// and manual checks show drawers with keepsakes. Restaurants and Cities stay empty on
+    /// purpose: they show the ghost state. Launch argument `-sampleData` (in-memory store only).
+    public static func fillBuiltIns(_ repository: Repository) throws {
+        let day: TimeInterval = 86400
+        let byKind = try Dictionary(
+            repository.collections(includeHidden: true).map { ($0.kind, $0) },
+            uniquingKeysWith: { first, _ in first },
+        )
+        if let cafes = byKind[.cafes] {
+            let ranked = [("Prufrock Coffee", 0.92), ("Monmouth", 0.81), ("Kaffeine", 0.74), ("Workshop", 0.6)]
+            for (index, (name, score)) in ranked.enumerated() {
+                let item = repository.upsertItem(named: name, externalRef: "sample:\(name)", in: cafes)
+                item.rankScore = score
+                repository.addEntry(to: item, date: .now.addingTimeInterval(-Double(index + 1) * 3 * day))
+            }
+        }
+        if let countries = byKind[.countries] {
+            let visited = [("Japan", "JP"), ("Peru", "PE"), ("Kenya", "KE"), ("Portugal", "PT")]
+            let daysAgo = [400.0, 900.0, 1300.0, 60.0]
+            for ((name, code), daysAgo) in zip(visited, daysAgo) {
+                let item = repository.upsertItem(named: name, externalRef: "iso:\(code)", in: countries)
+                item.countryCode = code
+                repository.addEntry(to: item, date: .now.addingTimeInterval(-daysAgo * day))
+            }
+        }
+        if let films = byKind[.films] {
+            for (index, name) in ["Perfect Days", "Past Lives", "Aftersun"].enumerated() {
+                let item = repository.upsertItem(named: name, externalRef: "sample:\(name)", in: films)
+                repository.addEntry(to: item, date: .now.addingTimeInterval(-Double(index + 1) * 10 * day), rating: 5)
+            }
+        }
+        if let airlines = byKind[.airlines] {
+            let item = repository.upsertItem(named: "British Airways", externalRef: "iata:BA", in: airlines)
+            repository.addEntry(to: item, date: .now.addingTimeInterval(-30 * day))
+            repository.addEntry(to: item, date: .now.addingTimeInterval(-200 * day))
+        }
+        try repository.save()
+    }
 }

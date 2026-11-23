@@ -86,4 +86,16 @@ struct BuiltInCollectionsTests {
         #expect(Set(kinds) == Set(CollectionKind.allCases.filter { $0 != .custom }))
         #expect(kinds.count == Set(kinds).count)
     }
+
+    @Test func sampleDataFillsSomeBuiltInsAndLeavesOthersEmpty() throws {
+        try BuiltInCollections.seedIfNeeded(in: repository.context)
+        try PreviewData.fillBuiltIns(repository)
+        let byKind = try Dictionary(uniqueKeysWithValues: repository.collections().map { ($0.kind, $0) })
+        #expect(byKind[.cafes]?.items?.count == 4)
+        #expect(byKind[.countries]?.items?.count == 4)
+        #expect(byKind[.films]?.items?.count == 3)
+        #expect(byKind[.airlines]?.items?.first?.entries?.count == 2)
+        #expect(byKind[.restaurants]?.items?.isEmpty == true)
+        #expect(byKind[.cities]?.items?.isEmpty == true)
+    }
 }
