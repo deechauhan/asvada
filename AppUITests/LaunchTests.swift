@@ -129,8 +129,7 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
 
         // Rename
-        app.staticTexts["Concerts"].swipeRight()
-        app.buttons["Customise"].tap()
+        customise(app, "Concerts")
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
         let field = app.textFields["collectionNameField"]
         field.tap()
@@ -141,11 +140,11 @@ final class LaunchTests: XCTestCase {
         field.typeText("Gigs")
         attachScreenshot(of: app, named: "edit-collection")
         app.buttons["saveCollectionButton"].tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForNonExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Gigs"].waitForExistence(timeout: 5))
 
         // Delete with confirmation
-        app.staticTexts["Gigs"].swipeRight()
-        app.buttons["Customise"].tap()
+        customise(app, "Gigs")
         app.buttons["deleteCollectionButton"].tap()
         let confirm = app.buttons["confirmDeleteButton"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
@@ -155,8 +154,7 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Gigs"].waitForNonExistence(timeout: 5))
 
         // Built-ins can be edited but not deleted
-        app.staticTexts["Cafés"].swipeRight()
-        app.buttons["Customise"].tap()
+        customise(app, "Cafés")
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
         XCTAssertFalse(app.buttons["deleteCollectionButton"].exists)
     }
@@ -176,6 +174,24 @@ final class LaunchTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Swipes a collection row right and taps Customise. Retries the swipe once: a swipe that
+    /// lands while the list is still re-laying out (e.g. just after a sheet closes) is dropped.
+    @MainActor
+    private func customise(_ app: XCUIApplication, _ name: String) {
+        let row = app.staticTexts[name]
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "\(name) row missing")
+        let action = app.buttons["Customise"]
+        for _ in 0 ..< 2 {
+            row.swipeRight()
+            if action.waitForExistence(timeout: 4) {
+                break
+            }
+        }
+        XCTAssertTrue(action.exists, "Customise action did not appear for \(name)")
+        action.tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+    }
 
     /// Switches to Collections and waits until the list has loaded, so toolbar taps don't land
     /// mid tab-transition (they're dropped while the glass toolbar is animating).
