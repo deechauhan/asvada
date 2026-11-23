@@ -8,17 +8,18 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
-    func testLaunchShowsTimelineTab() {
+    func testLaunchShowsJournal() {
         let app = launch(["-resetState"])
-        XCTAssertTrue(app.tabBars.buttons["Timeline"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.navigationBars["Timeline"].exists)
+        XCTAssertTrue(app.tabBars.buttons["Journal"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Journal"].exists)
+        XCTAssertTrue(app.staticTexts["your first keepsake"].exists)
         attachScreenshot(of: app, named: "launch")
     }
 
     @MainActor
-    func testAllFourTabsAreReachable() {
+    func testAllThreeTabsAreReachable() {
         let app = launch(["-resetState"])
-        for title in ["Collections", "Map", "Settings", "Timeline"] {
+        for title in ["Collections", "Atlas", "Journal"] {
             let button = app.tabBars.buttons[title]
             XCTAssertTrue(button.waitForExistence(timeout: 10), "\(title) tab missing")
             button.tap()
@@ -29,14 +30,14 @@ final class LaunchTests: XCTestCase {
     @MainActor
     func testLogButtonOpensQuickLogFromAnyTab() {
         let app = launch(["-resetState"])
-        app.tabBars.buttons["Map"].tap()
+        app.tabBars.buttons["Atlas"].tap()
         let logButton = app.buttons["quickLogButton"]
         XCTAssertTrue(logButton.waitForExistence(timeout: 10))
         logButton.tap()
         XCTAssertTrue(app.navigationBars["What did you savour?"].waitForExistence(timeout: 5))
         attachScreenshot(of: app, named: "quick-log")
         app.buttons["Cancel"].tap()
-        XCTAssertTrue(app.navigationBars["Map"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Atlas"].waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -56,7 +57,10 @@ final class LaunchTests: XCTestCase {
     @MainActor
     func testAboutExplainsNameAndShowsVersion() {
         let app = launch(["-resetState"])
-        app.tabBars.buttons["Settings"].tap()
+        // Settings lives behind the ā avatar in the Journal toolbar.
+        let settings = app.buttons["settingsButton"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 10))
+        settings.tap()
         let aboutLink = app.buttons["aboutLink"]
         XCTAssertTrue(aboutLink.waitForExistence(timeout: 10))
         aboutLink.tap()

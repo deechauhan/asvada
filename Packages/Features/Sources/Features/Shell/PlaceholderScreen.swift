@@ -42,7 +42,7 @@ struct SettingsScreen: View {
             }
             .scrollContentBackground(.hidden)
             .background(Palette.background.color)
-            .navigationTitle(AppTab.settings.title)
+            .navigationTitle("Settings")
         }
     }
 }
