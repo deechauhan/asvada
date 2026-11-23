@@ -66,6 +66,29 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testCollectionsListsBuiltInsAndCanHideOne() {
+        let app = launch(["-resetState"])
+        app.tabBars.buttons["Collections"].tap()
+        XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
+        for name in ["Cafés", "Restaurants", "Countries", "Cities", "Airlines", "Films"] {
+            XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: 5), "\(name) missing")
+        }
+        attachScreenshot(of: app, named: "collections")
+
+        app.staticTexts["Airlines"].swipeLeft()
+        let hide = app.buttons["Hide"]
+        XCTAssertTrue(hide.waitForExistence(timeout: 5))
+        hide.tap()
+
+        // Hidden collections stay listed (dimmed, in their own section) and can be shown again.
+        let airlines = app.staticTexts["Airlines"]
+        XCTAssertTrue(airlines.waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "collections-hidden")
+        airlines.swipeLeft()
+        XCTAssertTrue(app.buttons["Show"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testDesignCatalogLight() {
         let app = launch(["-designCatalog"])
         XCTAssertTrue(app.navigationBars["Design catalogue"].waitForExistence(timeout: 10))

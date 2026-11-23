@@ -52,7 +52,7 @@ public struct AppShellView: View {
         case .timeline:
             PlaceholderScreen(tab: tab, message: "Everything you log will appear here, newest first.")
         case .collections:
-            PlaceholderScreen(tab: tab, message: "Cafés, countries, films and your own collections.")
+            CollectionsScreen()
         case .map:
             PlaceholderScreen(tab: tab, message: "A collage of everywhere you've been.")
         case .settings:
