@@ -1,3 +1,9 @@
+import DesignSystem
+import Model
+import Storage
+import SwiftData
+import SwiftUI
+
 /// Collections: the turning cabinet by default (one drawer big and centred on a revolving column,
 /// docs/design/INTERACTION.md §3), or the whole chest of drawers two to a row ("All drawers").
 /// In the chest, "Edit" makes the drawers jiggle: drag one onto another to reorder, or tap its
