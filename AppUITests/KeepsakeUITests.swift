@@ -53,7 +53,9 @@ final class KeepsakeUITests: UITestCase {
         // title), so check the rows' selected state instead.
         XCTAssertTrue(waitUntilSelected(japan, true))
         search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 5) + "portu")
+        // The list filters as you type: wait for the row, as for Japan above.
         let portugal = app.buttons["country-PT"]
+        XCTAssertTrue(portugal.waitForExistence(timeout: 5))
         portugal.tap()
         XCTAssertTrue(waitUntilSelected(portugal, true))
         // The ink map floods with both.
