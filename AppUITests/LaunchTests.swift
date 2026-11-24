@@ -166,12 +166,13 @@ final class LaunchTests: UITestCase {
         // Rename, from the front drawer's hold menu.
         customiseFromMenu(app, "Concerts")
         let field = app.textFields["collectionNameField"]
-        field.tap()
-        field.press(forDuration: 1.0)
-        if app.menuItems["Select All"].waitForExistence(timeout: 2) {
-            app.menuItems["Select All"].tap()
-        }
+        // Tap the field's right end so the cursor sits after the old name, then delete it: the
+        // Select All menu doesn't always show in time.
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+        let oldName = field.value as? String ?? ""
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: oldName.count))
         field.typeText("Gigs")
+        XCTAssertEqual(field.value as? String, "Gigs")
         attachScreenshot(of: app, named: "edit-collection")
         app.buttons["saveCollectionButton"].tap()
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForNonExistence(timeout: 10))
