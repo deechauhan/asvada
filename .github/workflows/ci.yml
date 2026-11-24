@@ -86,12 +86,23 @@ jobs:
             echo "::endgroup::"
           done
 
+  # The UI tests are split across two runners that work side by side: LaunchTests on one,
+  # every other test class (new ones included) on the other. Each builds for itself (under a
+  # minute with the cache) and tests its half.
   app:
-    name: App build + UI test
+    name: App build + UI test (${{ matrix.shard.name }})
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard:
+          - name: launch
+            tests: -only-testing:AsvadaUITests/LaunchTests
+          - name: features
+            tests: -skip-testing:AsvadaUITests/LaunchTests
     env:
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
@@ -132,13 +143,17 @@ jobs:
         uses: actions/cache@v5
         with:
           path: build/DerivedData
-          key: derived-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift') }}-${{ github.sha }}
+          key: derived-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift') }}-${{ github.sha }}-${{ matrix.shard.name }}
           restore-keys: |
             derived-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift') }}-
             derived-${{ runner.os }}-
-      - name: Pick a simulator
+      - name: Pick a simulator and start booting it
         id: simulator
-        run: echo "udid=$(scripts/ci/pick-simulator.sh)" >> "$GITHUB_OUTPUT"
+        run: |
+          UDID=$(scripts/ci/pick-simulator.sh)
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          # Boots while the app builds; `bootstatus` below waits for it.
+          xcrun simctl boot "$UDID" || true
       - name: Build for testing
         run: |
           set -o pipefail
@@ -151,17 +166,16 @@ jobs:
             -clonedSourcePackagesDirPath build/SourcePackages \
             COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO
-      # UI test classes run side by side on two simulator clones.
       - name: UI tests
         run: |
           set -o pipefail
+          xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
           xcodebuild test-without-building \
             -project Asvada.xcodeproj -scheme Asvada \
             -destination "id=${{ steps.simulator.outputs.udid }}" \
             -derivedDataPath build/DerivedData \
             -resultBundlePath build/Asvada.xcresult \
-            -parallel-testing-enabled YES \
-            -parallel-testing-worker-count 2
+            ${{ matrix.shard.tests }}
       - name: Export screenshots
         if: always()
         run: |
@@ -179,14 +193,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: screenshots
+          name: screenshots-${{ matrix.shard.name }}
           path: build/screenshots
           if-no-files-found: ignore
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v5
         with:
-          name: xcresult
+          name: xcresult-${{ matrix.shard.name }}
           path: build/Asvada.xcresult
           if-no-files-found: ignore
       # Last, so the report sits at the very end of the log, after the screenshot dump: the

@@ -47,6 +47,7 @@ For any PR that changes UI, add or update a UI test that attaches a named screen
 (see `screenshots/README.md`). After CI is green, pull them into `screenshots/<issue>/`:
 
 ```bash
+# once per app job: "App build + UI test (launch)" and "(features)"
 gh api repos/deechauhan/asvada/actions/jobs/<app-job-id>/logs | python3 -I scripts/screenshots-from-log.py screenshots/<issue>
 ```
 
