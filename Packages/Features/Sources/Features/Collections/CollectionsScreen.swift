@@ -21,6 +21,8 @@ struct CollectionsScreen: View {
     @State private var editing: ExperienceCollection?
     @State private var sharing: ExperienceCollection?
     @State private var opened: ExperienceCollection?
+    /// Set by a sheet when it appears, so a sheet requested from a context menu can be retried.
+    @State private var sheetAppeared = false
     /// The view the owner chose this session; `nil` follows the default for the text size.
     @State private var chestChosen: Bool?
     @AppStorage("cabinet.front") private var frontID = ""
@@ -77,10 +79,12 @@ struct CollectionsScreen: View {
             // must change `editing`, or the second sheet never presents.
             .sheet(item: $editing, onDismiss: clearEditing) { collection in
                 CollectionEditor(mode: .edit(collection))
+                    .onAppear { sheetAppeared = true }
             }
             .sheet(item: $sharing) { collection in
                 if let content = ShareContent(collection: collection) {
                     ShareCardSheet(collection: collection, content: content)
+                        .onAppear { sheetAppeared = true }
                 }
             }
         }
@@ -150,8 +154,8 @@ struct CollectionsScreen: View {
         CabinetActions(
             open: { opened = $0 },
             create: { isCreating = true },
-            customise: { collection in afterMenuCloses { editing = collection } },
-            share: { collection in afterMenuCloses { sharing = collection } },
+            customise: { afterMenuCloses({ editing = $0 }, $0) },
+            share: { afterMenuCloses({ sharing = $0 }, $0) },
             hide: { setHidden(true, $0) },
             move: { collection, slot in
                 guard let index = visible.firstIndex(where: { $0.id == collection.id }) else { return }
@@ -243,12 +247,12 @@ struct CollectionsScreen: View {
         // A long press shows this menu; moving the finger instead lifts the drawer to drag.
         .contextMenu {
             Button("Customise", systemImage: "slider.horizontal.3") {
-                afterMenuCloses { editing = collection }
+                afterMenuCloses({ editing = $0 }, collection)
             }
             // Only filled drawers have something to share.
             if ShareContent(collection: collection) != nil {
                 Button("Share", systemImage: "square.and.arrow.up") {
-                    afterMenuCloses { sharing = collection }
+                    afterMenuCloses({ sharing = $0 }, collection)
                 }
             }
             Button("Hide", systemImage: "eye.slash") {
@@ -307,18 +311,29 @@ struct CollectionsScreen: View {
         save()
     }
 
-    /// Runs `present` once a context menu has finished closing. Presenting a sheet straight from a
-    /// menu action races the menu's dismissal, and UIKit then drops the sheet (seen as a second
-    /// Customise that did nothing).
-    private func afterMenuCloses(_ present: @escaping @MainActor () -> Void) {
+    /// Shows `collection` in a sheet (through `show`) once a context menu has finished closing.
+    /// Presenting straight from a menu action races the menu's dismissal and UIKit drops the
+    /// sheet; on a slow device even a fixed wait isn't always enough. So the sheet reports when it
+    /// appears, and until it has, the request is cleared and made again a little later.
+    private func afterMenuCloses(
+        _ show: @escaping @MainActor (ExperienceCollection?) -> Void,
+        _ collection: ExperienceCollection,
+    ) {
+        sheetAppeared = false
         Task { @MainActor in
-            try? await Task.sleep(for: Self.menuDismissal)
-            present()
+            for wait in Self.menuDismissalRetries {
+                try? await Task.sleep(for: wait)
+                guard !sheetAppeared else { return }
+                // A cleared request has to reach SwiftUI before the new one, or nothing changes.
+                show(nil)
+                try? await Task.sleep(for: .milliseconds(50))
+                show(collection)
+            }
         }
     }
 
-    /// Long enough for the context menu's closing animation.
-    static let menuDismissal = Duration.milliseconds(400)
+    /// The context menu's closing animation, then two later tries if the sheet was dropped.
+    static let menuDismissalRetries: [Duration] = [.milliseconds(400), .milliseconds(500), .milliseconds(1000)]
 
     private func clearEditing() {
         editing = nil
