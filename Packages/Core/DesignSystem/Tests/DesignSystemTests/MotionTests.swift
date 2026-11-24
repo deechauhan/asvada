@@ -144,13 +144,10 @@ struct HapticKitTests {
     }
 
     @Test func detentsAreThrottledTo30ms() {
+        // shouldFire is mutating, which #expect can't call in place, so record the answers first.
         var throttle = DetentThrottle()
-        #expect(throttle.shouldFire(at: 1.000))
-        #expect(!throttle.shouldFire(at: 1.010))
-        #expect(!throttle.shouldFire(at: 1.029))
-        #expect(throttle.shouldFire(at: 1.031))
-        #expect(!throttle.shouldFire(at: 1.040))
-        #expect(throttle.shouldFire(at: 2.000))
+        let fired = [1.000, 1.010, 1.029, 1.031, 1.040, 2.000].map { throttle.shouldFire(at: $0) }
+        #expect(fired == [true, false, false, true, false, true])
     }
 
     @Test func theTearIsSixTicks22msApart() {
