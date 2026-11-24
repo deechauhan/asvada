@@ -82,9 +82,11 @@ final class LaunchTests: UITestCase {
         XCTAssertTrue(labelled("Nothing savoured yet", in: app).exists)
         attachScreenshot(of: app, named: "collections")
 
-        // Put a drawer away from its menu: it waits on the storeroom shelf.
+        // Put a drawer away from its hold menu: it waits on the chest's storeroom shelf.
         openDrawerMenu(app, "Airlines")
         app.buttons["Put away"].tap()
+        XCTAssertTrue(app.buttons["Airlines drawer"].waitForNonExistence(timeout: 10))
+        openChest(app)
         let takeOut = app.buttons["showCollection-Airlines"]
         XCTAssertTrue(takeOut.waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Storeroom"].exists)
