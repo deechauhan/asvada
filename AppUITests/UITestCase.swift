@@ -16,11 +16,44 @@ class UITestCase: XCTestCase {
         XCTAssertTrue(element.waitForExistence(timeout: 5), "\(element) never scrolled into view")
     }
 
+    /// Turns the cabinet to `name`'s drawer and taps it open, unless it's open already. Drawers
+    /// open from the cabinet, so this leaves the chest first if it's showing.
+    @MainActor
+    func openDrawer(_ app: XCUIApplication, _ name: String) {
+        guard !app.navigationBars[name].exists else { return }
+        let done = app.buttons["cabinetButton"]
+        for _ in 0 ..< 3 where done.exists {
+            done.tap()
+            _ = done.waitForNonExistence(timeout: 4)
+        }
+        let knob = app.buttons["Turn to \(name)"]
+        XCTAssertTrue(knob.waitForExistence(timeout: 10), "No knob for \(name)")
+        knob.tap()
+        XCTAssertTrue(waitUntilSelected(knob, true), "The cabinet didn't turn to \(name)")
+        // Tapping the front drawer, in the middle of the drum, opens it.
+        let front = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))
+        for _ in 0 ..< 2 where !app.navigationBars[name].exists {
+            front.tap()
+            _ = app.navigationBars[name].waitForExistence(timeout: 5)
+        }
+        XCTAssertTrue(app.navigationBars[name].exists, "The \(name) drawer didn't open")
+    }
+
     /// Opens Customise from a collection drawer's context menu (long press).
     @MainActor
     func customiseFromMenu(_ app: XCUIApplication, _ name: String) {
         openDrawerMenu(app, name)
         app.buttons["Customise"].tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+    }
+
+    /// Opens `name`'s drawer and its Customise sheet from the drawer's toolbar.
+    @MainActor
+    func customise(_ app: XCUIApplication, _ name: String) {
+        openDrawer(app, name)
+        let button = app.buttons["drawerCustomise"]
+        XCTAssertTrue(button.waitForExistence(timeout: 5))
+        button.tap()
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
     }
 

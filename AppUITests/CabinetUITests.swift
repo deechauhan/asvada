@@ -73,4 +73,75 @@ final class CabinetUITests: UITestCase {
         XCTAssertTrue(app.buttons["allDrawersButton"].waitForExistence(timeout: 10))
         XCTAssertTrue(waitUntilSelected(app.buttons["Turn to Films"], true))
     }
+
+    @MainActor
+    func testHoldingTheFrontDrawerShowsItsMenu() {
+        let app = launch(["-resetState", "-sampleData"])
+        openCollectionsAndWait(app)
+        XCTAssertTrue(waitUntilSelected(app.buttons["Turn to Cafés"], true))
+        // The cabinet's front drawer has the hold menu but, unlike the chest, can't be dragged.
+        let customise = app.buttons["Customise"]
+        for _ in 0 ..< 2 where !customise.exists {
+            drum(app).press(forDuration: 1.2)
+            _ = customise.waitForExistence(timeout: 4)
+        }
+        XCTAssertTrue(customise.exists, "Holding the front drawer showed no menu")
+        XCTAssertTrue(app.buttons["Open"].exists)
+        XCTAssertTrue(app.buttons["Share"].exists)
+        attachScreenshot(of: app, named: "cabinet-hold-menu")
+        customise.tap()
+        XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
+    }
+
+    @MainActor
+    func testCustomiseAndShareFromAnOpenDrawer() {
+        let app = launch(["-resetState", "-sampleData"])
+        openCollectionsAndWait(app)
+
+        // Share the top cafés straight from the open drawer.
+        openDrawer(app, "Cafés")
+        let share = app.buttons["drawerShare"]
+        XCTAssertTrue(share.waitForExistence(timeout: 5), "Share missing from a filled drawer")
+        attachScreenshot(of: app, named: "open-drawer-toolbar")
+        share.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["shareCardPreview"].waitForExistence(timeout: 15))
+        app.swipeDown(velocity: .fast)
+        XCTAssertTrue(app.descendants(matching: .any)["shareCardPreview"].waitForNonExistence(timeout: 10))
+
+        // Customise it from the same toolbar; Cancel leaves it as it was.
+        customise(app, "Cafés")
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.navigationBars["Cafés"].waitForExistence(timeout: 10))
+
+        // An empty drawer has nothing to share.
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
+        openDrawer(app, "Restaurants")
+        XCTAssertTrue(app.buttons["drawerCustomise"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["drawerShare"].exists)
+    }
+
+    @MainActor
+    func testDeletingAnOpenDrawerClosesIt() {
+        let app = launch(["-resetState"])
+        openCollectionsAndWait(app)
+        app.buttons["newCollectionButton"].tap()
+        let name = app.textFields["collectionNameField"]
+        XCTAssertTrue(name.waitForExistence(timeout: 15))
+        name.tap()
+        name.typeText("Concerts")
+        app.buttons["saveCollectionButton"].tap()
+        XCTAssertTrue(app.buttons["Concerts drawer"].waitForExistence(timeout: 10))
+
+        customise(app, "Concerts")
+        let delete = app.buttons["deleteCollectionButton"]
+        scrollUntilVisible(delete, in: app)
+        delete.tap()
+        let confirm = app.buttons["confirmDeleteButton"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        confirm.tap()
+        // Back at the cabinet, with no Concerts drawer left.
+        XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Concerts drawer"].waitForNonExistence(timeout: 5))
+    }
 }

@@ -6,8 +6,6 @@ import SwiftUI
 /// out of the drawer, and a key stat in serif numerals. An empty drawer shows a ghost keepsake.
 struct CabinetDrawer: View {
     let collection: ExperienceCollection
-    var isArranging = false
-    var onHide: () -> Void = {}
 
     private var accent: CollectionAccent {
         collection.accent
@@ -42,22 +40,6 @@ struct CabinetDrawer: View {
                 .padding(.top, 5)
                 .accessibilityHidden(true)
         }
-        .overlay(alignment: .topLeading) {
-            if isArranging {
-                Button(action: onHide) {
-                    Image(systemName: "minus.circle.fill")
-                        .font(.title2)
-                        .symbolRenderingMode(.palette)
-                        .foregroundStyle(Palette.onBrand.color, Palette.textSecondary.color)
-                }
-                .buttonStyle(.plain)
-                .offset(x: -8, y: -8)
-                .accessibilityLabel("Hide \(collection.name)")
-                .accessibilityIdentifier("hideCollection-\(collection.name)")
-                .transition(.scale.combined(with: .opacity))
-            }
-        }
-        .modifier(Jiggle(isActive: isArranging, seed: collection.id.uuidString))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("collection-\(collection.kind.rawValue)-\(collection.name)")
     }
@@ -292,35 +274,5 @@ struct NewCollectionTile: View {
         .buttonStyle(.plain)
         .accessibilityLabel("New collection")
         .accessibilityIdentifier("newCollectionTile")
-    }
-}
-
-/// The home-screen "edit" wobble while arranging. Each drawer starts at its own phase. Under
-/// Reduce Motion there's no wobble; a brand outline marks the arranging state instead.
-struct Jiggle: ViewModifier {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    let isActive: Bool
-    let seed: String
-
-    func body(content: Content) -> some View {
-        if isActive, reduceMotion {
-            content.overlay(
-                RoundedRectangle(cornerRadius: Radius.medium)
-                    .strokeBorder(Palette.brand.color.opacity(0.5), lineWidth: 1.5),
-            )
-        } else if isActive {
-            content.keyframeAnimator(initialValue: 0.0, repeating: true) { view, angle in
-                view.rotationEffect(.degrees(angle))
-            } keyframes: { _ in
-                KeyframeTrack {
-                    LinearKeyframe(0.0, duration: 0.01 + Seed.unit(seed) * 0.12)
-                    LinearKeyframe(1.1, duration: 0.12)
-                    LinearKeyframe(-1.1, duration: 0.24)
-                    LinearKeyframe(0.0, duration: 0.12)
-                }
-            }
-        } else {
-            content
-        }
     }
 }
