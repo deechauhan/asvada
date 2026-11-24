@@ -66,8 +66,8 @@ public enum TMDBError: Error, Equatable, Sendable {
 /// typed by the user leaves the phone. Works with either kind of TMDB credential: a v4 read
 /// access token (sent as a bearer token) or a v3 API key (sent as `api_key`).
 public struct TMDBClient: Sendable {
-    public static let apiBase = URL(string: "https://api.themoviedb.org/3/")! // swiftlint:disable:this force_unwrapping
-    public static let imageBase = URL(string: "https://image.tmdb.org/t/p/")! // swiftlint:disable:this force_unwrapping
+    public static let apiBase = URL(string: "https://api.themoviedb.org/3/")!
+    public static let imageBase = URL(string: "https://image.tmdb.org/t/p/")!
 
     private let configuration: TMDBConfiguration?
     private let http: HTTPDataSource
