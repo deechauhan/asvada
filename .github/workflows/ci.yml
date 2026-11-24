@@ -115,3 +115,17 @@ jobs:
           name: xcresult
           path: build/Asvada.xcresult
           if-no-files-found: ignore
+      # Last, so failures sit at the very end of the log, after the screenshot dump.
+      - name: Summarise test failures
+        if: failure()
+        run: |
+          [ -d build/Asvada.xcresult ] || exit 0
+          xcrun xcresulttool get test-results summary --path build/Asvada.xcresult --compact > build/summary.json || exit 0
+          python3 - build/summary.json <<'PY'
+          import json, sys
+          summary = json.load(open(sys.argv[1]))
+          failures = summary.get("testFailures", [])
+          print(f"{summary.get('result')}: {summary.get('failedTests', len(failures))} failed of {summary.get('totalTestCount')}")
+          for failure in failures:
+              print(f"FAILED {failure.get('testIdentifierString') or failure.get('testName')}: {failure.get('failureText')}")
+          PY
