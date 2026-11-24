@@ -53,6 +53,9 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        # Nothing uses the generated Swift asset symbols; generating them costs an actool run.
+        ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS: NO
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
   AsvadaUITests:
     type: bundle.ui-testing
     platform: iOS
