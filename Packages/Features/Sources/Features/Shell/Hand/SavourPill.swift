@@ -6,44 +6,37 @@ import TipKit
     import UIKit
 #endif
 
-/// What the shell needs to draw the hand: whether it's out, which blank the thumb is on, and
-/// where the pill is on screen (the hand fans out over it).
+/// Where the pill is on screen, shared without re-rendering the tab view: only the press catcher
+/// and the hand read it. (Writing it into the shell's own state re-rendered the tab view, which
+/// laid the pill out again, endlessly.)
+@MainActor
+@Observable
+final class PillFrame {
+    var frame: CGRect = .zero
+
+    var centre: CGPoint {
+        CGPoint(x: frame.midX, y: frame.midY)
+    }
+}
+
+/// What the shell needs to draw the hand: whether it's out and which blank the thumb is on.
 struct HandState: Equatable {
     var isShown = false
     var selection: Int?
-    var origin: CGPoint = .zero
 }
 
-/// The savour pill (INTERACTION.md §5). A tap opens quick-log on the hand laid out as a grid.
-/// Holding for 170 ms, or sliding up more than 8 pt, fans the hand of blanks out over the
-/// thumb; sliding onto a blank lifts it and letting go draws it. A quick flick draws the same
-/// blank before the hand has even appeared, because the blanks never move. Sliding below the
-/// pill cancels.
+/// The savour pill's face, in the tab-bar accessory (INTERACTION.md §5): the ā, "Savour
+/// something" and a chevron hinting that it slides up. Its touches are handled by
+/// `PillPressCatcher`, which sits over it above the tab bar; VoiceOver uses the pill itself: a
+/// button that opens quick-log, with one action per blank.
 struct SavourPill: View {
     /// The visible collections, in cabinet order (the hand holds the first eight).
     let collections: [ExperienceCollection]
-    @Binding var hand: HandState
+    let frame: PillFrame
     let onTap: () -> Void
     let onDraw: (ExperienceCollection) -> Void
 
-    /// How long a press must last before the hand fans out.
-    static let holdDelay = Duration.milliseconds(170)
-    /// How far up a slide must go to bring the hand out early.
-    static let slideToShow: CGFloat = 8
-    /// The most a press can move and still count as a tap.
-    static let tapSlop: CGFloat = 10
-
-    /// Where the pill is on screen. Kept here, not in the shell's state: writing it upward on
-    /// every layout re-rendered the whole tab view, which re-laid out the pill, endlessly.
-    @State private var origin: CGPoint = .zero
-    @State private var isPressing = false
-    @State private var holdTimer: Task<Void, Never>?
-    @State private var draws = 0
     private let tip = HoldToDrawTip()
-
-    private var hand8: [ExperienceCollection] {
-        Array(collections.prefix(HandLayout.maximumCount))
-    }
 
     var body: some View {
         HStack(spacing: Spacing.small) {
@@ -60,33 +53,80 @@ struct SavourPill: View {
                 .foregroundStyle(Palette.textSecondary.color)
         }
         .frame(maxWidth: .infinity, minHeight: 36)
-        .contentShape(Rectangle())
-        .onGeometryChange(for: CGPoint.self) { proxy in
-            let frame = proxy.frame(in: .global)
-            return CGPoint(x: frame.midX, y: frame.midY)
-        } action: { newOrigin in
-            origin = newOrigin
-            // `-showHand` holds the hand out (Cafés lifted) for screenshots: a real press can't be
-            // paused mid-gesture in a UI test.
-            if Self.showsHandForScreenshots, !hand.isShown {
-                hand = HandState(isShown: true, selection: 0, origin: newOrigin)
+        .onGeometryChange(for: CGRect.self) { proxy in
+            proxy.frame(in: .global)
+        } action: { newFrame in
+            // An @Observable setter notifies even for an equal value.
+            if frame.frame != newFrame {
+                frame.frame = newFrame
             }
         }
-        .pressTracking(changed: pressChanged, ended: pressEnded, cancelled: pressCancelled)
-        .detentHaptic(trigger: hand.selection)
-        .haptic(.pick, trigger: draws)
+        .onDisappear { frame.frame = .zero }
         .popoverTip(tip)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Savour something")
         .accessibilityHint("Opens quick log. Actions draw a keepsake directly.")
         .accessibilityAddTraits(.isButton)
-        .accessibilityAction(.default, tap)
+        .accessibilityAction(.default, onTap)
         .accessibilityActions {
-            ForEach(hand8) { collection in
-                Button(collection.savourPhrase) { draw(collection) }
+            ForEach(collections.prefix(HandLayout.maximumCount)) { collection in
+                Button(collection.savourPhrase) { onDraw(collection) }
             }
         }
         .accessibilityIdentifier("quickLogButton")
+    }
+}
+
+/// An invisible patch over the pill, in the shell's overlay above the tab bar, that handles its
+/// touches. (Inside the tab-bar accessory the system's own tab-bar drags took the touch as soon as
+/// the finger slid, so a slide never ended on the pill.)
+///
+/// A tap opens quick-log. Holding for 170 ms, or sliding up more than 8 pt, fans the hand of
+/// blanks out over the thumb; sliding onto a blank lifts it and letting go draws it. A quick flick
+/// draws the same blank before the hand has even appeared, because the blanks never move. Sliding
+/// below the pill cancels.
+struct PillPressCatcher: View {
+    let collections: [ExperienceCollection]
+    let frame: PillFrame
+    @Binding var hand: HandState
+    let onTap: () -> Void
+    let onDraw: (ExperienceCollection) -> Void
+
+    /// How long a press must last before the hand fans out.
+    static let holdDelay = Duration.milliseconds(170)
+    /// How far up a slide must go to bring the hand out early.
+    static let slideToShow: CGFloat = 8
+    /// The most a press can move and still count as a tap.
+    static let tapSlop: CGFloat = 10
+
+    @State private var isPressing = false
+    @State private var holdTimer: Task<Void, Never>?
+    @State private var draws = 0
+
+    private var hand8: [ExperienceCollection] {
+        Array(collections.prefix(HandLayout.maximumCount))
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let origin = proxy.frame(in: .global).origin
+            Color.clear
+                .contentShape(Rectangle())
+                .frame(width: frame.frame.width, height: frame.frame.height)
+                .position(x: frame.centre.x - origin.x, y: frame.centre.y - origin.y)
+                .pressTracking(changed: pressChanged, ended: pressEnded, cancelled: pressCancelled)
+        }
+        .ignoresSafeArea()
+        .detentHaptic(trigger: hand.selection)
+        .haptic(.pick, trigger: draws)
+        .onChange(of: frame.frame) { _, newFrame in
+            // `-showHand` holds the hand out (Cafés lifted) for screenshots: a real press can't be
+            // paused mid-gesture in a UI test.
+            if Self.showsHandForScreenshots, !hand.isShown, newFrame != .zero {
+                hand = HandState(isShown: true, selection: 0)
+            }
+        }
+        .accessibilityHidden(true)
     }
 
     // MARK: - The press
@@ -143,7 +183,6 @@ struct SavourPill: View {
 
     private func showHand() {
         guard !hand8.isEmpty else { return }
-        hand.origin = origin
         hand.isShown = true
     }
 
@@ -156,7 +195,7 @@ struct SavourPill: View {
 
     private func draw(_ collection: ExperienceCollection) {
         draws += 1
-        tip.invalidate(reason: .actionPerformed)
+        HoldToDrawTip().invalidate(reason: .actionPerformed)
         onDraw(collection)
     }
 }

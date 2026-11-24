@@ -19,6 +19,7 @@ public struct AppShellView: View {
     /// The blank drawn from the hand, if quick-log opened by drawing.
     @State private var drawn: ExperienceCollection?
     @State private var hand = HandState()
+    @State private var pillFrame = PillFrame()
 
     public init() {}
 
@@ -33,6 +34,15 @@ public struct AppShellView: View {
         .tint(Palette.brand.color)
         .quickLogAccessory(pill)
         .overlay { handOverlay }
+        .overlay {
+            PillPressCatcher(
+                collections: collections,
+                frame: pillFrame,
+                hand: $hand,
+                onTap: { openQuickLog(drawing: nil) },
+                onDraw: { openQuickLog(drawing: $0) },
+            )
+        }
         .sheet(isPresented: $isShowingQuickLog) {
             QuickLogSheet(drawn: drawn)
         }
@@ -42,7 +52,7 @@ public struct AppShellView: View {
     private var pill: some View {
         SavourPill(
             collections: collections,
-            hand: $hand,
+            frame: pillFrame,
             onTap: { openQuickLog(drawing: nil) },
             onDraw: { openQuickLog(drawing: $0) },
         )
@@ -55,11 +65,11 @@ public struct AppShellView: View {
             GeometryReader { proxy in
                 let frame = proxy.frame(in: .global)
                 HandOfBlanks(collections: Array(collections.prefix(HandLayout.maximumCount)), selection: hand.selection)
-                    .position(x: hand.origin.x - frame.minX, y: hand.origin.y - frame.minY)
+                    .position(x: pillFrame.centre.x - frame.minX, y: pillFrame.centre.y - frame.minY)
             }
             .ignoresSafeArea()
             .background(Palette.background.color.opacity(0.35).ignoresSafeArea())
-            // The press that brought the hand out keeps tracking on the pill underneath.
+            // The press that brought the hand out keeps tracking on the catcher over the pill.
             .allowsHitTesting(false)
             .transition(.opacity)
         }
