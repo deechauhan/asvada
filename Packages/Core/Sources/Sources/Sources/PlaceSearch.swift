@@ -103,10 +103,11 @@ public struct MapKitPlaceSearch: PlaceSearching {
 
     /// `places` ordered by distance from `point` (stable for ties).
     static func nearestFirst(_ places: [PlaceResult], to point: GeoPoint) -> [PlaceResult] {
-        places.enumerated()
-            .map { (index: $0.offset, place: $0.element, distance: kilometres(from: point, to: $0.element)) }
-            .sorted { $0.distance == $1.distance ? $0.index < $1.index : $0.distance < $1.distance }
-            .map(\.place)
+        let distances: [Double] = places.map { kilometres(from: point, to: $0) }
+        let order: [Int] = places.indices.sorted { lhs, rhs in
+            distances[lhs] == distances[rhs] ? lhs < rhs : distances[lhs] < distances[rhs]
+        }
+        return order.map { places[$0] }
     }
 
     /// An equirectangular distance in kilometres: plenty for ordering places within a city.
