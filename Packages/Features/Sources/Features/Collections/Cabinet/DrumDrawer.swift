@@ -36,6 +36,8 @@ struct DrumDrawer: View {
             front(summary: summary)
         }
         .frame(width: Self.size.width, height: Self.size.height, alignment: .bottom)
+        // The whole drawer (tray and front) answers taps, not just its painted parts.
+        .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(collection.name) drawer")
         .accessibilityValue(summary.spoken)
@@ -96,6 +98,7 @@ struct BlankDrawer: View {
                 .strokeBorder(Palette.brand.color.opacity(0.45), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])),
         )
         .frame(width: DrumDrawer.size.width, height: DrumDrawer.size.height, alignment: .bottom)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("New collection")
         .accessibilityIdentifier("drawer-new")
