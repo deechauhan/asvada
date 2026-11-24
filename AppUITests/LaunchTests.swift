@@ -144,7 +144,8 @@ final class LaunchTests: UITestCase {
 
         app.buttons["quickLogButton"].tap()
         XCTAssertTrue(app.navigationBars["What did you savour?"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
+        // The new collection has its own blank in the hand.
+        XCTAssertTrue(app.buttons["Savour in Concerts"].waitForExistence(timeout: 5))
     }
 
     @MainActor
