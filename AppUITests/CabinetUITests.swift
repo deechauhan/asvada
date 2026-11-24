@@ -144,4 +144,39 @@ final class CabinetUITests: UITestCase {
         XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["Concerts drawer"].waitForNonExistence(timeout: 5))
     }
+
+    @MainActor
+    func testAddAnItemByHandFromAnOpenDrawer() {
+        let app = launch(["-resetState"])
+        openCollectionsAndWait(app)
+
+        // A café search can't find: written in by hand, with a pin on the map.
+        openDrawer(app, "Cafés")
+        app.buttons["drawerAddByHand"].tap()
+        let name = app.textFields["manualItemName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 10))
+        let add = app.buttons["manualItemSave"]
+        XCTAssertFalse(add.isEnabled, "A name is required")
+        name.tap()
+        name.typeText("Corner Kiosk")
+        XCTAssertTrue(add.isEnabled)
+        let pin = app.staticTexts["manualItemPin"]
+        XCTAssertEqual(pin.label, "Tap the map to pin where it is")
+        app.descendants(matching: .any)["manualItemMap"].tap()
+        XCTAssertTrue(labelled("Pinned", in: app, prefix: true).waitForExistence(timeout: 5), "Tapping the map dropped no pin")
+        attachScreenshot(of: app, named: "add-by-hand")
+        add.tap()
+        XCTAssertTrue(name.waitForNonExistence(timeout: 10))
+        let kiosk = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Corner Kiosk")).firstMatch
+        XCTAssertTrue(kiosk.waitForExistence(timeout: 10), "The new café isn't in its drawer")
+        attachScreenshot(of: app, named: "add-by-hand-in-drawer")
+
+        // Films have no place to pin: just a name.
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
+        openDrawer(app, "Films")
+        app.buttons["drawerAddByHand"].tap()
+        XCTAssertTrue(app.textFields["manualItemName"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.descendants(matching: .any)["manualItemMap"].exists)
+    }
 }

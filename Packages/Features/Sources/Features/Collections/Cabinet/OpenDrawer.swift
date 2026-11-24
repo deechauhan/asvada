@@ -9,6 +9,7 @@ struct OpenDrawer: View {
     let collection: ExperienceCollection
     @State private var isCustomising = false
     @State private var isSharing = false
+    @State private var isAddingByHand = false
 
     private var items: [Item] {
         ExperienceCollection.drawerOrder(collection.items ?? [], mode: collection.ratingMode)
@@ -57,9 +58,14 @@ struct OpenDrawer: View {
                     Button("Share", systemImage: "square.and.arrow.up") { isSharing = true }
                         .accessibilityIdentifier("drawerShare")
                 }
+                Button("Add by hand", systemImage: "square.and.pencil") { isAddingByHand = true }
+                    .accessibilityIdentifier("drawerAddByHand")
                 Button("Customise", systemImage: "slider.horizontal.3") { isCustomising = true }
                     .accessibilityIdentifier("drawerCustomise")
             }
+        }
+        .sheet(isPresented: $isAddingByHand) {
+            ManualItemSheet(collection: collection)
         }
         .sheet(isPresented: $isCustomising) {
             CollectionEditor(mode: .edit(collection))
