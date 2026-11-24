@@ -41,6 +41,7 @@ final class OnboardingUITests: UITestCase {
         // Into the app, with the passport and the keepsake in their drawers.
         XCTAssertTrue(app.navigationBars["Journal"].waitForExistence(timeout: 10))
         openCollectionsAndWait(app)
+        openChest(app)
         XCTAssertTrue(labelled("2 stamped", in: app, prefix: true).waitForExistence(timeout: 5))
         XCTAssertTrue(labelled("1 ranked, number one My favourite café", in: app).exists)
     }

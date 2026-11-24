@@ -97,9 +97,15 @@ private struct DrawerStat: View {
 /// Up to three keepsakes fanned like cards: the best in front and centre, the next two behind it,
 /// leaning out. Countries are different: their stamps are inked across a passport page instead.
 /// Under Reduce Motion the keepsakes stay upright (no tilt), still spread side by side.
-private struct DrawerFan: View {
+///
+/// In the turning cabinet the fan sits inside the drawer and `rise` lifts the keepsakes out of it
+/// one after another as the drawer eases ajar.
+struct DrawerFan: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let collection: ExperienceCollection
     let items: [Item]
+    /// How far the keepsakes have risen out of the drawer, in points (0 = sitting in the grid).
+    var rise: CGFloat = 0
 
     /// Where a keepsake sits in the fan: offsets, lean in degrees and stacking order.
     private struct Spot {
@@ -150,7 +156,12 @@ private struct DrawerFan: View {
                     let spot = isPassport ? stampPlacement(rank: rank, of: items.count) : placement(rank: rank, of: items.count)
                     MiniKeepsake(item: item, collection: collection, rank: rank)
                         .paperTilt(spot.angle, anchor: .bottom)
-                        .offset(x: spot.x, y: spot.y)
+                        .offset(x: spot.x, y: spot.y - rise)
+                        .animation(
+                            Motion.animation(Motion.settle, reduceMotion: reduceMotion)
+                                .delay(Motion.staggerDelay(rank, reduceMotion: reduceMotion)),
+                            value: rise,
+                        )
                         .zIndex(spot.layer)
                 }
             }

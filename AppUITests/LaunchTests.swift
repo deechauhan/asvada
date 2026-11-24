@@ -72,8 +72,8 @@ final class LaunchTests: UITestCase {
     @MainActor
     func testCollectionsListsBuiltInsAndCanHideOne() {
         let app = launch(["-resetState"])
-        app.tabBars.buttons["Collections"].tap()
-        XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
+        openCollectionsAndWait(app)
+        openChest(app)
         for name in ["Cafés", "Restaurants", "Countries", "Cities", "Airlines", "Films"] {
             XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: 5), "\(name) missing")
         }
@@ -110,6 +110,7 @@ final class LaunchTests: UITestCase {
         for (args, name) in runs {
             let app = launch(args)
             openCollectionsAndWait(app)
+            openChest(app)
             // Ranked drawers name their No. 1; checklists show their share of the world.
             XCTAssertTrue(labelled("4 ranked, number one Prufrock Coffee", in: app).waitForExistence(timeout: 5))
             XCTAssertTrue(labelled("4 stamped", in: app, prefix: true).waitForExistence(timeout: 5))
@@ -139,7 +140,8 @@ final class LaunchTests: UITestCase {
         XCTAssertTrue(save.isEnabled)
         save.tap()
 
-        XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
+        // The new drawer joins the cabinet (VoiceOver lists it as a drawer).
+        XCTAssertTrue(app.buttons["Concerts drawer"].waitForExistence(timeout: 5))
         attachScreenshot(of: app, named: "collections-with-custom")
 
         app.buttons["quickLogButton"].tap()
@@ -158,9 +160,9 @@ final class LaunchTests: UITestCase {
         name.tap()
         name.typeText("Concerts")
         app.buttons["saveCollectionButton"].tap()
-        XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Concerts drawer"].waitForExistence(timeout: 5))
 
-        // Rename
+        // Rename (from the chest, where every drawer has its context menu)
         customiseFromMenu(app, "Concerts")
         let field = app.textFields["collectionNameField"]
         field.tap()
