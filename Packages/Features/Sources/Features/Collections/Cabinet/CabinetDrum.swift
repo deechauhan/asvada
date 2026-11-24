@@ -17,6 +17,16 @@ struct CabinetDrum: Equatable {
 
     /// How far a finger travels to turn the ring by one drawer, in points.
     static let dragPerDrawer = 170.0
+    /// A finger that stays still this long before lifting has stopped: its release carries no
+    /// fling, as in a scroll view.
+    static let restBeforeLift: TimeInterval = 0.1
+
+    /// The velocity a release really carries: none if the finger rested for `restBeforeLift` or
+    /// more after its last movement (event times, so a busy main thread doesn't change it).
+    static func releaseVelocity(_ velocity: Double, restedFor rest: TimeInterval) -> Double {
+        rest >= restBeforeLift ? 0 : velocity
+    }
+
     /// The most drawers a single fling can travel.
     static let maximumFlingStep = 3
 

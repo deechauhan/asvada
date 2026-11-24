@@ -158,4 +158,20 @@ struct ChestMorphTests {
         #expect(!ChestMorph.commits(0.5))
         #expect(ChestMorph.commits(0.51))
     }
+
+    @Test func aFingerThatRestedBeforeLiftingFlingsNowhere() {
+        // Moving when it lifted: the fling counts.
+        #expect(CabinetDrum.releaseVelocity(-300, restedFor: 0.02) == -300)
+        // Held still first: no fling, however fast it moved before.
+        #expect(CabinetDrum.releaseVelocity(-300, restedFor: 0.4) == 0)
+        #expect(CabinetDrum.releaseVelocity(-300, restedFor: CabinetDrum.restBeforeLift) == 0)
+    }
+
+    @Test func aHeldDragOfJustOverADrawerLandsOnTheNextOne() {
+        // 190 pt left, then held: one drawer on, not two.
+        var drum = CabinetDrum(count: 6, position: 0)
+        drum.position = drum.position(dragging: -190, from: 0)
+        let velocity = CabinetDrum.releaseVelocity(-300, restedFor: 0.4)
+        #expect(drum.restingPosition(afterReleaseAt: velocity) == 1)
+    }
 }
