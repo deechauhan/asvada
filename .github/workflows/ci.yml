@@ -11,8 +11,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Docs, backlog and other non-code changes skip the Swift jobs (skipped counts as passing).
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.code == 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          filters: |
+            code:
+              - 'App/**'
+              - 'AppUITests/**'
+              - 'Packages/**'
+              - 'Config/**'
+              - 'project.yml'
+              - 'scripts/ci/**'
+              - '.github/workflows/ci.yml'
+              - '.swiftlint.yml'
+              - '.swiftformat'
+
   lint:
     name: Lint (SwiftLint + SwiftFormat)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -25,10 +55,17 @@ jobs:
 
   packages:
     name: Package tests
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: macos-26
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # full history, for restoring file times
+      # Unchanged sources keep their commit times, so the cached .build isn't rebuilt from scratch.
+      - name: Restore file times
+        run: python3 scripts/ci/restore-mtimes.py
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
@@ -49,12 +86,41 @@ jobs:
             echo "::endgroup::"
           done
 
+  # The UI tests are split across three runners that work side by side: the two slow
+  # context-menu tests, the rest of LaunchTests, and every other test class (new ones included).
+  # Each builds for itself (about a minute) and tests its share.
   app:
-    name: App build + UI test
+    name: App build + UI test (${{ matrix.shard.name }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard:
+          - name: menus
+            tests: >-
+              -only-testing:AsvadaUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
+              -only-testing:AsvadaUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer
+          - name: launch
+            tests: >-
+              -only-testing:AsvadaUITests/LaunchTests
+              -skip-testing:AsvadaUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
+              -skip-testing:AsvadaUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer
+          - name: features
+            tests: -skip-testing:AsvadaUITests/LaunchTests
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # full history, for restoring file times
+      # Unchanged sources keep their commit times, so the cached DerivedData only rebuilds what
+      # changed (a fresh checkout would make every file look new).
+      - name: Restore file times
+        run: python3 scripts/ci/restore-mtimes.py
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
@@ -78,16 +144,45 @@ jobs:
           fi
       - name: Generate project
         run: xcodegen generate
-      - name: Build and test
+      # Build products from the last run on this branch (or main): with file times restored,
+      # only what changed recompiles. Keyed per commit; the newest match is restored.
+      - name: Cache DerivedData
+        uses: actions/cache@v5
+        with:
+          path: build/DerivedData
+          key: derived-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift') }}-${{ github.sha }}-${{ matrix.shard.name }}
+          restore-keys: |
+            derived-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift') }}-
+            derived-${{ runner.os }}-
+      - name: Pick a simulator and start booting it
+        id: simulator
+        run: |
+          UDID=$(scripts/ci/pick-simulator.sh)
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          # Boots while the app builds; `bootstatus` below waits for it.
+          xcrun simctl boot "$UDID" || true
+      - name: Build for testing
         run: |
           set -o pipefail
-          UDID=$(scripts/ci/pick-simulator.sh)
-          xcodebuild test \
+          # Restored files have new inodes; let the build system trust their times instead.
+          defaults write com.apple.dt.XCBuild IgnoreFileSystemDeviceInodeChanges -bool YES
+          xcodebuild build-for-testing \
             -project Asvada.xcodeproj -scheme Asvada \
-            -destination "id=$UDID" \
+            -destination "id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath build/DerivedData \
             -clonedSourcePackagesDirPath build/SourcePackages \
-            -resultBundlePath build/Asvada.xcresult \
+            COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO
+      - name: UI tests
+        run: |
+          set -o pipefail
+          xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
+          xcodebuild test-without-building \
+            -project Asvada.xcodeproj -scheme Asvada \
+            -destination "id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath build/DerivedData \
+            -resultBundlePath build/Asvada.xcresult \
+            ${{ matrix.shard.tests }}
       - name: Export screenshots
         if: always()
         run: |
@@ -105,27 +200,47 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: screenshots
+          name: screenshots-${{ matrix.shard.name }}
           path: build/screenshots
           if-no-files-found: ignore
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v5
         with:
-          name: xcresult
+          name: xcresult-${{ matrix.shard.name }}
           path: build/Asvada.xcresult
           if-no-files-found: ignore
-      # Last, so failures sit at the very end of the log, after the screenshot dump.
-      - name: Summarise test failures
-        if: failure()
+      # Last, so the report sits at the very end of the log, after the screenshot dump: the
+      # slowest tests (to see where CI time goes), then any failures with file:line.
+      - name: Test report
+        if: always()
         run: |
           [ -d build/Asvada.xcresult ] || exit 0
           xcrun xcresulttool get test-results summary --path build/Asvada.xcresult --compact > build/summary.json || exit 0
-          python3 - build/summary.json <<'PY'
+          xcrun xcresulttool get test-results tests --path build/Asvada.xcresult --compact > build/tests.json || exit 0
+          python3 - build/summary.json build/tests.json <<'PY'
           import json, sys
+
           summary = json.load(open(sys.argv[1]))
-          failures = summary.get("testFailures", [])
-          print(f"{summary.get('result')}: {summary.get('failedTests', len(failures))} failed of {summary.get('totalTestCount')}")
-          for failure in failures:
+          tree = json.load(open(sys.argv[2]))
+          cases, failures = [], []
+
+          def walk(node, test=None):
+              if node.get("nodeType") == "Test Case":
+                  test = node.get("name")
+                  cases.append((node.get("durationInSeconds") or 0, node.get("nodeIdentifier") or test))
+              if node.get("nodeType") == "Failure Message":
+                  failures.append(f"  at {test}: {node.get('name')}")
+              for child in node.get("children", []):
+                  walk(child, test)
+
+          for root in tree.get("testNodes", []):
+              walk(root)
+          print(f"{summary.get('result')}: {summary.get('passedTests')} passed, {summary.get('failedTests')} failed of {summary.get('totalTestCount')}")
+          print("Slowest tests:")
+          for seconds, name in sorted(cases, reverse=True)[:12]:
+              print(f"  {seconds:7.1f}s  {name}")
+          for failure in summary.get("testFailures", []):
               print(f"FAILED {failure.get('testIdentifierString') or failure.get('testName')}: {failure.get('failureText')}")
+          print("\n".join(failures))
           PY
