@@ -96,3 +96,40 @@ struct StressItemsTests {
         #expect(ranked.last?.name == "Café 50")
     }
 }
+
+@MainActor
+struct PlaceStorageTests {
+    @Test func aFoundPlaceIsKeptWithItsWhereabouts() throws {
+        let container = try AsvadaStore.makeContainer(.inMemory)
+        let repository = Repository(context: container.mainContext)
+        try BuiltInCollections.seedIfNeeded(in: repository.context)
+        let match = try repository.collections().first { $0.kind == .cafes }
+        let cafes = try #require(match)
+        let place = PlaceDetails(
+            name: "Prufrock Coffee",
+            externalRef: "mk:I1234",
+            latitude: 51.5204,
+            longitude: -0.1094,
+            countryCode: "GB",
+            address: "23-25 Leather Ln, London",
+        )
+        let item = repository.upsertPlace(place, in: cafes)
+        #expect(item.latitude == 51.5204 && item.longitude == -0.1094)
+        #expect(item.countryCode == "GB")
+        #expect(item.placeAddress == "23-25 Leather Ln, London")
+        // Finding it again updates the same item.
+        let renamed = PlaceDetails(
+            name: "Prufrock",
+            externalRef: "mk:I1234",
+            latitude: 51.5204,
+            longitude: -0.1094,
+            countryCode: nil,
+            address: nil,
+        )
+        let again = repository.upsertPlace(renamed, in: cafes)
+        #expect(again.id == item.id)
+        #expect(again.name == "Prufrock")
+        #expect(again.countryCode == "GB", "a missing code doesn't erase a known one")
+        #expect(again.placeAddress == "23-25 Leather Ln, London")
+    }
+}
