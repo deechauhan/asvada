@@ -88,6 +88,16 @@ class UITestCase: XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 
+    /// Taps Save in the collection editor once it's enabled: it only enables when the typed name
+    /// has reached the form, and a tap before that is silently ignored.
+    @MainActor
+    func tapSaveCollection(_ app: XCUIApplication, timeout: TimeInterval = 5) {
+        let save = app.buttons["saveCollectionButton"]
+        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isEnabled == true"), object: save)
+        XCTAssertEqual(XCTWaiter().wait(for: [enabled], timeout: timeout), .completed, "Save never enabled")
+        save.tap()
+    }
+
     /// The first element of any type whose accessibility label is (or starts with) `label`.
     @MainActor
     func labelled(_ label: String, in app: XCUIApplication, prefix: Bool = false) -> XCUIElement {

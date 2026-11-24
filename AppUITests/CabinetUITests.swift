@@ -130,7 +130,7 @@ final class CabinetUITests: UITestCase {
         XCTAssertTrue(name.waitForExistence(timeout: 15))
         name.tap()
         name.typeText("Concerts")
-        app.buttons["saveCollectionButton"].tap()
+        tapSaveCollection(app)
         XCTAssertTrue(app.buttons["Concerts drawer"].waitForExistence(timeout: 10))
 
         customise(app, "Concerts")

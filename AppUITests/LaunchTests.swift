@@ -160,7 +160,7 @@ final class LaunchTests: UITestCase {
         XCTAssertTrue(name.waitForExistence(timeout: 15))
         name.tap()
         name.typeText("Concerts")
-        app.buttons["saveCollectionButton"].tap()
+        tapSaveCollection(app)
         XCTAssertTrue(app.buttons["Concerts drawer"].waitForExistence(timeout: 5))
 
         // Rename, from the front drawer's hold menu.
@@ -174,7 +174,7 @@ final class LaunchTests: UITestCase {
         field.typeText("Gigs")
         XCTAssertEqual(field.value as? String, "Gigs")
         attachScreenshot(of: app, named: "edit-collection")
-        app.buttons["saveCollectionButton"].tap()
+        tapSaveCollection(app)
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForNonExistence(timeout: 10))
         XCTAssertTrue(app.buttons["Gigs drawer"].waitForExistence(timeout: 5))
 
