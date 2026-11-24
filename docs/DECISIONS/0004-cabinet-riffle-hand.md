@@ -97,7 +97,7 @@ not the screens built on it.
 
 The owner-only task "Measure the cabinet, riffle and hand on device" (#149) runs this procedure on
 an A13-class iPhone (e.g. iPhone 11 / SE 2nd gen) and a ProMotion iPhone, with the sample
-data plus 500 extra items (`-sampleData -stressItems 500`, added with the cabinet):
+data plus 500 extra items (`-inMemoryStore -sampleData -stressItems 500`, added with the cabinet, #151):
 
 1. Release build, Instruments **SwiftUI** template (View Body, Hitches) and the **Animation
    Hitches** template.
