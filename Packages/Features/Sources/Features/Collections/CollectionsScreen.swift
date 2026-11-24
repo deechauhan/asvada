@@ -5,10 +5,9 @@ import SwiftData
 import SwiftUI
 
 /// Collections: the turning cabinet by default (one drawer big and centred on a revolving column,
-/// docs/design/INTERACTION.md §3), or the whole chest of drawers two to a row ("All drawers").
-/// In the chest, "Edit" makes the drawers jiggle: drag one onto another to reorder, or tap its
-/// badge to put it away. Put-away collections sit below the chest and can be taken out again.
-/// Long-press a drawer to customise, share or put it away.
+/// docs/design/INTERACTION.md §3), or the whole chest of drawers two to a row. Pinch the cabinet
+/// (or tap "All drawers") for the chest; pinch out (or "Done") to go back. In the chest, carry a
+/// drawer to reorder it or drop it in the storeroom to put it away.
 struct CollectionsScreen: View {
     @Environment(\.modelContext) private var context
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -17,7 +16,6 @@ struct CollectionsScreen: View {
     private var collections: [ExperienceCollection]
 
     @State private var isCreating = false
-    @State private var isArranging = false
     @State private var editing: ExperienceCollection?
     @State private var sharing: ExperienceCollection?
     @State private var opened: ExperienceCollection?
@@ -26,6 +24,8 @@ struct CollectionsScreen: View {
     /// The view the owner chose this session; `nil` follows the default for the text size.
     @State private var chestChosen: Bool?
     @AppStorage("cabinet.front") private var frontID = ""
+    /// How far a pinch has carried the view toward the other one, 0...1.
+    @State private var pinch = 0.0
     @Namespace private var drawerZoom
 
     private var visible: [ExperienceCollection] {
@@ -60,6 +60,10 @@ struct CollectionsScreen: View {
                     cabinet
                 }
             }
+            // A pinch scrubs toward the other view: the current one shrinks (or swells) and fades.
+            .scaleEffect(1 + (showsChest ? 0.12 : -0.22) * pinch)
+            .opacity(1 - 0.55 * pinch)
+            .simultaneousGesture(pinchGesture)
             .background(Palette.background.color)
             .overlay {
                 if collections.isEmpty {
@@ -99,28 +103,17 @@ struct CollectionsScreen: View {
             .accessibilityIdentifier("newCollectionButton")
         }
         if showsChest {
-            ToolbarItem(placement: .primaryAction) {
-                Button(isArranging ? "Done" : "Edit") {
-                    withAnimation(settle) { isArranging.toggle() }
-                }
-                .fontWeight(isArranging ? .semibold : .regular)
-                .accessibilityIdentifier("arrangeButton")
-            }
             ToolbarItem(placement: .navigation) {
-                Button("Cabinet", systemImage: "cabinet") {
-                    withAnimation(Motion.animation(Motion.morph, reduceMotion: reduceMotion)) {
-                        isArranging = false
-                        chestChosen = false
-                    }
+                Button("Done") {
+                    morph(toChest: false)
                 }
+                .fontWeight(.semibold)
                 .accessibilityIdentifier("cabinetButton")
             }
         } else {
             ToolbarItem(placement: .navigation) {
                 Button("All drawers", systemImage: "square.grid.2x2") {
-                    withAnimation(Motion.animation(Motion.morph, reduceMotion: reduceMotion)) {
-                        chestChosen = true
-                    }
+                    morph(toChest: true)
                 }
                 .accessibilityIdentifier("allDrawersButton")
             }
@@ -167,120 +160,42 @@ struct CollectionsScreen: View {
     // MARK: - The chest
 
     private var chest: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.xl) {
-                // Not lazy: a chest holds a handful of drawers, and every drawer should exist
-                // for VoiceOver and UI tests even when scrolled off screen.
-                Grid(horizontalSpacing: Spacing.medium, verticalSpacing: Spacing.large) {
-                    ForEach(Array(cabinetRows.enumerated()), id: \.offset) { _, row in
-                        GridRow(alignment: .top) {
-                            ForEach(row) { slot in
-                                cell(for: slot)
-                            }
-                            if row.count == 1 {
-                                Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
-                            }
-                        }
-                    }
-                }
-                if !hidden.isEmpty {
-                    hiddenSection
-                }
-            }
-            .padding(.horizontal, Spacing.large)
-            .padding(.vertical, Spacing.medium)
-            .animation(settle, value: visible.map(\.id))
-            .animation(settle, value: isArranging)
-        }
+        ChestOfDrawers(
+            drawers: visible,
+            putAway: hidden,
+            actions: cabinetActions,
+            reorder: { move($0, onto: $1) },
+            takeOut: { setHidden(false, $0) },
+            turnTo: { collection in
+                frontID = collection.id.uuidString
+                morph(toChest: false)
+            },
+        )
         .transition(.opacity)
     }
 
-    // MARK: - Chest cells
+    // MARK: - Pinch
 
-    /// A grid cell: a collection's drawer, or the blank "new collection" tag at the end.
-    private enum Slot: Identifiable {
-        case drawer(ExperienceCollection)
-        case new
-
-        var id: String {
-            switch self {
-            case let .drawer(collection): collection.id.uuidString
-            case .new: "new"
+    /// Fingers together on the cabinet heads for the chest; apart on the chest heads back.
+    private var pinchGesture: some Gesture {
+        MagnifyGesture()
+            .onChanged { value in
+                pinch = ChestMorph.progress(magnification: value.magnification, towardChest: !showsChest)
             }
-        }
-    }
-
-    private var cabinetRows: [[Slot]] {
-        let slots = visible.map(Slot.drawer) + (isArranging ? [] : [.new])
-        return stride(from: 0, to: slots.count, by: 2).map { Array(slots[$0 ..< min($0 + 2, slots.count)]) }
-    }
-
-    @ViewBuilder
-    private func cell(for slot: Slot) -> some View {
-        switch slot {
-        case let .drawer(collection):
-            drawer(collection)
-        case .new:
-            NewCollectionTile { isCreating = true }
-        }
-    }
-
-    private func drawer(_ collection: ExperienceCollection) -> some View {
-        CabinetDrawer(collection: collection, isArranging: isArranging) {
-            setHidden(true, collection)
-        }
-        .onTapGesture {
-            // Tapping a drawer in the chest turns the cabinet to it.
-            guard !isArranging else { return }
-            frontID = collection.id.uuidString
-            withAnimation(Motion.animation(Motion.morph, reduceMotion: reduceMotion)) {
-                chestChosen = false
-            }
-        }
-        .draggable(collection.id.uuidString) {
-            MiniDrawerPreview(collection: collection)
-        }
-        .dropDestination(for: String.self) { ids, _ in
-            guard let id = ids.first else { return false }
-            return move(id, onto: collection)
-        }
-        // A long press shows this menu; moving the finger instead lifts the drawer to drag.
-        .contextMenu {
-            Button("Customise", systemImage: "slider.horizontal.3") {
-                afterMenuCloses({ editing = $0 }, collection)
-            }
-            // Only filled drawers have something to share.
-            if ShareContent(collection: collection) != nil {
-                Button("Share", systemImage: "square.and.arrow.up") {
-                    afterMenuCloses({ sharing = $0 }, collection)
+            .onEnded { _ in
+                if ChestMorph.commits(pinch) {
+                    morph(toChest: !showsChest)
+                } else {
+                    withAnimation(Motion.animation(Motion.morph, reduceMotion: reduceMotion)) { pinch = 0 }
                 }
             }
-            Button("Hide", systemImage: "eye.slash") {
-                setHidden(true, collection)
-            }
-        }
-        .accessibilityAction(named: "Customise") { editing = collection }
-        .accessibilityAction(named: "Share") {
-            if ShareContent(collection: collection) != nil {
-                sharing = collection
-            }
-        }
-        .accessibilityAction(named: "Move earlier") { step(collection, by: -1) }
-        .accessibilityAction(named: "Move later") { step(collection, by: 1) }
-        .accessibilityAction(named: "Hide") { setHidden(true, collection) }
     }
 
-    private var hiddenSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.small) {
-            Text("Hidden")
-                .typeToken(.headline)
-                .foregroundStyle(Palette.textSecondary.color)
-                .accessibilityAddTraits(.isHeader)
-            ForEach(hidden) { collection in
-                HiddenCollectionRow(collection: collection) {
-                    setHidden(false, collection)
-                }
-            }
+    /// Switches between the cabinet and the chest with the morph spring.
+    private func morph(toChest: Bool) {
+        withAnimation(Motion.animation(Motion.morph, reduceMotion: reduceMotion)) {
+            chestChosen = toChest
+            pinch = 0
         }
     }
 
@@ -361,47 +276,6 @@ enum CabinetOrder {
     /// `target`. `onMove` counts the destination before removal, so moving later needs one more.
     static func destination(moving source: Int, onto target: Int) -> Int {
         target > source ? target + 1 : target
-    }
-}
-
-/// A hidden collection: dimmed, with a button to bring it back into the cabinet.
-private struct HiddenCollectionRow: View {
-    let collection: ExperienceCollection
-    let onShow: () -> Void
-
-    var body: some View {
-        HStack(spacing: Spacing.medium) {
-            Image(systemName: collection.icon)
-                .foregroundStyle(collection.accent.token.color)
-                .frame(width: 32, height: 32)
-                .background(collection.accent.token.color.opacity(0.12), in: RoundedRectangle(cornerRadius: Radius.small))
-                .accessibilityHidden(true)
-            Text(collection.name)
-                .typeToken(.body)
-                .foregroundStyle(Palette.textPrimary.color)
-            Spacer(minLength: 0)
-            Button("Show", action: onShow)
-                .buttonStyle(.bordered)
-                .tint(Palette.brand.color)
-                .accessibilityLabel("Show \(collection.name)")
-                .accessibilityIdentifier("showCollection-\(collection.name)")
-        }
-        .padding(Spacing.small)
-        .background(Palette.surface.color.opacity(0.6), in: RoundedRectangle(cornerRadius: Radius.medium))
-        .opacity(0.75)
-    }
-}
-
-/// What follows the finger while a drawer is dragged.
-private struct MiniDrawerPreview: View {
-    let collection: ExperienceCollection
-
-    var body: some View {
-        Label(collection.name, systemImage: collection.icon)
-            .typeToken(.headline)
-            .foregroundStyle(collection.accent.token.color)
-            .padding(Spacing.medium)
-            .background(Palette.surface.color, in: RoundedRectangle(cornerRadius: Radius.medium))
     }
 }
 

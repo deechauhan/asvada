@@ -82,22 +82,17 @@ final class LaunchTests: UITestCase {
         XCTAssertTrue(labelled("Nothing savoured yet", in: app).exists)
         attachScreenshot(of: app, named: "collections")
 
-        // Edit makes the drawers jiggle and gives each a hide badge.
-        app.buttons["arrangeButton"].tap()
-        let hide = app.buttons["hideCollection-Airlines"]
-        bringIntoView(hide, in: app)
-        attachScreenshot(of: app, named: "collections-arranging")
-        hide.tap()
-        app.buttons["arrangeButton"].tap()
+        // Put a drawer away from its menu: it waits on the storeroom shelf.
+        openDrawerMenu(app, "Airlines")
+        app.buttons["Put away"].tap()
+        let takeOut = app.buttons["showCollection-Airlines"]
+        XCTAssertTrue(takeOut.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Storeroom"].exists)
+        attachScreenshot(of: app, named: "collections-storeroom")
 
-        // Hidden collections sit below the cabinet, dimmed, and can be shown again.
-        let hiddenHeader = app.staticTexts["Hidden"]
-        bringIntoView(hiddenHeader, in: app)
-        attachScreenshot(of: app, named: "collections-hidden")
-        let show = app.buttons["showCollection-Airlines"]
-        bringIntoView(show, in: app)
-        show.tap()
-        XCTAssertTrue(hiddenHeader.waitForNonExistence(timeout: 10))
+        // Take it out again and it's back in the chest.
+        takeOut.tap()
+        XCTAssertTrue(takeOut.waitForNonExistence(timeout: 10))
         XCTAssertTrue(app.descendants(matching: .any)["collection-airlines-Airlines"].waitForExistence(timeout: 5))
     }
 
