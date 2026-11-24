@@ -140,7 +140,11 @@ final class LaunchTests: UITestCase {
         attachScreenshot(of: app, named: "collections-with-custom")
 
         app.buttons["quickLogButton"].tap()
-        XCTAssertTrue(app.navigationBars["What did you savour?"].waitForExistence(timeout: 5))
+        let quickLog = app.navigationBars["What did you savour?"].waitForExistence(timeout: 5)
+        if !quickLog {
+            attachScreenshot(of: app, named: "quick-log-did-not-open")
+        }
+        XCTAssertTrue(quickLog)
         // The new collection has its own blank in the hand.
         XCTAssertTrue(app.buttons["Savour in Concerts"].waitForExistence(timeout: 5))
     }

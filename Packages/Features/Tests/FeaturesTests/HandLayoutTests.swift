@@ -49,4 +49,15 @@ struct HandLayoutTests {
         #expect(hand.angle(of: 0) == 0)
         #expect(hand.selection(for: CGSize(width: 80, height: -80)) == 0)
     }
+
+    @MainActor
+    @Test func aStillQuickPressIsATapEvenIfTheHandCameOut() {
+        // The hold timer can beat a busy main thread to the lift; a quick still press still taps.
+        #expect(PillPressCatcher.isTap(distance: 2, duration: 0.1, handWasShown: false))
+        #expect(PillPressCatcher.isTap(distance: 2, duration: 0.2, handWasShown: true))
+        // A real hold, let go in place without choosing a blank, opens nothing.
+        #expect(!PillPressCatcher.isTap(distance: 2, duration: 0.8, handWasShown: true))
+        // A slide is never a tap.
+        #expect(!PillPressCatcher.isTap(distance: 40, duration: 0.1, handWasShown: false))
+    }
 }

@@ -111,8 +111,20 @@ struct PillPressCatcher: View {
     static let slideToShow: CGFloat = 8
     /// The most a press can move and still count as a tap.
     static let tapSlop: CGFloat = 10
+    /// A still press shorter than this is a tap even if the hand came out: on a busy main thread
+    /// the hold timer can fire before the lift is handled, and a tap must never be lost.
+    static let tapDuration: TimeInterval = 0.35
+
+    /// Whether a press that drew nothing was a tap: it barely moved, and either the hand never
+    /// came out or the press was quick anyway.
+    static func isTap(distance: CGFloat, duration: TimeInterval, handWasShown: Bool) -> Bool {
+        guard distance < tapSlop else { return false }
+        return !handWasShown || duration < tapDuration
+    }
 
     @State private var isPressing = false
+    @State private var pressStarted = Date.distantPast
+    @State private var lastTranslation = CGSize.zero
     @State private var holdTimer: Task<Void, Never>?
     @State private var draws = 0
 
@@ -148,8 +160,10 @@ struct PillPressCatcher: View {
     private func pressChanged(_ translation: CGSize) {
         if !isPressing {
             isPressing = true
+            pressStarted = .now
             startHoldTimer()
         }
+        lastTranslation = translation
         if !hand.isShown, translation.height < -Self.slideToShow {
             showHand()
         }
@@ -169,12 +183,17 @@ struct PillPressCatcher: View {
         hand.selection = nil
         if let pick {
             draw(hand8[pick])
-        } else if !wasShown, hypot(translation.width, translation.height) < Self.tapSlop {
+        } else if Self.isTap(
+            distance: hypot(translation.width, translation.height),
+            duration: Date.now.timeIntervalSince(pressStarted),
+            handWasShown: wasShown,
+        ) {
             tap()
         }
     }
 
-    /// The system took the touch away: draw whichever blank was lifted, if any.
+    /// The system took the touch away: draw whichever blank was lifted, if any, or open
+    /// quick-log if it was really a tap (a quick press that never moved).
     private func pressCancelled() {
         holdTimer?.cancel()
         isPressing = false
@@ -183,6 +202,13 @@ struct PillPressCatcher: View {
         hand.selection = nil
         if let lifted, hand8.indices.contains(lifted) {
             draw(hand8[lifted])
+        } else if Self.isTap(
+            distance: hypot(lastTranslation.width, lastTranslation.height),
+            duration: Date.now.timeIntervalSince(pressStarted),
+            // A cancelled press only counts if it was quick, whether or not the hand showed.
+            handWasShown: true,
+        ) {
+            tap()
         }
     }
 
