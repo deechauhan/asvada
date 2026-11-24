@@ -13,6 +13,9 @@ import TipKit
 @Observable
 final class PillFrame {
     var frame: CGRect = .zero
+    /// Which pill set `frame`. Switching tabs makes a new pill before the old one disappears, so
+    /// only the pill that owns the frame may clear it.
+    var owner: UUID?
 
     var centre: CGPoint {
         CGPoint(x: frame.midX, y: frame.midY)
@@ -37,6 +40,7 @@ struct SavourPill: View {
     let onDraw: (ExperienceCollection) -> Void
 
     private let tip = HoldToDrawTip()
+    @State private var identity = UUID()
 
     var body: some View {
         HStack(spacing: Spacing.small) {
@@ -57,11 +61,20 @@ struct SavourPill: View {
             proxy.frame(in: .global)
         } action: { newFrame in
             // An @Observable setter notifies even for an equal value.
-            if frame.frame != newFrame {
+            if frame.frame != newFrame || frame.owner != identity {
                 frame.frame = newFrame
+                frame.owner = identity
             }
         }
-        .onDisappear { frame.frame = .zero }
+        .onDisappear {
+            guard frame.owner == identity else { return }
+            frame.frame = .zero
+            frame.owner = nil
+        }
+        // Normally the catcher above the tab bar takes the touch; this covers any moment it isn't
+        // there (between tabs, say).
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onTap)
         .popoverTip(tip)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Savour something")
