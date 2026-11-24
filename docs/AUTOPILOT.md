@@ -33,9 +33,11 @@ Read `CLAUDE.md` and `docs/WAYS_OF_WORKING.md` first. Everything there still app
 
 ## Design
 
-Every UI ticket follows `docs/design/CONCEPT.md` (Keepsakes, Aubergine & Saffron). Check the
-ticket's **Design** section, reuse the keepsake kit, motion and haptics tokens, and attach
-screenshots so the owner can judge the look. If a ticket's acceptance criteria conflict with the
+Every UI ticket follows `docs/design/CONCEPT.md` (Keepsakes, Aubergine & Saffron) for the look and
+`docs/design/INTERACTION.md` (Savour by hand) for gestures, motion and haptics: roll, pull, pinch,
+hold, each with a tap path, a VoiceOver path and a Reduce Motion crossfade. Check the ticket's
+**Design** and **Depends on** sections, reuse the keepsake kit, motion and haptics tokens, and
+attach screenshots so the owner can judge the look. If a ticket's acceptance criteria conflict with the
 concept, follow the concept and say so in the PR.
 
 ## Screenshots

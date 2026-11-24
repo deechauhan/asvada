@@ -24,8 +24,9 @@ Capacity assumption: **~14 points per two-week sprint** (side-project pace). Re-
 | E3 · Data model & persistence | M0 | 13 |
 | E4 · Collections | M1 | 15 |
 | E15 · Keepsakes design language | M1 | 41 |
+| E16 · Savour by hand — tactile browsing and picking | M1 | 35 |
 | E5 · Item sources — search and catalogs | M1 | 20 |
-| E6 · Quick-log & entries | M1 | 23 |
+| E6 · Quick-log & entries | M1 | 20 |
 | E7 · Rating modes & ranking engine | M1 | 18 |
 | E8 · Timeline & browsing | M1 | 13 |
 | E9 · Map collage | M2 | 23 |
@@ -88,41 +89,51 @@ Capacity assumption: **~14 points per two-week sprint** (side-project pace). Re-
 - [M1/E5] Place search with MapKit (cafés, restaurants, cities) — story, 5 pts, P0
 - [M1/E5] Bundled country catalog and polygons — task, 3 pts, P0
 
-### Sprint 7 · 01 Mar 2027 – 14 Mar 2027 · 12 pts
+### Sprint 7 · 01 Mar 2027 – 14 Mar 2027 · 16 pts
 
+- [M1/E16] Spike: cabinet, riffle and hand on device (ADR-0004) — spike, 2 pts, P0
+- [M1/E16] Motion and haptics kit II: roll, pull, riffle, draw, spin — task, 2 pts, P0
 - [M1/E5] Bundled airline catalog — task, 2 pts, P0
 - [M1/E5] Manual item creation for any collection — story, 2 pts, P0
 - [M1/E5] Film search with TMDB and poster caching — story, 5 pts, P0
 - [M1/E5] Offline country lookup from coordinates — story, 3 pts, P0
 
-### Sprint 8 · 15 Mar 2027 – 28 Mar 2027 · 13 pts
+### Sprint 8 · 15 Mar 2027 – 28 Mar 2027 · 21 pts
 
-- [M1/E6] Quick-log flow (under 15 seconds) — story, 8 pts, P0
+- [M1/E16] Measure the cabinet, riffle and hand on device — task, 1 pt, P0
+- [M1/E16] The turning cabinet: roll, ajar and pull to open — story, 5 pts, P0
+- [M1/E16] The chest: pinch for every drawer, carry to reorder, storeroom to hide — story, 2 pts, P0
+- [M1/E16] Draw a keepsake: the hand of blanks on the savour pill — story, 3 pts, P0
+- [M1/E6] Quick-log flow (under 15 seconds) — story, 5 pts, P0
 - [M1/E6] Entry details: date, notes, companions, tags — story, 5 pts, P0
 
-### Sprint 9 · 29 Mar 2027 – 11 Apr 2027 · 13 pts
+### Sprint 9 · 29 Mar 2027 – 11 Apr 2027 · 16 pts
 
+- [M1/E16] The print head: suggestions print onto the blank, tear off for the next — story, 3 pts, P0
 - [M1/E6] Attach photos to an entry — story, 5 pts, P0
 - [M1/E6] Item detail: all entries and stats for one thing — story, 3 pts, P1
 - [M1/E6] Edit and delete entries with undo — story, 2 pts, P1
 - [M1/E7] Rating mode: stars — story, 3 pts, P0
 
-### Sprint 10 · 12 Apr 2027 – 25 Apr 2027 · 10 pts
+### Sprint 10 · 12 Apr 2027 – 25 Apr 2027 · 15 pts
 
+- [M1/E16] Keepsake raster cache for 120 fps motion — task, 2 pts, P1
+- [M1/E16] Stamp pad: aim, press and ink a country — story, 3 pts, P1
 - [M1/E7] Rating mode: checklist with completion progress — story, 3 pts, P0
 - [M1/E7] Rating mode: log (repeat entries) — story, 2 pts, P0
 - [M1/E7] Ranking engine: pairwise binary insertion — task, 5 pts, P0
 
-### Sprint 11 · 26 Apr 2027 – 09 May 2027 · 12 pts
+### Sprint 11 · 26 Apr 2027 – 09 May 2027 · 17 pts
 
 - [M1/E15] Duel polish: stamped result and list re-flow — story, 2 pts, P1
+- [M1/E16] The riffle: thumb through a drawer — story, 5 pts, P0
 - [M1/E7] Rating mode: ranked via 'which was better?' — story, 5 pts, P0
 - [M1/E8] Timeline home grouped by month — story, 5 pts, P0
 
 ### Sprint 12 · 10 May 2027 – 23 May 2027 · 12 pts
 
 - [M1/E15] Spike: Atlas styling — muted map, ink overlays, snapshot pins — spike, 2 pts, P0
-- [M1/E8] Collection views: list, poster grid, ranked, progress — story, 5 pts, P0
+- [M1/E8] Drawer spreads: The Menu, Ticket box, Passport, Pinboard — story, 5 pts, P0
 - [M1/E8] Search across everything — story, 3 pts, P1
 - [M2/E9] Spike: clustering approach — MKMapView vs ClusterMap (ADR-0003) — spike, 2 pts, P0
 
@@ -131,8 +142,9 @@ Capacity assumption: **~14 points per two-week sprint** (side-project pace). Re-
 - [M2/E9] Map: fill visited countries — story, 5 pts, P0
 - [M2/E9] Map: clustered photo stacks with counts — story, 8 pts, P0
 
-### Sprint 14 · 07 Jun 2027 – 20 Jun 2027 · 8 pts
+### Sprint 14 · 07 Jun 2027 – 20 Jun 2027 · 13 pts
 
+- [M2/E16] Spin & stamp: the ink globe — story, 5 pts, P1
 - [M2/E9] Map: individual pins tinted by collection — story, 3 pts, P0
 - [M2/E9] Map performance test with 5,000 entries — task, 2 pts, P1
 - [M3/E10] Spike: sync strategy — SwiftData+CloudKit vs GRDB+CKSyncEngine (ADR-0002) — spike, 3 pts, P0
@@ -158,17 +170,18 @@ Capacity assumption: **~14 points per two-week sprint** (side-project pace). Re-
 - [M4/E11] Scan photo library on-device for visits — story, 8 pts, P1
 - [M4/E11] Suggestions inbox: 'You were in Lisbon, add it?' — story, 5 pts, P1
 
-### Sprint 19 · 16 Aug 2027 – 29 Aug 2027 · 18 pts
+### Sprint 19 · 16 Aug 2027 – 29 Aug 2027 · 20 pts
 
 - [M4/E4] Custom fields for collections — story, 5 pts, P1
+- [M4/E16] Lucky dip: spin the cabinet for a forgotten keepsake — story, 2 pts, P2
 - [M4/E11] Trips: group entries and view a trip — story, 5 pts, P1
 - [M4/E12] Stats dashboard — story, 5 pts, P2
 - [M4/E12] On this day — story, 3 pts, P2
 
 ### Sprint 20 · 30 Aug 2027 – 12 Sep 2027 · 16 pts
 
-- [M1/E15] Tear the stub (films) and split-flap codes (flights) — story, 2 pts, P2
-- [M1/E15] Sound pack: paper, stamp, seal — task, 1 pt, P2
+- [M1/E15] Tear the stub (films) and split-flap codes (flights) — story, 1 pt, P2
+- [M1/E15] Sound pack: paper, stamp, seal — task, 2 pts, P2
 - [M4/E9] Map filters: collection, year, trip — story, 3 pts, P1
 - [M4/E12] Year in review — story, 5 pts, P2
 - [M4/E12] Poster export of a trip or year — story, 5 pts, P2
@@ -187,4 +200,4 @@ Capacity assumption: **~14 points per two-week sprint** (side-project pace). Re-
 - [M5/E14] Privacy policy and support page — task, 2 pts, P0
 - [M5/E14] Release v1.0 — task, 1 pt, P0
 
-**Total:** 81 items across 15 epics, 280 points.
+**Total:** 93 items across 16 epics, 312 points.
