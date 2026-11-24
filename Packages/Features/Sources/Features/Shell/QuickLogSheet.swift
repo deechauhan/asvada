@@ -35,20 +35,3 @@ struct QuickLogSheet: View {
         .presentationDetents([.medium, .large])
     }
 }
-
-#if os(iOS)
-    private extension View {
-        /// Inline navigation titles on iOS.
-        func navigationBarTitleDisplayModeInline() -> some View {
-            navigationBarTitleDisplayMode(.inline)
-        }
-    }
-
-#else
-    private extension View {
-        /// No-op on macOS, where this package's tests also build.
-        func navigationBarTitleDisplayModeInline() -> some View {
-            self
-        }
-    }
-#endif

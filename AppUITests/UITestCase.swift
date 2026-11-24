@@ -28,6 +28,7 @@ class UITestCase: XCTestCase {
     /// still settling (after a scroll or a new drawer) starts no menu, so it's retried once.
     @MainActor
     func openDrawerMenu(_ app: XCUIApplication, _ name: String) {
+        openChest(app)
         let row = app.staticTexts[name]
         bringIntoView(row, in: app)
         let customise = app.buttons["Customise"]
@@ -71,16 +72,29 @@ class UITestCase: XCTestCase {
         XCTAssertTrue(element.isHittable, "\(element) never came into view")
     }
 
-    /// Switches to Collections and waits until the list has loaded, so toolbar taps don't land
-    /// mid tab-transition (they're dropped while the glass toolbar is animating).
+    /// Switches to Collections and waits until the turning cabinet has loaded, so toolbar taps
+    /// don't land mid tab-transition (they're dropped while the glass toolbar is animating).
+    /// VoiceOver (and so XCUITest) sees the cabinet as a list of "<name> drawer" buttons.
     @MainActor
     func openCollectionsAndWait(_ app: XCUIApplication) {
         app.tabBars.buttons["Collections"].tap()
         XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Cafés"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Cafés drawer"].waitForExistence(timeout: 10))
         let newButton = app.buttons["newCollectionButton"]
         XCTAssertTrue(newButton.waitForExistence(timeout: 10))
         XCTAssertTrue(newButton.isHittable)
+    }
+
+    /// Switches the cabinet to the whole chest of drawers (the grid), where every drawer shows its
+    /// name, stat and context menu. Does nothing if the chest is already showing.
+    @MainActor
+    func openChest(_ app: XCUIApplication) {
+        let allDrawers = app.buttons["allDrawersButton"]
+        if allDrawers.waitForExistence(timeout: 3) {
+            allDrawers.tap()
+        }
+        XCTAssertTrue(app.buttons["cabinetButton"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Cafés"].waitForExistence(timeout: 10))
     }
 
     @MainActor
