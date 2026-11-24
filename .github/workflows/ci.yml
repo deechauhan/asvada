@@ -99,17 +99,22 @@ jobs:
       fail-fast: false
       matrix:
         shard:
+          # Three runners of roughly equal length (about 4–8 minutes of tests each). "menus"
+          # keeps its name so the check names don't change; it now holds the cabinet too.
           - name: menus
             tests: >-
               -only-testing:AsvadaUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
               -only-testing:AsvadaUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer
+              -only-testing:AsvadaUITests/CabinetUITests
           - name: launch
             tests: >-
               -only-testing:AsvadaUITests/LaunchTests
               -skip-testing:AsvadaUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
               -skip-testing:AsvadaUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer
           - name: features
-            tests: -skip-testing:AsvadaUITests/LaunchTests
+            tests: >-
+              -skip-testing:AsvadaUITests/LaunchTests
+              -skip-testing:AsvadaUITests/CabinetUITests
     env:
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
@@ -166,9 +171,13 @@ jobs:
           set -o pipefail
           # Restored files have new inodes; let the build system trust their times instead.
           defaults write com.apple.dt.XCBuild IgnoreFileSystemDeviceInodeChanges -bool YES
+          # Build for the generic simulator, not the booting device: with a device destination
+          # xcodebuild waited ~3 min on the simulator service before starting, and actool spent
+          # ~2 min thinning an 80 KB asset catalog for that device. arm64 only (the runners).
           xcodebuild build-for-testing \
             -project Asvada.xcodeproj -scheme Asvada \
-            -destination "id=${{ steps.simulator.outputs.udid }}" \
+            -destination "generic/platform=iOS Simulator" \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
             -derivedDataPath build/DerivedData \
             -clonedSourcePackagesDirPath build/SourcePackages \
             COMPILER_INDEX_STORE_ENABLE=NO \
