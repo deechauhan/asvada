@@ -10,6 +10,7 @@ let package = Package(
     dependencies: [
         .package(path: "../Geo"),
         .package(path: "../Model"),
+        .package(path: "../Ranking"),
     ],
     targets: [
         .target(
@@ -17,11 +18,12 @@ let package = Package(
             dependencies: [
                 "Geo",
                 "Model",
+                "Ranking",
             ],
         ),
         .testTarget(
             name: "StorageTests",
-            dependencies: ["Geo", "Storage"],
+            dependencies: ["Geo", "Ranking", "Storage"],
         ),
     ],
 )
