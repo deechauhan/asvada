@@ -159,19 +159,17 @@ jobs:
           restore-keys: |
             derived-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift') }}-
             derived-${{ runner.os }}-
-      - name: Pick a simulator and start booting it
+      - name: Pick a simulator
         id: simulator
         run: |
           UDID=$(scripts/ci/pick-simulator.sh)
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
-          # Boots while the app builds; `bootstatus` below waits for it.
-          xcrun simctl boot "$UDID" || true
       - name: Build for testing
         run: |
           set -o pipefail
           # Restored files have new inodes; let the build system trust their times instead.
           defaults write com.apple.dt.XCBuild IgnoreFileSystemDeviceInodeChanges -bool YES
-          # Build for the generic simulator, not the booting device: with a device destination
+          # Build for the generic simulator, not a specific device: with a device destination
           # xcodebuild waited ~3 min on the simulator service before starting, and actool spent
           # ~2 min thinning an 80 KB asset catalog for that device. arm64 only (the runners).
           # No app icon: rendering the iOS 26 icon took actool over 2 min, and tests don't see it.
@@ -184,10 +182,15 @@ jobs:
             -clonedSourcePackagesDirPath build/SourcePackages \
             COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO
+      # Booted after the build, not during it: on these runners a booting simulator slowed the
+      # whole machine, so the build step sat idle for ~3 min before xcodebuild even started.
+      - name: Boot the simulator
+        run: |
+          xcrun simctl boot "${{ steps.simulator.outputs.udid }}" || true
+          xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
       - name: UI tests
         run: |
           set -o pipefail
-          xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
           xcodebuild test-without-building \
             -project Asvada.xcodeproj -scheme Asvada \
             -destination "id=${{ steps.simulator.outputs.udid }}" \
