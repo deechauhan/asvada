@@ -8,6 +8,7 @@ Status moves Proposed → Accepted → (Superseded by NNNN).
 | [0001](0001-minimum-ios-version.md) | Minimum iOS version (iOS 26+) | Accepted | #7 |
 | 0002 | Sync strategy: SwiftData + CloudKit vs GRDB + CKSyncEngine | Proposed | Spike in E10 |
 | 0003 | Map clustering: MKMapView vs ClusterMap | Proposed | Spike in E9 |
+| [0004](0004-cabinet-riffle-hand.md) | Cabinet, riffle and hand: how they're built | Accepted (device timings pending, #149) | #148 |
 
 Decisions already settled during planning (see `CLAUDE.md`): native SwiftUI, local-first SwiftData,
 CloudKit-compatible schema from day one, MapKit for places, bundled Natural Earth polygons, TMDB for
