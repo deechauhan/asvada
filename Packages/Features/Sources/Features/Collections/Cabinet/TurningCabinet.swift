@@ -24,6 +24,8 @@ struct TurningCabinet: View {
     @State private var drum = CabinetDrum(count: 0)
     @State private var dragStart: Double?
     @State private var dragAxis: Axis?
+    /// When the finger last moved, and where to: a release after a rest flings nowhere.
+    @State private var lastMove: (time: Date, translation: CGSize)?
     @State private var pull = 0.0
     @State private var ajar: Int?
     @State private var detents = 0
@@ -131,6 +133,9 @@ struct TurningCabinet: View {
     private var dragGesture: some Gesture {
         DragGesture(minimumDistance: 10)
             .onChanged { value in
+                if lastMove?.translation != value.translation {
+                    lastMove = (value.time, value.translation)
+                }
                 if dragAxis == nil {
                     let horizontal = abs(value.translation.width) >= abs(value.translation.height)
                     dragAxis = horizontal ? .horizontal : .vertical
@@ -144,13 +149,18 @@ struct TurningCabinet: View {
                 }
             }
             .onEnded { value in
+                let rest = lastMove.map { value.time.timeIntervalSince($0.time) } ?? 0
                 switch dragAxis {
-                case .horizontal: settle(to: drum.restingPosition(afterReleaseAt: value.velocity.width))
-                case .vertical: endPull(velocity: value.velocity.height)
+                case .horizontal:
+                    let velocity = CabinetDrum.releaseVelocity(value.velocity.width, restedFor: rest)
+                    settle(to: drum.restingPosition(afterReleaseAt: velocity))
+                case .vertical:
+                    endPull(velocity: CabinetDrum.releaseVelocity(value.velocity.height, restedFor: rest))
                 case nil: break
                 }
                 dragAxis = nil
                 dragStart = nil
+                lastMove = nil
             }
     }
 

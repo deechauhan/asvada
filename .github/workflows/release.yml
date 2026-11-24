@@ -6,6 +6,8 @@ name: Release
 #   - milestone M<k> closed   → v0.<k+1>.0 (M0 → v0.1.0 … M4 → v0.5.0); M5 → v1.0.0,
 #                               then stale branches are swept (scripts/ci/cleanup-branches.sh)
 #   - manual run              → the version you type
+# Each new release also gets an unsigned Asvada-<version>.ipa to sideload (Sideloadly, AltStore…
+# sign it with your own Apple ID). It's built without the TMDB key: release assets are public.
 
 on:
   push:
@@ -29,6 +31,9 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      created: ${{ steps.publish.outputs.created }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -58,6 +63,7 @@ jobs:
           echo "version=$v" >> "$GITHUB_OUTPUT"
           echo "Releasing $v"
       - name: Publish release
+        id: publish
         env:
           GH_TOKEN: ${{ github.token }}
           V: ${{ steps.v.outputs.version }}
@@ -69,8 +75,53 @@ jobs:
           flags=()
           [[ "$V" == v0.* ]] && flags+=(--prerelease)
           gh release create "$V" --target "$(git rev-parse HEAD)" --generate-notes --title "$title" "${flags[@]}"
+          echo "created=true" >> "$GITHUB_OUTPUT"
       - name: Delete stale branches
         if: github.event_name == 'milestone'
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/ci/cleanup-branches.sh
+
+  ipa:
+    # An unsigned build for real iPhones, attached to the release just made. Sideloading tools
+    # sign it with the installer's own Apple ID, so no certificates live in this repo.
+    needs: release
+    if: needs.release.outputs.created == 'true'
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.release.outputs.version }}
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build (Release, iphoneos, unsigned)
+        env:
+          V: ${{ needs.release.outputs.version }}
+        run: |
+          set -o pipefail
+          # No Config/Secrets.xcconfig: the TMDB key stays out of a public download (film
+          # search says "no key"). Version numbers come from the tag.
+          xcodebuild build \
+            -project Asvada.xcodeproj -scheme Asvada -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build/DerivedData \
+            MARKETING_VERSION="${V#v}" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+      - name: Package and upload the .ipa
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ needs.release.outputs.version }}
+        run: |
+          app=build/DerivedData/Build/Products/Release-iphoneos/Asvada.app
+          test -d "$app" || { echo "::error::$app was not built"; exit 1; }
+          mkdir -p ipa/Payload
+          cp -R "$app" ipa/Payload/
+          (cd ipa && zip -qry "../Asvada-$V.ipa" Payload)
+          ls -lh "Asvada-$V.ipa"
+          gh release upload "$V" "Asvada-$V.ipa" --clobber
