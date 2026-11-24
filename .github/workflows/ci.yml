@@ -86,9 +86,9 @@ jobs:
             echo "::endgroup::"
           done
 
-  # The UI tests are split across two runners that work side by side: LaunchTests on one,
-  # every other test class (new ones included) on the other. Each builds for itself (under a
-  # minute with the cache) and tests its half.
+  # The UI tests are split across three runners that work side by side: the two slow
+  # context-menu tests, the rest of LaunchTests, and every other test class (new ones included).
+  # Each builds for itself (about a minute) and tests its share.
   app:
     name: App build + UI test (${{ matrix.shard.name }})
     needs: changes
@@ -99,8 +99,15 @@ jobs:
       fail-fast: false
       matrix:
         shard:
+          - name: menus
+            tests: >-
+              -only-testing:AsvadaUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
+              -only-testing:AsvadaUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer
           - name: launch
-            tests: -only-testing:AsvadaUITests/LaunchTests
+            tests: >-
+              -only-testing:AsvadaUITests/LaunchTests
+              -skip-testing:AsvadaUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
+              -skip-testing:AsvadaUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer
           - name: features
             tests: -skip-testing:AsvadaUITests/LaunchTests
     env:
