@@ -247,8 +247,10 @@ struct CollectionsScreen: View {
         }
     }
 
-    /// The context menu's closing animation, then two later tries if the sheet was dropped.
-    static let menuDismissalRetries: [Duration] = [.milliseconds(400), .milliseconds(500), .milliseconds(1000)]
+    /// The context menu's closing animation, then two later tries if the sheet was dropped. The
+    /// gaps are long enough for a slow device to finish presenting: re-requesting a sheet that is
+    /// still on its way dismisses it.
+    static let menuDismissalRetries: [Duration] = [.milliseconds(400), .milliseconds(1200), .milliseconds(1500)]
 
     private func clearEditing() {
         editing = nil
