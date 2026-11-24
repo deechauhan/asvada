@@ -30,6 +30,9 @@ struct SavourPill: View {
     /// The most a press can move and still count as a tap.
     static let tapSlop: CGFloat = 10
 
+    /// Where the pill is on screen. Kept here, not in the shell's state: writing it upward on
+    /// every layout re-rendered the whole tab view, which re-laid out the pill, endlessly.
+    @State private var origin: CGPoint = .zero
     @State private var isPressing = false
     @State private var holdTimer: Task<Void, Never>?
     @State private var draws = 0
@@ -58,8 +61,13 @@ struct SavourPill: View {
         .onGeometryChange(for: CGPoint.self) { proxy in
             let frame = proxy.frame(in: .global)
             return CGPoint(x: frame.midX, y: frame.midY)
-        } action: { origin in
-            hand.origin = origin
+        } action: { newOrigin in
+            origin = newOrigin
+            // `-showHand` holds the hand out (Cafés lifted) for screenshots: a real press can't be
+            // paused mid-gesture in a UI test.
+            if Self.showsHandForScreenshots, !hand.isShown {
+                hand = HandState(isShown: true, selection: 0, origin: newOrigin)
+            }
         }
         .gesture(press)
         .detentHaptic(trigger: hand.selection)
@@ -118,8 +126,11 @@ struct SavourPill: View {
 
     private func showHand() {
         guard !hand8.isEmpty else { return }
+        hand.origin = origin
         hand.isShown = true
     }
+
+    private static let showsHandForScreenshots = ProcessInfo.processInfo.arguments.contains("-showHand")
 
     private func tap() {
         Task { await HoldToDrawTip.tapOpened.donate() }

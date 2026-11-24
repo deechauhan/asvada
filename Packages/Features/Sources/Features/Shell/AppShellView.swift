@@ -36,7 +36,6 @@ public struct AppShellView: View {
         .sheet(isPresented: $isShowingQuickLog) {
             QuickLogSheet(drawn: drawn)
         }
-        .onAppear(perform: showHandForScreenshots)
     }
 
     /// The savour pill — shown above the tab bar on every tab.
@@ -69,14 +68,6 @@ public struct AppShellView: View {
     private func openQuickLog(drawing collection: ExperienceCollection?) {
         drawn = collection
         isShowingQuickLog = true
-    }
-
-    /// `-showHand` holds the hand out (Cafés lifted) for screenshots; a real press can't be
-    /// paused mid-gesture in a UI test.
-    private func showHandForScreenshots() {
-        guard ProcessInfo.processInfo.arguments.contains("-showHand") else { return }
-        hand.isShown = true
-        hand.selection = 0
     }
 
     private var selection: Binding<AppTab> {
