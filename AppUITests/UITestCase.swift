@@ -90,11 +90,17 @@ class UITestCase: XCTestCase {
     @MainActor
     func openChest(_ app: XCUIApplication) {
         let allDrawers = app.buttons["allDrawersButton"]
-        if allDrawers.waitForExistence(timeout: 3) {
-            allDrawers.tap()
+        let done = app.buttons["cabinetButton"]
+        // A toolbar tap is dropped while the glass toolbar is still animating (after a sheet
+        // closes, say), so tap again until the chest is really showing.
+        for _ in 0 ..< 3 where !done.exists {
+            if allDrawers.waitForExistence(timeout: 3) {
+                allDrawers.tap()
+            }
+            _ = done.waitForExistence(timeout: 4)
         }
-        XCTAssertTrue(app.buttons["cabinetButton"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Cafés"].waitForExistence(timeout: 10))
+        XCTAssertTrue(done.exists, "The chest didn't open")
+        XCTAssertTrue(app.staticTexts["Cafés"].waitForExistence(timeout: 10), "The chest has no Cafés drawer")
     }
 
     @MainActor
