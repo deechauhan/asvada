@@ -64,6 +64,21 @@ public enum PreviewData {
         try repository.save()
     }
 
+    /// Adds `count` extra ranked cafés, one entry each, below any already ranked: enough keepsakes
+    /// to measure the cabinet and riffle under load (`-stressItems N`, ADR-0004).
+    public static func addStressItems(_ count: Int, to repository: Repository) throws {
+        let cafes = try repository.collections(includeHidden: true).first { $0.kind == .cafes }
+        guard let cafes, count > 0 else { return }
+        let hour: TimeInterval = 3600
+        let scores = RankScores.evenlySpaced(count: count)
+        for index in 0 ..< count {
+            let item = repository.upsertItem(named: "Café \(index + 1)", externalRef: "stress:\(index)", in: cafes)
+            // Below the sample cafés (scored in thousands from 1,000 up).
+            item.rankScore = scores[index] - RankScores.gap * Double(count + 1)
+            repository.addEntry(to: item, date: .now.addingTimeInterval(-Double(index + 1) * hour))
+        }
+    }
+
     /// Fills the seeded built-in collections with a few sample items and entries, so screenshots
     /// and manual checks show drawers with keepsakes. Restaurants and Cities stay empty on
     /// purpose: they show the ghost state. Launch argument `-sampleData` (in-memory store only).

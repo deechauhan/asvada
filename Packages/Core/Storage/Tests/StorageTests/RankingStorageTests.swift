@@ -78,3 +78,21 @@ struct RankingStorageTests {
         #expect(scores == [4000, 3000, 2000, 1000])
     }
 }
+
+@MainActor
+struct StressItemsTests {
+    @Test func stressItemsRankBelowTheSamples() throws {
+        let container = try AsvadaStore.makeContainer(.inMemory)
+        let repository = Repository(context: container.mainContext)
+        try BuiltInCollections.seedIfNeeded(in: repository.context)
+        try PreviewData.fillBuiltIns(repository)
+        try PreviewData.addStressItems(50, to: repository)
+        let match = try repository.collections().first { $0.kind == .cafes }
+        let cafes = try #require(match)
+        let ranked = repository.ranking(of: cafes)
+        #expect(ranked.count == 54)
+        #expect(ranked.first?.name == "Prufrock Coffee")
+        #expect(ranked[4].name == "Café 1")
+        #expect(ranked.last?.name == "Café 50")
+    }
+}

@@ -12,7 +12,9 @@ struct AsvadaApp: App {
     /// `-keepsakeGallery` opens the keepsake gallery, `-forceDarkMode` forces dark appearance,
     /// `-inMemoryStore` keeps data off disk, `-disableTips` hides TipKit tips, `-sampleData` fills
     /// the built-ins with sample keepsakes (only together with `-inMemoryStore`), `-countryPicker`
-    /// opens the country picker on its own, `-skipOnboarding` keeps first-launch onboarding away.
+    /// opens the country picker on its own, `-skipOnboarding` keeps first-launch onboarding away,
+    /// `-cabinetMidRoll` stops the turning cabinet between two drawers (for screenshots),
+    /// `-stressItems N` adds N ranked cafés (with `-inMemoryStore`, for performance runs).
     private let arguments = ProcessInfo.processInfo.arguments
     private let container: ModelContainer
 
@@ -21,6 +23,7 @@ struct AsvadaApp: App {
             UserDefaults.standard.removeObject(forKey: AppTab.storageKey)
             UserDefaults.standard.removeObject(forKey: "seal.hasLearnedHold")
             UserDefaults.standard.removeObject(forKey: "onboarding.completed")
+            UserDefaults.standard.removeObject(forKey: "cabinet.front")
         }
         do {
             container = try AsvadaStore.makeContainer(arguments.contains("-inMemoryStore") ? .inMemory : .standard)
@@ -41,6 +44,14 @@ struct AsvadaApp: App {
         // Sample keepsakes for screenshots; never written to the real store.
         if arguments.contains("-sampleData"), arguments.contains("-inMemoryStore") {
             try? PreviewData.fillBuiltIns(Repository(context: container.mainContext))
+        }
+        // Extra keepsakes for performance runs (ADR-0004), also only in memory.
+        if arguments.contains("-inMemoryStore"),
+           let flag = arguments.firstIndex(of: "-stressItems"),
+           arguments.indices.contains(flag + 1),
+           let count = Int(arguments[flag + 1])
+        {
+            try? PreviewData.addStressItems(count, to: Repository(context: container.mainContext))
         }
     }
 
