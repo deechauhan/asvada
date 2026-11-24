@@ -10,6 +10,9 @@ struct InkWorld: Sendable {
         let code: String
         let path: Path
         let bounds: CGRect
+        /// Where the reticle sits on it: the middle of its largest outline, so the United States
+        /// is aimed at the lower 48, not halfway to Alaska.
+        let anchor: CGPoint
     }
 
     static let shared = InkWorld(catalog: .shared)
@@ -43,14 +46,51 @@ struct InkWorld: Sendable {
         // Antarctica would be a white band along the bottom of a cropped map; leave it out.
         countries = catalog.countries.filter { $0.code != "AQ" }.map { country in
             let shape = path(country.outlines)
-            return Shape(code: country.code, path: shape, bounds: shape.boundingRect)
+            let largest = country.outlines
+                .map { path([$0]).boundingRect }
+                .max { $0.width * $0.height < $1.width * $1.height } ?? shape.boundingRect
+            return Shape(
+                code: country.code,
+                path: shape,
+                bounds: shape.boundingRect,
+                anchor: CGPoint(x: largest.midX, y: largest.midY),
+            )
         }
         unassigned = catalog.unassignedLand.map { path([$0]) }
+        byCode = Dictionary(countries.map { ($0.code, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
-    /// The country under a point in unit space, if any.
+    private let byCode: [String: Shape]
+
+    /// The drawn shape for ISO code `code`, if the map draws it.
+    func shape(code: String) -> Shape? {
+        byCode[code.uppercased()]
+    }
+
+    /// The country under a point in unit space, if any. Outlines are outer rings only, so where
+    /// they overlap (Lesotho inside South Africa) the smallest wins.
     func code(atUnit point: CGPoint) -> String? {
-        countries.first { $0.bounds.contains(point) && $0.path.contains(point) }?.code
+        countries
+            .filter { $0.bounds.contains(point) && $0.path.contains(point) }
+            .min { $0.bounds.width * $0.bounds.height < $1.bounds.width * $1.bounds.height }?
+            .code
+    }
+
+    /// Draws the map into `context`: unassigned land, then every country, inked if it's in
+    /// `visited`. `transform` maps unit space to the context (scale, plus a shift for the loupe).
+    func draw(in context: GraphicsContext, transform: CGAffineTransform, visited: Set<String>) {
+        // Unvisited land needs enough tone to read as a map before anything is inked.
+        let paper = Palette.separator.color
+        let edge = Palette.background.color
+        for land in unassigned {
+            context.fill(land.applying(transform), with: .color(paper))
+        }
+        for country in countries {
+            let path = country.path.applying(transform)
+            let inked = visited.contains(country.code)
+            context.fill(path, with: .color(inked ? Palette.brand.color : paper))
+            context.stroke(path, with: .color(edge), lineWidth: 0.6)
+        }
     }
 }
 
@@ -59,25 +99,16 @@ struct InkWorld: Sendable {
 /// toggle it (when `onTap` is set).
 struct InkWorldMap: View {
     let visited: Set<String>
+    /// A visited country to leave as paper for now: the stamp pad blooms its ink in on top.
+    var unInked: String?
     var onTap: ((String) -> Void)?
     private let world = InkWorld.shared
 
     var body: some View {
         GeometryReader { proxy in
             Canvas { context, size in
-                let scale = CGAffineTransform(scaleX: size.width, y: size.height)
-                // Unvisited land needs enough tone to read as a map before anything is inked.
-                let paper = Palette.separator.color
-                let edge = Palette.background.color
-                for land in world.unassigned {
-                    context.fill(land.applying(scale), with: .color(paper))
-                }
-                for country in world.countries {
-                    let path = country.path.applying(scale)
-                    let inked = visited.contains(country.code)
-                    context.fill(path, with: .color(inked ? Palette.brand.color : paper))
-                    context.stroke(path, with: .color(edge), lineWidth: 0.6)
-                }
+                let inked = unInked.map { visited.subtracting([$0]) } ?? visited
+                world.draw(in: context, transform: CGAffineTransform(scaleX: size.width, y: size.height), visited: inked)
             }
             .contentShape(Rectangle())
             .onTapGesture { location in
