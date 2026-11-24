@@ -75,7 +75,9 @@ struct ChestOfDrawers: View {
             .offset(y: isMakingRoom ? 10 : 0)
             .animation(settle, value: isMakingRoom)
             .onTapGesture { turnTo(collection) }
-            // Holding lifts the drawer (the system's lift and haptic); moving carries it.
+            // Holding lifts the drawer (the system's lift and haptic); moving carries it. No hold
+            // menu here: on the same view it fights the drag and leaves the app busy (#168). The
+            // cabinet's front drawer has the menu, and VoiceOver keeps every action below.
             .draggable(collection.id.uuidString) {
                 MiniDrawerPreview(collection: collection)
             }
@@ -89,15 +91,6 @@ struct ChestOfDrawers: View {
                 } else if makingRoom == collection.id {
                     makingRoom = nil
                 }
-            }
-            // A hold without moving shows this menu instead.
-            .contextMenu {
-                Button("Customise", systemImage: "slider.horizontal.3") { actions.customise(collection) }
-                // Only filled drawers have something to share.
-                if ShareContent(collection: collection) != nil {
-                    Button("Share", systemImage: "square.and.arrow.up") { actions.share(collection) }
-                }
-                Button("Put away", systemImage: "archivebox") { actions.hide(collection) }
             }
             .modifier(ChestDrawerActions(
                 collection: collection,

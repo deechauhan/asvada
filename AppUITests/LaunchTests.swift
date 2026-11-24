@@ -82,9 +82,11 @@ final class LaunchTests: UITestCase {
         XCTAssertTrue(labelled("Nothing savoured yet", in: app).exists)
         attachScreenshot(of: app, named: "collections")
 
-        // Put a drawer away from its menu: it waits on the storeroom shelf.
+        // Put a drawer away from its hold menu: it waits on the chest's storeroom shelf.
         openDrawerMenu(app, "Airlines")
         app.buttons["Put away"].tap()
+        XCTAssertTrue(app.buttons["Airlines drawer"].waitForNonExistence(timeout: 10))
+        openChest(app)
         let takeOut = app.buttons["showCollection-Airlines"]
         XCTAssertTrue(takeOut.waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Storeroom"].exists)
@@ -140,8 +142,13 @@ final class LaunchTests: UITestCase {
         attachScreenshot(of: app, named: "collections-with-custom")
 
         app.buttons["quickLogButton"].tap()
-        XCTAssertTrue(app.navigationBars["What did you savour?"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Concerts"].waitForExistence(timeout: 5))
+        let quickLog = app.navigationBars["What did you savour?"].waitForExistence(timeout: 5)
+        if !quickLog {
+            attachScreenshot(of: app, named: "quick-log-did-not-open")
+        }
+        XCTAssertTrue(quickLog)
+        // The new collection has its own blank in the hand.
+        XCTAssertTrue(app.buttons["Savour in Concerts"].waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -156,7 +163,7 @@ final class LaunchTests: UITestCase {
         app.buttons["saveCollectionButton"].tap()
         XCTAssertTrue(app.buttons["Concerts drawer"].waitForExistence(timeout: 5))
 
-        // Rename (from the chest, where every drawer has its context menu)
+        // Rename, from the front drawer's hold menu.
         customiseFromMenu(app, "Concerts")
         let field = app.textFields["collectionNameField"]
         field.tap()
@@ -168,7 +175,7 @@ final class LaunchTests: UITestCase {
         attachScreenshot(of: app, named: "edit-collection")
         app.buttons["saveCollectionButton"].tap()
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForNonExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Gigs"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Gigs drawer"].waitForExistence(timeout: 5))
 
         // Delete with confirmation
         customiseFromMenu(app, "Gigs")
@@ -181,7 +188,7 @@ final class LaunchTests: UITestCase {
         XCTAssertTrue(app.staticTexts["This collection is empty."].exists)
         attachScreenshot(of: app, named: "delete-confirmation")
         confirm.tap()
-        XCTAssertTrue(app.staticTexts["Gigs"].waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Gigs drawer"].waitForNonExistence(timeout: 5))
 
         // Built-ins can be edited but not deleted
         customiseFromMenu(app, "Cafés")
