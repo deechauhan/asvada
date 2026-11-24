@@ -61,7 +61,8 @@ public final class Item {
     public var countryCode: String?
     /// Source-specific details such as poster path, address or flag (JSON).
     public var metadataJSON: Data?
-    /// Position in a ranked collection (gapped, e.g. 1000, 2000…).
+    /// Place in a ranked collection, higher is better; gapped (…, 2000, 1000) so a newcomer usually
+    /// takes a midpoint without renumbering (see `RankScores`). `nil` until ranked.
     public var rankScore: Double?
     public var createdAt: Date = Date.now
     public var collection: ExperienceCollection?

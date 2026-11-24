@@ -1,5 +1,6 @@
 import Foundation
 import Model
+import Ranking
 import SwiftData
 
 /// An in-memory store filled with sample data, for SwiftUI previews and tests.
@@ -73,8 +74,8 @@ public enum PreviewData {
             uniquingKeysWith: { first, _ in first },
         )
         if let cafes = byKind[.cafes] {
-            let ranked = [("Prufrock Coffee", 0.92), ("Monmouth", 0.81), ("Kaffeine", 0.74), ("Workshop", 0.6)]
-            for (index, (name, score)) in ranked.enumerated() {
+            let ranked = ["Prufrock Coffee", "Monmouth", "Kaffeine", "Workshop"]
+            for (index, (name, score)) in zip(ranked, RankScores.evenlySpaced(count: ranked.count)).enumerated() {
                 let item = repository.upsertItem(named: name, externalRef: "sample:\(name)", in: cafes)
                 item.rankScore = score
                 repository.addEntry(to: item, date: .now.addingTimeInterval(-Double(index + 1) * 3 * day))
