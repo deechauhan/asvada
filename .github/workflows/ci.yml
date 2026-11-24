@@ -203,3 +203,19 @@ jobs:
           for failure in failures:
               print(f"FAILED {failure.get('testIdentifierString') or failure.get('testName')}: {failure.get('failureText')}")
           PY
+          # Where each failure happened (file:line), from the full test tree.
+          xcrun xcresulttool get test-results tests --path build/Asvada.xcresult --compact > build/tests.json || exit 0
+          python3 - build/tests.json <<'PY'
+          import json, sys
+
+          def walk(node, test=None):
+              if node.get("nodeType") == "Test Case":
+                  test = node.get("name")
+              if node.get("nodeType") == "Failure Message":
+                  print(f"  at {test}: {node.get('name')}")
+              for child in node.get("children", []):
+                  walk(child, test)
+
+          for root in json.load(open(sys.argv[1])).get("testNodes", []):
+              walk(root)
+          PY
