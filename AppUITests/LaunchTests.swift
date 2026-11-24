@@ -158,7 +158,7 @@ final class LaunchTests: UITestCase {
         app.buttons["saveCollectionButton"].tap()
         XCTAssertTrue(app.buttons["Concerts drawer"].waitForExistence(timeout: 5))
 
-        // Rename (from the chest, where every drawer has its context menu)
+        // Rename, from the front drawer's hold menu.
         customiseFromMenu(app, "Concerts")
         let field = app.textFields["collectionNameField"]
         field.tap()
@@ -170,7 +170,7 @@ final class LaunchTests: UITestCase {
         attachScreenshot(of: app, named: "edit-collection")
         app.buttons["saveCollectionButton"].tap()
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForNonExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Gigs"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Gigs drawer"].waitForExistence(timeout: 5))
 
         // Delete with confirmation
         customiseFromMenu(app, "Gigs")
@@ -183,7 +183,7 @@ final class LaunchTests: UITestCase {
         XCTAssertTrue(app.staticTexts["This collection is empty."].exists)
         attachScreenshot(of: app, named: "delete-confirmation")
         confirm.tap()
-        XCTAssertTrue(app.staticTexts["Gigs"].waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Gigs drawer"].waitForNonExistence(timeout: 5))
 
         // Built-ins can be edited but not deleted
         customiseFromMenu(app, "Cafés")
