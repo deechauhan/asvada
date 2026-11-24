@@ -442,10 +442,22 @@ epics:
         sprint: 7
         body: 'Time-box: two evenings. Prototype the turning cabinet two ways: custom CabinetDrum physics, and a horizontal ScrollView with viewAligned and a cylinder transform in visualEffect. Prototype the riffle as a vertical ScrollView + LazyVStack with negative spacing + visualEffect. Prototype the savour pill''s hold-and-slide inside the real tabViewBottomAccessory. Measure, then decide (INTERACTION.md §10).'
         ac:
-          - 'Frame timings recorded for drum roll, riffle fling and hand fan on an A13-class iPhone and a ProMotion iPhone (targets: 120 fps ProMotion, at least 60 fps A13)'
+          - 'Frame-time budget (120 fps ProMotion, at least 60 fps A13) and the on-device measurement procedure written into ADR-0004; the measurement itself is the owner-only task below, since cloud sessions have no device'
           - 'Gesture arbitration verified: horizontal roll vs vertical pull vs pinch vs tab bar; pill long-press-and-slide inside tabViewBottomAccessory works, or a fallback is chosen'
           - VoiceOver traversal checked with an accessibilityRepresentation list for the drum
           - ADR-0004 records the drum implementation, wrap-around vs hard ends, the riffle approach and the pill gesture approach
+      - title: 'Measure the cabinet, riffle and hand on device'
+        type: task
+        points: 1
+        priority: P0
+        sprint: 8
+        owner_only: true
+        depends_on:
+          - 'The turning cabinet: roll, ajar and pull to open'
+        body: 'Run the Instruments procedure in ADR-0004 (SwiftUI and Hitches templates) on an A13-class iPhone and a ProMotion iPhone once the turning cabinet is merged, and again after the riffle and the hand. Cloud sessions cannot run a device, so this needs the owner.'
+        ac:
+          - 'Hitch rate and frame times recorded in ADR-0004 for drum roll and pull (then riffle fling and hand fan as they land)'
+          - 'If the budget is missed, the raster cache ticket is promoted to P0 and the finding is noted on it'
       - title: 'Motion and haptics kit II: roll, pull, riffle, draw, spin'
         type: task
         points: 2

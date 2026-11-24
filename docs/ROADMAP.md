@@ -24,7 +24,7 @@ Capacity assumption: **~14 points per two-week sprint** (side-project pace). Re-
 | E3 · Data model & persistence | M0 | 13 |
 | E4 · Collections | M1 | 15 |
 | E15 · Keepsakes design language | M1 | 41 |
-| E16 · Savour by hand — tactile browsing and picking | M1 | 34 |
+| E16 · Savour by hand — tactile browsing and picking | M1 | 35 |
 | E5 · Item sources — search and catalogs | M1 | 20 |
 | E6 · Quick-log & entries | M1 | 20 |
 | E7 · Rating modes & ranking engine | M1 | 18 |
@@ -98,8 +98,9 @@ Capacity assumption: **~14 points per two-week sprint** (side-project pace). Re-
 - [M1/E5] Film search with TMDB and poster caching — story, 5 pts, P0
 - [M1/E5] Offline country lookup from coordinates — story, 3 pts, P0
 
-### Sprint 8 · 15 Mar 2027 – 28 Mar 2027 · 20 pts
+### Sprint 8 · 15 Mar 2027 – 28 Mar 2027 · 21 pts
 
+- [M1/E16] Measure the cabinet, riffle and hand on device — task, 1 pt, P0
 - [M1/E16] The turning cabinet: roll, ajar and pull to open — story, 5 pts, P0
 - [M1/E16] The chest: pinch for every drawer, carry to reorder, storeroom to hide — story, 2 pts, P0
 - [M1/E16] Draw a keepsake: the hand of blanks on the savour pill — story, 3 pts, P0
@@ -199,4 +200,4 @@ Capacity assumption: **~14 points per two-week sprint** (side-project pace). Re-
 - [M5/E14] Privacy policy and support page — task, 2 pts, P0
 - [M5/E14] Release v1.0 — task, 1 pt, P0
 
-**Total:** 92 items across 16 epics, 311 points.
+**Total:** 93 items across 16 epics, 312 points.
