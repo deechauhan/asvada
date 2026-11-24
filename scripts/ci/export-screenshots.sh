@@ -15,6 +15,9 @@ for test in manifest:
         name = a.get("suggestedHumanReadableName") or a["exportedFileName"]
         # "launch_0_<uuid>.png" -> "launch.png"
         base = re.sub(r"_\d+_[0-9A-F-]{36}", "", os.path.splitext(name)[0], flags=re.I)
+        # XCTest names debug attachments after the query ("Debug description for `"Keepsakes"
+        # NavigationBar`"); upload-artifact rejects quotes, colons and the like, so swap them out.
+        base = re.sub(r'[\\/"`:<>|*?\r\n]+', "-", base).strip("- ")
         ext = os.path.splitext(a["exportedFileName"])[1] or ".png"
         shutil.copy(os.path.join(src, a["exportedFileName"]), os.path.join(out, base + ext))
         print("exported", base + ext)
