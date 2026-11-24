@@ -72,6 +72,12 @@ struct CollectionsScreen: View {
             }
             .navigationTitle(AppTab.collections.title)
             .toolbar { toolbar }
+            // A drawer deleted from its own Customise sheet closes behind it.
+            .onChange(of: collections.map(\.id)) {
+                if let opened, !collections.contains(opened) {
+                    self.opened = nil
+                }
+            }
             .navigationDestination(item: $opened) { collection in
                 OpenDrawer(collection: collection)
                     .zoomTransition(id: collection.id, in: drawerZoom)
