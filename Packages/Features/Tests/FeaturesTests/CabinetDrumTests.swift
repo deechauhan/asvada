@@ -138,3 +138,24 @@ struct DrawerPullTests {
         #expect(TurningCabinet.pullOffset(for: 60) < TurningCabinet.pullThreshold)
     }
 }
+
+struct ChestMorphTests {
+    @Test func pinchingInHeadsForTheChest() {
+        #expect(ChestMorph.progress(magnification: 1, towardChest: true) == 0)
+        #expect(abs(ChestMorph.progress(magnification: 0.75, towardChest: true) - 0.5) < 1e-9)
+        #expect(ChestMorph.progress(magnification: 0.2, towardChest: true) == 1)
+        // Opening the fingers on the cabinet doesn't move toward the chest.
+        #expect(ChestMorph.progress(magnification: 1.4, towardChest: true) == 0)
+    }
+
+    @Test func pinchingOutHeadsBackToTheCabinet() {
+        #expect(abs(ChestMorph.progress(magnification: 1.3, towardChest: false) - 0.5) < 1e-9)
+        #expect(ChestMorph.progress(magnification: 2, towardChest: false) == 1)
+        #expect(ChestMorph.progress(magnification: 0.8, towardChest: false) == 0)
+    }
+
+    @Test func onlyPastHalfwayCommits() {
+        #expect(!ChestMorph.commits(0.5))
+        #expect(ChestMorph.commits(0.51))
+    }
+}

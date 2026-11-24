@@ -4,14 +4,26 @@ import SwiftUI
 
 /// An opened drawer: its keepsakes laid out one above another, best (or newest) first. This is
 /// the interim interior; the riffle (thumbing through keepsakes stood on end) replaces it.
+/// Its toolbar customises and shares the drawer directly, without the chest's hold menu.
 struct OpenDrawer: View {
     let collection: ExperienceCollection
+    @State private var isCustomising = false
+    @State private var isSharing = false
 
     private var items: [Item] {
         ExperienceCollection.drawerOrder(collection.items ?? [], mode: collection.ratingMode)
     }
 
     var body: some View {
+        // Deleted from Customise: nothing to show while the screen pops back to the cabinet.
+        if collection.isDeleted || collection.modelContext == nil {
+            Color.clear
+        } else {
+            drawer
+        }
+    }
+
+    private var drawer: some View {
         ScrollView {
             LazyVStack(spacing: Spacing.large) {
                 if items.isEmpty {
@@ -38,5 +50,24 @@ struct OpenDrawer: View {
         .navigationTitle(collection.name)
         .navigationBarTitleDisplayModeInline()
         .accessibilityIdentifier("openDrawer")
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                // Only filled drawers have something to share.
+                if ShareContent(collection: collection) != nil {
+                    Button("Share", systemImage: "square.and.arrow.up") { isSharing = true }
+                        .accessibilityIdentifier("drawerShare")
+                }
+                Button("Customise", systemImage: "slider.horizontal.3") { isCustomising = true }
+                    .accessibilityIdentifier("drawerCustomise")
+            }
+        }
+        .sheet(isPresented: $isCustomising) {
+            CollectionEditor(mode: .edit(collection))
+        }
+        .sheet(isPresented: $isSharing) {
+            if let content = ShareContent(collection: collection) {
+                ShareCardSheet(collection: collection, content: content)
+            }
+        }
     }
 }
