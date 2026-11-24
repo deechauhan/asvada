@@ -408,7 +408,7 @@ All of them follow WWDC21's three principles. *Causality:* every haptic is tied 
 |---|---|---|---|---|---|
 | Roll the cabinet | Neighbours peek; knob rail | Tap a neighbour or a knob | `accessibilityRepresentation` list, rotor | Flat, crossfade | AX1: one drawer; AX3: chest list |
 | Pull a drawer | Cup pull; one-time bob | Tap the drawer | Action "Open" | Crossfade into the drawer | Bigger label and stat |
-| Chest, carry, hide | *All drawers*; storeroom shelf | Buttons; context menu "Put away" | Move earlier/later, Put away | No lift tilt | Single column |
+| Chest, carry, hide | *All drawers*; storeroom shelf | Buttons; the cabinet hold menu "Put away" (a hold in the chest carries) | Move earlier/later, Put away | No lift tilt | Single column |
 | Riffle | Index tabs; rail | Tap a tab or the rail | Linear cards, headers, actions | Stack slides, no rotation | Overlap shrinks; AX3 opens the spread |
 | Spread | *Spread* button | Same | Spread is a plain ordered list | Crossfade | Reflows |
 | Draw a keepsake | ⌃ on the pill; hand labels | Tap the pill → grid | Pill actions "Savour a café"… | No arc animation | Sheet grid primary |

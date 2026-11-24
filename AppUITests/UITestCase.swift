@@ -57,19 +57,27 @@ class UITestCase: XCTestCase {
         XCTAssertTrue(app.navigationBars["Edit collection"].waitForExistence(timeout: 15))
     }
 
-    /// Long-presses a drawer until its context menu shows. A press that lands while the cabinet is
-    /// still settling (after a scroll or a new drawer) starts no menu, so it's retried once.
+    /// Turns the cabinet to `name`'s drawer and holds it until its menu shows (the cabinet's
+    /// front drawer has the hold menu; in the chest a hold carries the drawer instead). A press
+    /// that lands while the drum is still settling starts no menu, so it's retried once.
     @MainActor
     func openDrawerMenu(_ app: XCUIApplication, _ name: String) {
-        openChest(app)
-        let row = app.staticTexts[name]
-        bringIntoView(row, in: app)
+        let done = app.buttons["cabinetButton"]
+        for _ in 0 ..< 3 where done.exists {
+            done.tap()
+            _ = done.waitForNonExistence(timeout: 4)
+        }
+        let knob = app.buttons["Turn to \(name)"]
+        XCTAssertTrue(knob.waitForExistence(timeout: 10), "No knob for \(name)")
+        knob.tap()
+        XCTAssertTrue(waitUntilSelected(knob, true), "The cabinet didn't turn to \(name)")
+        let front = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))
         let customise = app.buttons["Customise"]
         for _ in 0 ..< 2 where !customise.exists {
-            row.press(forDuration: 1.2)
+            front.press(forDuration: 1.2)
             _ = customise.waitForExistence(timeout: 4)
         }
-        XCTAssertTrue(customise.exists, "The context menu did not appear for \(name)")
+        XCTAssertTrue(customise.exists, "The menu did not appear for \(name)")
     }
 
     /// Waits until `element`'s selected state is `selected` (rows expose `.isSelected`).
