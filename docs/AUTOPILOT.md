@@ -27,7 +27,8 @@ Read `CLAUDE.md` and `docs/WAYS_OF_WORKING.md` first. Everything there still app
    In progress (the PR moves it to In review; the merge to Done). Implement to the acceptance criteria with tests.
    Commit, push, open a PR using `.github/pull_request_template.md`, `Closes #<issue>`.
    Comment a short stand-up note on the issue (done / next / blocked).
-5. **Wait for CI** (it takes a few minutes on macOS runners), fix failures, then merge as in step 2.
+5. **Wait for CI** (it takes a few minutes on macOS runners; docs-only PRs skip the Swift jobs, and the
+   app job reuses cached build products), fix failures, then merge as in step 2.
 6. **Repeat** from step 3 while there's usage left. Stop after the run has merged 3 PRs, so a
    human can review the pace and direction.
 
@@ -46,6 +47,7 @@ For any PR that changes UI, add or update a UI test that attaches a named screen
 (see `screenshots/README.md`). After CI is green, pull them into `screenshots/<issue>/`:
 
 ```bash
+# once per app job: "App build + UI test (menus)", "(launch)" and "(features)"
 gh api repos/deechauhan/asvada/actions/jobs/<app-job-id>/logs | python3 -I scripts/screenshots-from-log.py screenshots/<issue>
 ```
 
