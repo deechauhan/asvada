@@ -10,18 +10,40 @@ final class OnboardingUITests: UITestCase {
         attachScreenshot(of: app, named: "onboarding-welcome")
         begin.tap()
 
-        // Stamp two countries by search; the counter rolls up.
+        // Stamp Japan by search (Return stamps it), then Australia from Oceania's strip.
         let search = app.textFields["stampSearch"]
         XCTAssertTrue(search.waitForExistence(timeout: 10))
         search.tap()
-        search.typeText("Japan")
-        app.buttons["flag-JP"].tap()
-        search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 5) + "Portugal\n")
-        app.buttons["flag-PT"].tap()
+        search.typeText("Japan\n")
+        app.buttons["continent-Oceania"].tap()
+        let australia = app.buttons["stamp-AU"]
+        XCTAssertTrue(australia.waitForExistence(timeout: 5))
+        australia.tap()
         let counter = app.staticTexts["stampCounter"]
         XCTAssertEqual(counter.label, "2 countries · 1% of the world")
-        XCTAssertEqual(app.descendants(matching: .any)["inkWorldMap"].label, "World map, 2 countries inked: Japan and Portugal")
+        let map = app.descendants(matching: .any)["inkWorldMap"]
+        XCTAssertEqual(map.label, "World map, 2 countries inked: Australia and Japan")
+        XCTAssertTrue(australia.isSelected)
+
+        // Carry the rubber stamp to Brazil and lift: its foot sits 44 pt above the finger.
+        let rubberStamp = app.buttons["rubberStamp"]
+        XCTAssertTrue(rubberStamp.exists)
+        let brazil = map.coordinate(withNormalizedOffset: CGVector(dx: 0.36, dy: 0))
+            .withOffset(CGVector(dx: 0, dy: map.frame.height * 0.65 + 44))
+        rubberStamp.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.3, thenDragTo: brazil)
+        XCTAssertTrue(labelled("World map, 3 countries inked", in: app, prefix: true).waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["passport-BR"].exists)
         attachScreenshot(of: app, named: "onboarding-stamp")
+
+        // Long-press a stamp in the passport to wash it off; Undo brings it back.
+        app.descendants(matching: .any)["passport-BR"].press(forDuration: 1.0)
+        XCTAssertTrue(labelled("World map, 2 countries inked", in: app, prefix: true).waitForExistence(timeout: 5))
+        let undo = app.buttons["washOffUndo"]
+        XCTAssertTrue(undo.waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "onboarding-stamp-washed-off")
+        undo.tap()
+        XCTAssertTrue(labelled("World map, 3 countries inked", in: app, prefix: true).waitForExistence(timeout: 5))
         app.buttons["onboardingContinue"].tap()
 
         // The passport spread, ready to share.
@@ -42,7 +64,7 @@ final class OnboardingUITests: UITestCase {
         XCTAssertTrue(app.navigationBars["Journal"].waitForExistence(timeout: 10))
         openCollectionsAndWait(app)
         openChest(app)
-        XCTAssertTrue(labelled("2 stamped", in: app, prefix: true).waitForExistence(timeout: 5))
+        XCTAssertTrue(labelled("3 stamped", in: app, prefix: true).waitForExistence(timeout: 5))
         XCTAssertTrue(labelled("1 ranked, number one My favourite café", in: app).exists)
     }
 
