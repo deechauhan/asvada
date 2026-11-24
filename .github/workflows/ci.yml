@@ -189,33 +189,37 @@ jobs:
           name: xcresult
           path: build/Asvada.xcresult
           if-no-files-found: ignore
-      # Last, so failures sit at the very end of the log, after the screenshot dump.
-      - name: Summarise test failures
-        if: failure()
+      # Last, so the report sits at the very end of the log, after the screenshot dump: the
+      # slowest tests (to see where CI time goes), then any failures with file:line.
+      - name: Test report
+        if: always()
         run: |
           [ -d build/Asvada.xcresult ] || exit 0
           xcrun xcresulttool get test-results summary --path build/Asvada.xcresult --compact > build/summary.json || exit 0
-          python3 - build/summary.json <<'PY'
-          import json, sys
-          summary = json.load(open(sys.argv[1]))
-          failures = summary.get("testFailures", [])
-          print(f"{summary.get('result')}: {summary.get('failedTests', len(failures))} failed of {summary.get('totalTestCount')}")
-          for failure in failures:
-              print(f"FAILED {failure.get('testIdentifierString') or failure.get('testName')}: {failure.get('failureText')}")
-          PY
-          # Where each failure happened (file:line), from the full test tree.
           xcrun xcresulttool get test-results tests --path build/Asvada.xcresult --compact > build/tests.json || exit 0
-          python3 - build/tests.json <<'PY'
+          python3 - build/summary.json build/tests.json <<'PY'
           import json, sys
+
+          summary = json.load(open(sys.argv[1]))
+          tree = json.load(open(sys.argv[2]))
+          cases, failures = [], []
 
           def walk(node, test=None):
               if node.get("nodeType") == "Test Case":
                   test = node.get("name")
+                  cases.append((node.get("durationInSeconds") or 0, node.get("nodeIdentifier") or test))
               if node.get("nodeType") == "Failure Message":
-                  print(f"  at {test}: {node.get('name')}")
+                  failures.append(f"  at {test}: {node.get('name')}")
               for child in node.get("children", []):
                   walk(child, test)
 
-          for root in json.load(open(sys.argv[1])).get("testNodes", []):
+          for root in tree.get("testNodes", []):
               walk(root)
+          print(f"{summary.get('result')}: {summary.get('passedTests')} passed, {summary.get('failedTests')} failed of {summary.get('totalTestCount')}")
+          print("Slowest tests:")
+          for seconds, name in sorted(cases, reverse=True)[:12]:
+              print(f"  {seconds:7.1f}s  {name}")
+          for failure in summary.get("testFailures", []):
+              print(f"FAILED {failure.get('testIdentifierString') or failure.get('testName')}: {failure.get('failureText')}")
+          print("\n".join(failures))
           PY
