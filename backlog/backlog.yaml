@@ -386,6 +386,7 @@ epics:
           - "Passport spread + share card; then one pre-filled quick-log ending in Hold to Savour"
           - "Every step skippable; replaces 'Onboarding: pick your collections'"
       - title: "Duel polish: stamped result and list re-flow"
+        design: "Duel cards are drawn from the drawer; 'Re-duel' starts from a lifted card's back."
         type: story
         points: 2
         priority: P1
@@ -405,8 +406,9 @@ epics:
           - "Prototype at 5k entries with frame timings"
           - "Decision recorded as an ADR"
       - title: "Tear the stub (films) and split-flap codes (flights)"
+        design: "The tear gesture and its rigid-tick haptic are built for the print head. This ticket adds only the perforation path for film stubs and the split-flap codes. See INTERACTION.md."
         type: story
-        points: 2
+        points: 1
         priority: P2
         sprint: 20
         story: "As a user I want logging a film or a flight to have its own finishing gesture so that it stays fun on the hundredth time."
@@ -415,13 +417,193 @@ epics:
           - "IATA codes roll in with numericText content transitions"
       - title: "Sound pack: paper, stamp, seal"
         type: task
-        points: 1
+        points: 2
         priority: P2
         sprint: 20
         body: "Three short sounds on an ambient audio session (silent switch mutes them) with a Settings toggle."
         ac:
           - "Paper, stamp and seal sounds play on their moments"
           - "Settings toggle; respects the silent switch"
+          - "Adds a drawer slide, a detent click, a riffle shff and a rubber-stamp thock (still mutable and ambient)"
+
+  # E16 sits after E15 so that, within a sprint, the autopilot builds these before the E5/E6
+  # items they shape (docs/design/INTERACTION.md).
+  - key: E16
+    title: 'Epic: Savour by hand — tactile browsing and picking'
+    milestone: M1
+    area: design
+    priority: P0
+    summary: 'Replace picking from lists with handling keepsakes: a turning cabinet you roll and pull open, a riffle of keepsakes inside each drawer, a hand of blank keepsakes you draw from to log, and countries you stamp. One gesture grammar (roll, pull, pinch, hold) and a tap, VoiceOver and Reduce Motion path for every gesture. See INTERACTION.md.'
+    items:
+      - title: 'Spike: cabinet, riffle and hand on device (ADR-0004)'
+        type: spike
+        points: 2
+        priority: P0
+        sprint: 7
+        body: 'Time-box: two evenings. Prototype the turning cabinet two ways: custom CabinetDrum physics, and a horizontal ScrollView with viewAligned and a cylinder transform in visualEffect. Prototype the riffle as a vertical ScrollView + LazyVStack with negative spacing + visualEffect. Prototype the savour pill''s hold-and-slide inside the real tabViewBottomAccessory. Measure, then decide (INTERACTION.md §10).'
+        ac:
+          - 'Frame timings recorded for drum roll, riffle fling and hand fan on an A13-class iPhone and a ProMotion iPhone (targets: 120 fps ProMotion, at least 60 fps A13)'
+          - 'Gesture arbitration verified: horizontal roll vs vertical pull vs pinch vs tab bar; pill long-press-and-slide inside tabViewBottomAccessory works, or a fallback is chosen'
+          - VoiceOver traversal checked with an accessibilityRepresentation list for the drum
+          - ADR-0004 records the drum implementation, wrap-around vs hard ends, the riffle approach and the pill gesture approach
+      - title: 'Motion and haptics kit II: roll, pull, riffle, draw, spin'
+        type: task
+        points: 2
+        priority: P0
+        sprint: 7
+        body: Extend Core/DesignSystem Motion.swift and Haptics.swift. The existing settle, thunk, flip, stagger, sealHold, crossfade and seal, stamp, pick, relishStep, done stay unchanged. Values are tuned in prototype.html and listed in INTERACTION.md §8.
+        ac:
+          - 'Motion.roll .spring(duration: 0.42, bounce: 0.12), .pull (0.36, 0.2), .morph (0.5, 0.06), .fan (0.34, 0.3, 18 ms stagger), .spin(distance:) and .inkBloom'
+          - Motion.rubberBand(_:dimension:coefficient:) and Motion.project(velocity:decelerationRate:) (WWDC18 projection), unit-tested
+          - 'Haptic.detent (.selection), .clunk (.impact(flexibility: .solid, intensity: 0.8)), .lift (.impact(weight: .light)) and .tear (Core Haptics rigid ticks with an .impact fallback)'
+          - A DetentHaptics helper throttles detents to at least 30 ms apart; every motion token has a Reduce Motion crossfade and haptics are kept
+      - title: 'The turning cabinet: roll, ajar and pull to open'
+        type: story
+        points: 5
+        priority: P0
+        sprint: 8
+        depends_on:
+          - 'Spike: cabinet, riffle and hand on device (ADR-0004)'
+          - 'Motion and haptics kit II: roll, pull, riffle, draw, spin'
+        story: As a user I want my collections to sit in a cabinet I can turn, one drawer at a time, so that browsing them feels like handling something rather than scanning a grid.
+        design: 'INTERACTION.md §3. Replaces the two-column grid of #113 as the default Collections view. The grid lives on as the chest (next story).'
+        ac:
+          - One drawer big and centred, with its neighbours rolling away in 3D on a closed drum. A horizontal drag tracks 1:1 and snaps with Motion.roll after a projected fling (at most ±3 drawers)
+          - One Haptic.detent per drawer passing the centre; a knob rail shows position and is tappable
+          - When the roll settles the front drawer eases ajar and its top three keepsakes rise (Motion.settle, 50 ms stagger). Empty drawers show a ghost keepsake and 'Nothing savoured yet', never '0'
+          - Pull the front drawer down (axis-locked after 10 pt, rubber-banded), or tap it, to open it. Past the threshold it clunks open with a zoom transition into the drawer; otherwise it springs back. A one-time 26 pt bob hints the pull
+          - The blank drawer at the end opens the collection editor; the last-used drawer is remembered
+          - VoiceOver gets an accessibilityRepresentation list of drawers with Open, Move earlier, Move later, Put away and Share actions. Reduce Motion draws the drum flat with crossfades. At AX3 and above the chest is the default
+          - UI test and screenshots (light and dark) of the drum, mid-roll and a pulled drawer
+      - title: 'The chest: pinch for every drawer, carry to reorder, storeroom to hide'
+        type: story
+        points: 2
+        priority: P0
+        sprint: 8
+        depends_on:
+          - 'The turning cabinet: roll, ajar and pull to open'
+        story: As a user I want to see every drawer at once and rearrange or put away drawers by carrying them, so that organising the cabinet feels physical.
+        design: 'INTERACTION.md §3 step 5. Reuses #113''s grid, CabinetOrder.destination, Repository.reorder and setHidden, and the VoiceOver Move earlier and Move later actions.'
+        ac:
+          - Pinching (fingers together) scrubs a continuous drum ↔ chest morph; releasing past halfway commits it with Motion.morph. 'All drawers' and 'Done' do the same
+          - Tapping a drawer in the chest rolls the cabinet to it
+          - Holding a drawer for 0.38 s lifts it (Haptic.lift); the others make room live; dropping it reorders (persisted)
+          - 'A storeroom shelf docked above the savour pill: drop a drawer there to hide it, tap ''Take out'' to unhide it. The context-menu ''Put away'' (today''s Hide) is kept'
+          - The Edit jiggle mode is removed; the VoiceOver actions are unchanged
+      - title: 'Draw a keepsake: the hand of blanks on the savour pill'
+        type: story
+        points: 3
+        priority: P0
+        sprint: 8
+        depends_on:
+          - 'Spike: cabinet, riffle and hand on device (ADR-0004)'
+          - 'Motion and haptics kit II: roll, pull, riffle, draw, spin'
+        story: As a user I want to hold the savour pill and draw the right blank keepsake with one slide of my thumb, so that starting a log is quick and feels like picking a card, not a row.
+        design: 'INTERACTION.md §5. Replaces the List in Shell/QuickLogSheet.swift for the pick step. Uses the blank keepsake shapes from the keepsake kit (#110, #114).'
+        ac:
+          - Holding the pill for 170 ms or more (or sliding up more than 8 pt) fans out one blank keepsake per visible collection (at most 8, in cabinet order) in an arc over the thumb (Motion.fan)
+          - The blank under the thumb's angle lifts with a Haptic.detent and a label naming it. There is a 46 pt dead zone at the pill, and sliding below the pill cancels
+          - Releasing draws the blank into the quick-log sheet (Haptic.pick). A flick released before the hand appears draws the same blank, because positions never change
+          - A tap opens the same hand as a grid in the sheet, plus 'Again?' chips for the latest items
+          - 'VoiceOver: pill actions ''Savour a café'', ''Stamp a country'' and so on. Reduce Motion: no arc animation. A TipKit tip teaches hold-and-slide after the third tap-open'
+      - title: 'The print head: suggestions print onto the blank, tear off for the next'
+        type: story
+        points: 3
+        priority: P0
+        sprint: 9
+        depends_on:
+          - Quick-log flow (under 15 seconds)
+          - Place search with MapKit (cafés, restaurants, cities)
+          - Film search with TMDB and poster caching
+          - Bundled airline catalog
+          - Offline country lookup from coordinates
+        story: As a user I want my best guess to print onto the keepsake straight away and to tear it off for the next one, so that I rarely have to type.
+        design: 'INTERACTION.md §5 steps 6–7. The tear gesture and its haptic are shared with #121.'
+        ac:
+          - The drawn blank prints its first guess with a typewriter reveal; a source line says where it came from and shows 'n of m'
+          - 'Guess sources: near you (MKLocalSearch within about 50 m, only with location permission), again (recent items in this drawer), now showing (films), you''re in (countries, via the offline lookup)'
+          - Swiping sideways at least 90 pt (or 650 pt/s) tears the guess off (Haptic.tear) and prints the next; swiping back restores it. A 'Next guess' button and VoiceOver actions do the same
+          - Typing prints the top search result onto the blank. The keyboard opens automatically only when there is no guess
+          - Reduce Motion crossfades instead of tearing and typing
+      - title: Keepsake raster cache for 120 fps motion
+        type: task
+        points: 2
+        priority: P1
+        sprint: 10
+        depends_on:
+          - 'Spike: cabinet, riffle and hand on device (ADR-0004)'
+        body: Pre-render mini keepsakes for the drum, chest and hand, and make paper grain a tiled image. Today KeepsakePaper draws about w·h/90 dots per keepsake in a Canvas, which is costly to rasterise again under 3D transforms.
+        ac:
+          - ImageRenderer snapshots cached by item id and version, invalidated on edit. During motion only the focused keepsake is a live view
+          - KeepsakePaper grain drawn from a 128 px tile (CONCEPT §3) instead of per-dot Canvas
+          - 'Instruments run: the drum and riffle hold 120 fps on ProMotion and at least 60 fps on an A13 device with 500 items'
+      - title: 'The riffle: thumb through a drawer'
+        type: story
+        points: 5
+        priority: P0
+        sprint: 11
+        depends_on:
+          - 'The turning cabinet: roll, ajar and pull to open'
+          - 'Item detail: all entries and stats for one thing'
+        story: As a user I want to thumb through a drawer's keepsakes one at a time, with tabs showing their order, so that looking back feels like flipping through a card file I love.
+        design: 'INTERACTION.md §4. The overview layouts are #44 (drawer spreads).'
+        ac:
+          - Keepsakes stand on end in the open drawer. Thumbing down flips the front card toward you (rotating about its bottom edge) and brings up the next. One Haptic.detent per card; flings project; the ends rubber-band
+          - 'Index tabs on a ⅓-cut pattern: No. n for ranked (best first), relish-grouped names for stars and custom, year guide cards for logs (newest first). The front tab carries the saffron macron'
+          - Tapping a tab, or scrubbing the right-hand rail, jumps there
+          - 'Tapping the front card lifts it out (a zoom into item detail, #34); tapping again turns it over to show the note, people, rank and Re-duel'
+          - Pinching or 'Spread' tips the drawer into its spread (#44), and tapping a card there returns to the riffle at that card. 'Shut', or tapping the drawer front, closes it with Haptic.clunk
+          - 'Built on ScrollView + LazyVStack + viewAligned + visualEffect, or whatever the spike chose. VoiceOver reads the cards in order with Lift out, Re-duel and Share actions. Reduce Motion: no rotation. At AX3 and above the drawer opens straight into its spread'
+      - title: 'Stamp pad: aim, press and ink a country'
+        type: story
+        points: 3
+        priority: P1
+        sprint: 10
+        depends_on:
+          - Ink world map (offline Canvas renderer of bundled polygons)
+          - Bundled country catalog and polygons
+          - 'Onboarding: stamp your passport'
+        story: As a user I want to stamp countries by aiming a rubber stamp at the ink map, or by tapping through a strip of unstamped stamps, so that filling my passport is a pleasure, not a checklist.
+        design: 'INTERACTION.md §6, the flat-map version. Builds on #117 InkWorldMap and the #25 catalogue. Changes #118''s StampStep and #38''s Passport.'
+        ac:
+          - Dragging the rubber stamp over the flat ink map shows a 2× loupe; releasing stamps the country under it with Motion.thunk, Haptic.stamp and an ink bloom from the impact point. The stamp lands in the passport strip and the counter rolls
+          - Continent chips deal a strip of unstamped stamps (dashed outlines) to tap through. This replaces the flag grid in onboarding's StampStep and makes the A–Z list a fallback, not the primary path
+          - Search flies the reticle to a country, and Return stamps it
+          - Long-pressing a stamp washes it off, with Undo
+          - 'VoiceOver uses search and the strips (isSelected) with a Stamp action. Reduce Motion: fade bloom, no thunk scale, haptic kept'
+      - title: 'Spin & stamp: the ink globe'
+        milestone: M2
+        type: story
+        points: 5
+        priority: P1
+        sprint: 14
+        depends_on:
+          - 'Stamp pad: aim, press and ink a country'
+          - Ink world map (offline Canvas renderer of bundled polygons)
+        story: As a user I want to spin a globe of my world and stamp countries where the ring lands, so that my passport feels like travelling again.
+        design: INTERACTION.md §6. Time-box a Canvas prototype first, with Metal as the fallback.
+        ac:
+          - An orthographic ink globe drawn from the bundled polygons (Canvas, precomputed unit-sphere points, horizon clipping). Versor dragging with inertia; latitude clamped
+          - The reticle locks on the country beneath it, with a magnetic snap within 46 pt and disambiguation chips for small neighbours
+          - The Stamp button, or a double-tap, stamps with the same ink bloom as the stamp pad
+          - Pinching or 'Unroll' morphs the globe into the flat ink map and back
+          - 'Measured while spinning: 120 fps on ProMotion and at least 60 fps on A13. Reduce Motion: no inertia, and cuts instead of fly-to'
+      - title: 'Lucky dip: spin the cabinet for a forgotten keepsake'
+        milestone: M4
+        type: story
+        points: 2
+        priority: P2
+        sprint: 19
+        depends_on:
+          - 'The turning cabinet: roll, ajar and pull to open'
+        story: As a user I want to give the cabinet a spin and have it hand me a keepsake I'd forgotten, so that looking back happens by surprise.
+        design: INTERACTION.md §7.
+        ac:
+          - Flinging the cabinet (faster than 2,300 pt/s), or tapping 'Lucky dip', spins it with decelerating detents (Motion.spin). It lands with Haptic.clunk
+          - 'A face-down keepsake rises from that drawer, and tapping turns it over (Motion.flip). Actions: Again, Open drawer, Put back'
+          - Weighted toward anniversaries (×2), keepsakes unseen for 90 days or more, and ones with a note or photo. Never an empty drawer, never the same keepsake twice in a row
+          - VoiceOver announces the keepsake; Reduce Motion crossfades with no spin
+          - 'Optional (P2): long-press a drawer''s lip to shuffle it'
 
   - key: E5
     title: "Epic: Item sources — search and catalogs"
@@ -497,17 +679,17 @@ epics:
     summary: "Logging an experience takes seconds; entries hold the details and photos."
     items:
       - title: "Quick-log flow (under 15 seconds)"
-        design: "Keepsakes: four beats — Pick (blank keepsakes) · Find (details print onto the keepsake) · Savour (mode-specific) · Seal (hold the ā). Build on the keepsake kit and ā Seal."
+        design: "Draw (hand or tap path) → print head → savour step per mode → optional note and details → hold the ā. INTERACTION.md §5."
         type: story
-        points: 8
+        points: 5
         priority: P0
         sprint: 8
         story: "As a user I want to log something in a few taps — pick a collection, find the item, rate it, save — so that logging never feels like a chore."
         ac:
-          - "Flow: collection → search/pick item → rating (per mode) → optional details → save"
-          - "Recent and nearby suggestions shown first"
-          - "Median completion < 15 s in a timed test with 10 entries"
-          - "Saved entry appears immediately on the timeline"
+          - "Flow: draw a keepsake (or the tap path) → print head → savour step per mode (duel, relish, when, stamp) → optional note and details → hold the ā"
+          - "Repeat visits to ranked items skip the duel ('Still No. n?')"
+          - "Median completion under 15 s in a timed test with 10 entries (the prototype logs a country in 7.3 s)"
+          - "The sealed keepsake flies into its drawer and appears in the Journal immediately; a toast shows the time taken"
       - title: "Entry details: date, notes, companions, tags"
         type: story
         points: 5
@@ -529,6 +711,7 @@ epics:
           - "Stored in-app (not PHAsset references)"
           - "Photo date/location read from metadata when present"
       - title: "Item detail: all entries and stats for one thing"
+        design: "Reached by lifting the front card out of the riffle (a zoom transition). The hero keepsake turns over to show its back: note, people, rank and Re-duel."
         type: story
         points: 3
         priority: P1
@@ -566,7 +749,7 @@ epics:
           - "Half-star input, accessible with VoiceOver adjustable action"
           - "Average shown on item detail"
       - title: "Rating mode: checklist with completion progress"
-        design: "Keepsakes: the Passport spread (rotated stamps) plus continent MacronBars; visited = plum ink."
+        design: "The Passport drawer uses the stamp pad and continent strips; the per-continent MacronBars stay."
         type: story
         points: 3
         priority: P0
@@ -624,16 +807,18 @@ epics:
           - "Mixed feed across collections grouped by month/year"
           - "Cards show photo, item, collection colour and rating"
           - "Smooth scrolling with 5,000 entries"
-      - title: "Collection views: list, poster grid, ranked, progress"
-        design: "Keepsakes: The Menu (ranked), Passport (checklist), Ticket box (log), Shelf (custom)."
+      - title: "Drawer spreads: The Menu, Ticket box, Passport, Pinboard"
+        design: "These become the overview state of an open drawer, reached by pinching or 'Spread' from the riffle. See INTERACTION.md."
         type: story
         points: 5
         priority: P0
         sprint: 12
         story: "As a user I want each collection to show in the layout that suits it — posters for films, a ranked list for cafés, a progress grid for countries."
         ac:
-          - "Four view modes; default per collection, switchable"
-          - "Sort and filter by date, rating, location"
+          - "Four spreads chosen by rating mode: The Menu (ranked), Ticket box (log), Passport (checklist), Pinboard (stars and custom)"
+          - "Reached by pinch or 'Spread' from the riffle, with matched geometry; tapping a card returns to the riffle at that card"
+          - "The Menu hosts manual re-ordering (the drag criterion from #41)"
+          - "Sort and filter by date, rating and location (kept)"
       - title: "Search across everything"
         type: story
         points: 3
@@ -857,6 +1042,7 @@ epics:
         ac:
           - "Card on the timeline when matches exist"
           - "Optional local notification, off by default"
+          - "An anniversary keepsake sticks out of its drawer on a saffron-macron tab in the cabinet and the chest; tapping pulls it out face down"
       - title: "Year in review"
         design: "Keepsakes: 'The Tasting Menu' — the year set as a printed degustation menu."
         type: story
@@ -906,6 +1092,8 @@ epics:
           - "All controls labelled; rotor works on timeline and map lists"
           - "Dynamic Type up to AX5 without truncation of key info"
           - "Reduce Motion respected"
+          - "Gesture audit of the drum, chest, riffle, hand, tear, stamp and globe with VoiceOver, Switch Control and Voice Control"
+          - "Reduce Motion matrix from INTERACTION.md §9 verified on device"
       - title: "Performance and memory profiling"
         type: task
         points: 3

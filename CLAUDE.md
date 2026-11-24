@@ -28,6 +28,7 @@ Owner: Deepak (`deechauhan`). Solo side project, run as an agile project on GitH
 | Photos | Store downscaled copies in-app (`@Attribute(.externalStorage)`), not PHAsset references. |
 | Privacy | No analytics SDKs, no tracking. Network only for TMDB, map tiles, and user-enabled iCloud. |
 | Design | **"Keepsakes"** (approved Nov 2026, `docs/design/CONCEPT.md`): entries are category-shaped keepsakes (receipt, menu card, passport stamp, postcard, boarding pass, ticket stub, luggage tag) sealed by holding the serif **ā**. Palette **Aubergine & Saffron**: plum ink `#6B2D8C` on warm paper `#FAF6F0`, saffron `#F2A93B` for macron bars only (never text), aubergine hero field. New York serif for voice, SF for UI. Never ship a plain CRUD list or a bare "0" — use keepsakes, ghost states and serif numerals. |
+| Interaction | **"Savour by hand"** (approved 24 Nov 2026, `docs/design/INTERACTION.md`, epic E16): one gesture grammar — roll to browse one thing at a time, pull to open, pinch to see everything, hold to commit. Collections is a turning cabinet (the grid becomes the chest), a drawer opens into a riffle of keepsakes, quick-log draws a blank keepsake from a hand on the savour pill and a print head suggests the item, countries are stamped. Every gesture has a visible handle, a tap path, a VoiceOver path and a Reduce Motion crossfade. |
 
 ## Domain model
 
@@ -74,6 +75,7 @@ name and UX from sounding travel-only.
 - `docs/WAYS_OF_WORKING.md` — agile process, DoR/DoD, branching, reviews
 - `docs/DECISIONS/` — ADRs (architecture decision records)
 - `docs/design/CONCEPT.md` — the approved "Keepsakes" design: language, signature moments, screens, tokens v2
+- `docs/design/INTERACTION.md` — the approved "Savour by hand" interaction design: cabinet, riffle, hand, print head, stamp pad, motion and haptics kit II (prototype in `docs/design/prototype/`)
 - `docs/AUTOPILOT.md` — runbook for unattended scheduled sessions
 - `backlog/backlog.yaml` — source of truth used to seed the GitHub board
 - `scripts/bootstrap_github.py` — creates labels, milestones, issues and the Project board

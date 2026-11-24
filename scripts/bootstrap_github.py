@@ -106,7 +106,13 @@ def item_body(item: dict, epic: dict, sprints: dict) -> str:
         parts += ["## What and why" if item["type"] != "spike" else "## Question", "", item["body"], ""]
     parts += ["## Acceptance criteria", ""] + [f"- [ ] {a}" for a in item["ac"]] + [""]
     if item.get("design"):
-        parts += ["## Design", "", item["design"], "", "See `docs/design/CONCEPT.md`.", ""]
+        refs = "`docs/design/CONCEPT.md`"
+        if "INTERACTION" in item["design"]:
+            refs = "`docs/design/INTERACTION.md` (gestures and motion) and " + refs + " (look)"
+        parts += ["## Design", "", item["design"], "", f"See {refs}.", ""]
+    if item.get("depends_on"):
+        # The autopilot skips a ticket until every one of these is merged.
+        parts += ["## Depends on", ""] + [f"- {d}" for d in item["depends_on"]] + [""]
     parts += [
         "---",
         f"**Epic:** {epic['key']} · {epic['title'].replace('Epic: ', '')}  ",
@@ -393,6 +399,11 @@ def validate(b: dict):
             if not (0 <= it["sprint"] < b["sprints"]["count"]):
                 problems.append(f"{it['title']}: sprint out of range")
             item_body(it, e, b["sprints"])
+    for e in b["epics"]:
+        for it in e["items"]:
+            for dep in it.get("depends_on", []):
+                if dep not in titles:
+                    problems.append(f"{it['title']}: depends on unknown title {dep!r}")
     print(f"{len(b['epics'])} epics, {n} items, {pts} points, {len(labels)} labels, {len(b['milestones'])} milestones")
     print("\n".join(problems) if problems else "OK — no problems found")
     sample = b["epics"][5]

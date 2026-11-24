@@ -1,6 +1,7 @@
 # Asvada — Design Concept: "Keepsakes"
 
 *Product + visual design concept · 23 Nov 2026 · **approved by the owner**: Keepsakes direction, Aubergine & Saffron palette, full scope (epic E15).*
+*How you browse and pick (cabinet, riffle, hand of blanks, stamp pad) is in `INTERACTION.md` (epic E16), which supersedes the gestures and list layouts sketched here where they differ.*
 
 ---
 
