@@ -75,11 +75,14 @@ struct RankScoresTests {
             }
             ranking.insert((label, placement.score), at: position)
             let scores = ranking.map(\.score)
-            #expect(scores.allSatisfy(\.isFinite))
+            // Hoisted: #expect splits a call into a closure that may throw, and allSatisfy rethrows.
+            let allFinite = scores.allSatisfy(\.isFinite)
+            #expect(allFinite)
             #expect(isStrictlyDescending(scores), "after inserting \(label) at \(position)")
             var expected = before
             expected.insert(label, at: position)
-            #expect(ranking.map(\.label) == expected)
+            let labels = ranking.map(\.label)
+            #expect(labels == expected)
         }
         #expect(rebalances > 0, "the test should exercise rebalancing")
     }
