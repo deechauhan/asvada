@@ -281,11 +281,11 @@ final class QuickLogUITests: UITestCase {
 
         draw("Savour in Concerts", in: app)
         addNew("Bonobo at the Roundhouse", in: app)
-        // 70% of the way along five ā is the left half of the fourth: 3½.
+        // 65% of the way along five ā is the left half of the fourth: 3½.
         let scale = app.descendants(matching: .any)["relishScale"]
         XCTAssertTrue(scale.waitForExistence(timeout: 5))
         attachScreenshot(of: app, named: "relish-scale")
-        scale.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5)).tap()
+        scale.coordinate(withNormalizedOffset: CGVector(dx: 0.65, dy: 0.5)).tap()
         seal(app, drawer: "Concerts")
 
         // The details show 3½, and the rating can be changed there. (VoiceOver's adjust action
@@ -295,7 +295,8 @@ final class QuickLogUITests: UITestCase {
         let rating = app.descendants(matching: .any)["relishScale"]
         XCTAssertTrue(rating.waitForExistence(timeout: 5))
         XCTAssertEqual(rating.value as? String, "3½ of 5, Lovely")
-        rating.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
+        // 75%: the right half of the fourth, so 4.
+        rating.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
         XCTAssertEqual(rating.value as? String, "4 of 5, Lovely")
         attachScreenshot(of: app, named: "relish-details")
     }

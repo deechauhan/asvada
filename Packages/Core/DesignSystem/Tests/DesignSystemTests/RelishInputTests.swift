@@ -9,6 +9,8 @@ struct RelishInputTests {
         (0.15, 1.0), // its right half
         (0.45, 2.5), // left half of the third
         (0.55, 3.0), // right half of the third
+        (0.7, 3.5), // exactly on a boundary: the half before it, despite floating point
+        (0.8, 4.0),
         (1.0, 5.0),
         (1.4, 5.0), // past the end
         (-0.2, 0.5),

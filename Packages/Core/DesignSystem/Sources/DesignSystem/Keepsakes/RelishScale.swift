@@ -10,7 +10,9 @@ public enum RelishInput {
     /// the next half, so the left half of the third ā is 2½ and its right half is 3.
     public static func rating(atFraction fraction: Double) -> Double {
         let clamped = min(max(fraction, 0), 1)
-        let halves = (clamped * maximum / step).rounded(.up)
+        // A hair's tolerance: 0.7 × 5 / 0.5 is 7.000000000000001 in floating point, which would
+        // otherwise round up a whole half past a boundary.
+        let halves = (clamped * maximum / step - 1e-9).rounded(.up)
         return max(halves, 1) * step
     }
 
