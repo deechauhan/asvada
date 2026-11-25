@@ -56,6 +56,21 @@ struct DrawerGeometry: Equatable {
         Self.eyeDistance / (Self.eyeDistance - depth)
     }
 
+    /// How much bigger the drawer in focus is drawn than its neighbours, for a cabinet
+    /// `width` points wide: about 78% of the width (×1.26 on a 402 pt iPhone), never smaller than
+    /// the drawer's own size and at most ×1.45. Neighbours stay their own size, so they still peek
+    /// in from the edges.
+    static func frontScale(forWidth width: Double, drawerWidth: Double) -> Double {
+        guard width > 0, drawerWidth > 0 else { return 1 }
+        return min(max(width * 0.78 / drawerWidth, 1), 1.45)
+    }
+
+    /// The extra scale for a drawer `offset` drawers from the front: all of `frontScale` at the
+    /// front, fading to none a whole drawer away, so a roll hands the size from one to the next.
+    static func focusScale(offset: Double, frontScale: Double) -> Double {
+        1 + (frontScale - 1) * max(0, 1 - abs(offset))
+    }
+
     /// Whether the drawer is worth drawing at all.
     var isVisible: Bool {
         opacity > 0.01

@@ -30,6 +30,8 @@ struct TurningCabinet: View {
     @State private var ajar: Int?
     @State private var detents = 0
     @State private var clunks = 0
+    /// How wide the cabinet is, for sizing the drawer in focus.
+    @State private var width = 0.0
     @AppStorage("cabinet.hintedPull") private var hintedPull = false
 
     /// How far the front drawer must be pulled (points) before it opens.
@@ -71,6 +73,12 @@ struct TurningCabinet: View {
 
     // MARK: - The drum
 
+    /// How much bigger the drawer in focus is drawn (#190). Under Reduce Motion the flat row
+    /// keeps every drawer the same size.
+    private var frontScale: Double {
+        reduceMotion ? 1 : DrawerGeometry.frontScale(forWidth: width, drawerWidth: DrumDrawer.size.width)
+    }
+
     private var drumView: some View {
         ZStack {
             ForEach(Array(faces.enumerated()), id: \.element.id) { index, face in
@@ -80,11 +88,13 @@ struct TurningCabinet: View {
                         index: index,
                         count: faces.count,
                         reduceMotion: reduceMotion,
+                        frontScale: frontScale,
                     ))
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: DrumDrawer.size.height + 40)
+        .frame(height: DrumDrawer.size.height * CGFloat(frontScale) + 40)
+        .onGeometryChange(for: Double.self, of: { Double($0.size.width) }, action: { width = $0 })
         .contentShape(Rectangle())
         .gesture(dragGesture)
         .detentHaptic(trigger: detents)
@@ -300,6 +310,8 @@ private struct DrumFace: ViewModifier, Animatable {
     let index: Int
     let count: Int
     let reduceMotion: Bool
+    /// The extra size of the drawer in focus.
+    let frontScale: Double
 
     nonisolated var animatableData: Double {
         get { position }
@@ -317,7 +329,7 @@ private struct DrumFace: ViewModifier, Animatable {
         content
             .brightness(-geometry.shade * 0.45)
             .rotation3DEffect(.degrees(geometry.rotation), axis: (x: 0, y: 1, z: 0), perspective: DrawerGeometry.perspective)
-            .scaleEffect(geometry.scale)
+            .scaleEffect(geometry.scale * DrawerGeometry.focusScale(offset: offset, frontScale: frontScale))
             .offset(x: geometry.x)
             .opacity(geometry.opacity)
             .zIndex(geometry.zIndex)
