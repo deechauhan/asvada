@@ -145,7 +145,8 @@ public struct AppShellView: View {
     private func screen(for tab: AppTab) -> some View {
         switch tab {
         case .journal:
-            JournalScreen(onSavour: { openQuickLog(drawing: nil) })
+            // A start chip draws its own blank; if that collection is hidden, the grid asks.
+            JournalScreen(onSavour: { kind in openQuickLog(drawing: collections.first { $0.kind == kind }) })
         case .collections:
             CollectionsScreen()
         case .atlas:
