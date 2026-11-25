@@ -165,31 +165,56 @@ enum Guesses {
         search: PlaceSearching,
         tmdb: TMDBClient,
     ) async -> Guess? {
+        await results(for: query, in: collection, near: point, search: search, tmdb: tmdb).top
+    }
+
+    /// Everything typing finds: the drawer's matches, then the source's results, numbered.
+    static func results(
+        for query: String,
+        in collection: ExperienceCollection,
+        near point: GeoPoint?,
+        search: PlaceSearching,
+        tmdb: TMDBClient,
+    ) async -> SearchResults {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-        if let item = QuickLogFlow.matches(collection.items ?? [], query: trimmed).first {
-            return Guess(id: "item:\(item.id)", title: item.name, source: .typed, subject: .item(item))
-        }
+        guard !trimmed.isEmpty else { return .empty }
+        let items = collection.items ?? []
+        return await SearchResults.make(
+            matches: Array(QuickLogFlow.matches(items, query: trimmed).prefix(6)),
+            online: found(for: trimmed, in: collection, near: point, search: search, tmdb: tmdb),
+            in: items,
+            near: point,
+        )
+    }
+
+    /// What the collection's source finds for `query` (not yet de-duplicated or capped).
+    private static func found(
+        for query: String,
+        in collection: ExperienceCollection,
+        near point: GeoPoint?,
+        search: PlaceSearching,
+        tmdb: TMDBClient,
+    ) async -> [Guess] {
         switch collection.itemSource {
         case .countryCatalog:
-            return CountryCatalog.shared.search(trimmed).first.map {
+            return CountryCatalog.shared.search(query).map {
                 Guess(id: "iso:\($0.code)", title: $0.name, source: .typed, subject: .country($0))
             }
         case .airlineCatalog:
-            return AirlineCatalog.shared.search(trimmed).first.map {
+            return AirlineCatalog.shared.search(query).map {
                 Guess(id: "iata:\($0.iata)", title: $0.name, source: .typed, subject: .airline($0))
             }
         case .tmdb:
-            return await (try? tmdb.searchFilms(trimmed))?.first.map {
+            return await ((try? tmdb.searchFilms(query)) ?? []).map {
                 Guess(id: $0.externalRef, title: $0.title, source: .typed, subject: .film($0))
             }
         case .mapkit:
-            guard let kind = placeKind(of: collection) else { return nil }
-            return await (try? search.search(trimmed, kind: kind, near: point))?.first.map {
+            guard let kind = placeKind(of: collection) else { return [] }
+            return await ((try? search.search(query, kind: kind, near: point)) ?? []).map {
                 Guess(id: $0.externalRef, title: $0.name, source: .typed, subject: .place($0))
             }
         case .manual:
-            return nil
+            return []
         }
     }
 

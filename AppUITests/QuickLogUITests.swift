@@ -196,6 +196,53 @@ final class QuickLogUITests: UITestCase {
     }
 
     @MainActor
+    func testSearchListsNumberedResultsAndPicksFromTheMap() {
+        // Fixed sample places instead of Apple Maps, so the results are the same every run.
+        let app = launch(["-resetState", "-samplePlaces"])
+
+        // Typing lists every match, numbered; the second is one tap away.
+        draw("Savour a café", in: app)
+        let field = app.textFields["quickLogName"]
+        field.tap()
+        field.typeText("coffee")
+        let second = app.buttons["pick-Prufrock Coffee"]
+        XCTAssertTrue(second.waitForExistence(timeout: 10), "No list of results")
+        XCTAssertTrue(second.label.hasPrefix("2. Prufrock Coffee"), second.label)
+        XCTAssertTrue(app.buttons["pick-Origin Coffee"].exists, "Only the top result was listed")
+        attachScreenshot(of: app, named: "quick-log-results")
+        second.tap()
+        let picked = app.staticTexts["quickLogItem"]
+        XCTAssertTrue(picked.waitForExistence(timeout: 5))
+        XCTAssertEqual(picked.label, "Prufrock Coffee")
+        seal(app, drawer: "Cafés")
+
+        // The same results on the map. Prufrock is in the drawer now, so it's listed there and
+        // the rest renumber: Monmouth 1, Workshop 2, Origin 3. Tap pin 2, then "This one".
+        draw("Savour a café", in: app)
+        let again = app.textFields["quickLogName"]
+        again.tap()
+        again.typeText("coffee")
+        let workshop = app.buttons["pick-Workshop Coffee"]
+        XCTAssertTrue(workshop.waitForExistence(timeout: 10))
+        XCTAssertTrue(workshop.label.hasPrefix("2. Workshop Coffee"), workshop.label)
+        app.segmentedControls.buttons["Map"].tap()
+        let pin = app.buttons["pin-2"]
+        XCTAssertTrue(pin.waitForExistence(timeout: 10), "No numbered pins on the map")
+        if !pin.isHittable {
+            app.swipeUp()
+        }
+        pin.tap()
+        let choose = app.buttons["mapPick"]
+        XCTAssertTrue(choose.waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "quick-log-results-map")
+        choose.tap()
+        XCTAssertTrue(picked.waitForExistence(timeout: 5))
+        XCTAssertEqual(picked.label, "Workshop Coffee")
+        // Prufrock is already ranked, so Workshop meets it in a duel.
+        XCTAssertTrue(app.staticTexts["Which did you savour more?"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testJournalChipsDrawTheirOwnBlank() {
         let app = launch(["-resetState"])
 
