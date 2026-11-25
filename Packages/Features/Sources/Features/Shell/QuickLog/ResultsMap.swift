@@ -30,6 +30,9 @@ struct ResultsMap: View {
     @State private var visibleCentre: GeoPoint?
     @State private var searchedCentre: GeoPoint?
     @State private var isLookingUp = false
+    /// The map is zooming to fit new results: where it lands counts as searched, so "Search this
+    /// area" only comes back once you pan.
+    @State private var isFitting = false
 
     /// How far the map must move before "Search this area" is offered again, in metres.
     static let searchAgainDistance = 300.0
@@ -117,6 +120,7 @@ struct ResultsMap: View {
         .onChange(of: found.map(\.id)) { _, _ in
             selection = nil
             if !found.isEmpty {
+                isFitting = true
                 position = .automatic
             }
         }
@@ -127,7 +131,12 @@ struct ResultsMap: View {
         selectableMap
             .mapStyle(.standard(pointsOfInterest: pointsOfInterest))
             .onMapCameraChange(frequency: .onEnd) { context in
-                visibleCentre = GeoPoint(longitude: context.region.center.longitude, latitude: context.region.center.latitude)
+                let centre = GeoPoint(longitude: context.region.center.longitude, latitude: context.region.center.latitude)
+                visibleCentre = centre
+                if isFitting {
+                    isFitting = false
+                    searchedCentre = centre
+                }
             }
     }
 
