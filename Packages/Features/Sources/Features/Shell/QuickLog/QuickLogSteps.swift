@@ -310,7 +310,18 @@ struct SealStep: View {
                 .lineLimit(1 ... 4)
                 .textFieldStyle(.roundedBorder)
                 .accessibilityIdentifier("quickLogNote")
-            DisclosureGroup("When, who with, tags", isExpanded: $showsDetails) {
+            Button {
+                showsDetails.toggle()
+            } label: {
+                Label("When, who with, tags", systemImage: showsDetails ? "chevron.down" : "chevron.right")
+                    .typeToken(.callout)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Palette.brand.color)
+            .accessibilityValue(showsDetails ? "Shown" : "Hidden")
+            .accessibilityIdentifier("quickLogDetails")
+            if showsDetails {
                 EntryDetailsFields(
                     date: $savouring.date,
                     people: $savouring.people,
@@ -318,10 +329,7 @@ struct SealStep: View {
                     knownPeople: Repository(context: context).peopleNames(),
                     knownTags: Repository(context: context).tagNames(),
                 )
-                .padding(.top, Spacing.small)
             }
-            .tint(Palette.brand.color)
-            .accessibilityIdentifier("quickLogDetails")
             SealButton(action: onSeal)
             Text("Hold the ā to seal it")
                 .font(.caption)

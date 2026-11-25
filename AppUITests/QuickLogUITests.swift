@@ -115,7 +115,7 @@ final class QuickLogUITests: UITestCase {
         draw("Savour a film", in: app)
         addNew("Perfect Days", in: app)
         app.buttons["when-Today"].tap()
-        app.buttons["When, who with, tags"].tap()
+        app.buttons["quickLogDetails"].tap()
         let people = app.textFields["peopleField"]
         XCTAssertTrue(people.waitForExistence(timeout: 5))
         people.tap()
@@ -145,7 +145,7 @@ final class QuickLogUITests: UITestCase {
         draw("Savour a film", in: app)
         addNew("Past Lives", in: app)
         app.buttons["when-Today"].tap()
-        app.buttons["When, who with, tags"].tap()
+        app.buttons["quickLogDetails"].tap()
         let again = app.textFields["peopleField"]
         XCTAssertTrue(again.waitForExistence(timeout: 5))
         again.tap()
