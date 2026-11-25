@@ -31,11 +31,25 @@ public struct SamplePlaceSearch: PlaceSearching {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !needle.isEmpty else { return [] }
         let pool = kind == .any ? Self.places.values.flatMap(\.self) : Self.places[kind] ?? []
+        // "Search this area" with nothing typed asks for the kind itself: every sample of it.
+        if needle.compare(kind.searchWord, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame {
+            return pool
+        }
         return pool.filter { $0.name.localizedStandardContains(needle) || ($0.address ?? "").localizedStandardContains(needle) }
     }
 
     public func nearby(_: PlaceKind, around _: GeoPoint) async throws -> [PlaceResult] {
         []
+    }
+
+    /// The sample city within about 100 km of `point`, if any.
+    public func city(at point: GeoPoint) async throws -> PlaceResult? {
+        let cities = Self.places[.city] ?? []
+        return cities
+            .map { ($0, MapKitPlaceSearch.kilometres(from: point, to: $0)) }
+            .filter { $0.1 < 100 }
+            .min { $0.1 < $1.1 }?
+            .0
     }
 
     private static func sample(_ name: String, _ latitude: Double, _ longitude: Double, _ address: String) -> PlaceResult {

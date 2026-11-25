@@ -265,4 +265,34 @@ final class QuickLogUITests: UITestCase {
         addNew("Corner Kiosk", in: app)
         XCTAssertEqual(app.staticTexts["quickLogSummary"].label, "No. 1 in Cafés")
     }
+
+    @MainActor
+    func testTheMapBrowsesWithNothingTypedAndSearchesThisArea() {
+        let app = launch(["-resetState", "-samplePlaces"])
+        draw("Savour a café", in: app)
+
+        // Nothing typed: find it on the map instead.
+        let find = app.buttons["findOnMap"]
+        XCTAssertTrue(find.waitForExistence(timeout: 5), "No way to look on the map")
+        find.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["resultsMap"].waitForExistence(timeout: 10))
+
+        // "Search this area" looks for cafés where the map is.
+        let searchHere = app.buttons["searchThisArea"]
+        XCTAssertTrue(searchHere.waitForExistence(timeout: 10))
+        searchHere.tap()
+        let pin = app.buttons["pin-1"]
+        XCTAssertTrue(pin.waitForExistence(timeout: 10), "Searching this area put no pins down")
+        attachScreenshot(of: app, named: "quick-log-browse-map")
+        if !pin.isHittable {
+            app.swipeUp()
+        }
+        pin.tap()
+        let choose = app.buttons["mapPick"]
+        XCTAssertTrue(choose.waitForExistence(timeout: 5))
+        choose.tap()
+        let picked = app.staticTexts["quickLogItem"]
+        XCTAssertTrue(picked.waitForExistence(timeout: 5))
+        XCTAssertEqual(picked.label, "Monmouth Coffee")
+    }
 }

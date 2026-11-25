@@ -31,6 +31,8 @@ struct PickStep: View {
     @State private var searchedFor = ""
     /// List or map, remembered per collection.
     @AppStorage private var layout: ResultsLayout
+    /// Where the map opens with nothing found yet: where you are, or the last thing pinned.
+    @State private var mapStart: GeoPoint?
     private let tmdb = TMDBClient(configuration: TMDBConfiguration.fromBundle())
 
     init(collection: ExperienceCollection, onPick: @escaping (Item) -> Void) {
@@ -125,6 +127,12 @@ struct PickStep: View {
                     .frame(maxWidth: .infinity)
                     .accessibilityIdentifier("printUseLocation")
             }
+            if trimmed.isEmpty, showsMapSwitch, layout == .list {
+                Button("Find it on the map", systemImage: "map") { layout = .map }
+                    .typeToken(.callout)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("findOnMap")
+            }
             TextField("What was it?", text: $query)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.title3, design: .serif))
@@ -145,13 +153,11 @@ struct PickStep: View {
             }
             if !trimmed.isEmpty, let source = SearchResults.sourceTitle(for: collection.itemSource) {
                 foundSection(source)
+            } else if trimmed.isEmpty, showsMapSwitch, layout == .map {
+                browseSection
             }
         }
-        .onChange(of: layout) { _, newLayout in
-            if newLayout == .map {
-                focused = false
-            }
-        }
+        .task(id: layout) { await openMap() }
         .task { await gatherGuesses() }
         .onChange(of: whereYouAre.isAllowed) { _, allowed in
             if allowed {
@@ -202,16 +208,11 @@ struct PickStep: View {
             groupTitle(source)
             Spacer(minLength: 0)
             if showsMapSwitch {
-                Picker("Show results as", selection: $layout) {
-                    ForEach(ResultsLayout.allCases, id: \.self) { Text($0.title).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .fixedSize()
-                .accessibilityIdentifier("resultsLayout")
+                layoutPicker
             }
         }
         if showsMapSwitch, layout == .map {
-            ResultsMap(found: results.found, held: drawerItems, onPick: accept, onPickHeld: onPick)
+            resultsMap(held: drawerItems)
         } else {
             ForEach(results.found) { found in
                 FoundRow(found: found) { accept(found.guess) }
@@ -223,6 +224,71 @@ struct PickStep: View {
                 .foregroundStyle(Palette.textSecondary.color)
                 .accessibilityIdentifier("resultsStatus")
         }
+    }
+
+    /// Browsing with nothing typed: the map, with the drawer's own places and whatever
+    /// "Search this area" finds (#189).
+    @ViewBuilder
+    private var browseSection: some View {
+        HStack {
+            groupTitle("On the map")
+            Spacer(minLength: 0)
+            layoutPicker
+        }
+        resultsMap(held: collection.items ?? [])
+    }
+
+    private var layoutPicker: some View {
+        Picker("Show results as", selection: $layout) {
+            ForEach(ResultsLayout.allCases, id: \.self) { Text($0.title).tag($0) }
+        }
+        .pickerStyle(.segmented)
+        .fixedSize()
+        .accessibilityIdentifier("resultsLayout")
+    }
+
+    private func resultsMap(held: [Item]) -> some View {
+        ResultsMap(
+            found: results.found,
+            held: held,
+            kind: Guesses.placeKind(of: collection),
+            start: mapStart,
+            search: search,
+            onPick: accept,
+            onPickHeld: onPick,
+            onSearchArea: { centre in Task { await searchArea(around: centre) } },
+        )
+        // Start again once we know where you are.
+        .id(mapStart)
+    }
+
+    /// On switching to the map: put the keyboard away, find where to start, and with nothing
+    /// typed, look for the drawer's kind of place there (not for cities: tap one instead).
+    private func openMap() async {
+        guard showsMapSwitch, layout == .map else { return }
+        focused = false
+        mapStart = await whereYouAre.current() ?? collection.lastPinnedPoint
+        if trimmed.isEmpty, let start = mapStart, Guesses.placeKind(of: collection) != .city {
+            await searchArea(around: start)
+        }
+    }
+
+    /// "Search this area": what's typed, or else the drawer's kind of place, around `centre`.
+    private func searchArea(around centre: GeoPoint) async {
+        guard let kind = Guesses.placeKind(of: collection) else { return }
+        let asked = trimmed
+        isSearching = true
+        let found = await Guesses.results(
+            for: asked.isEmpty ? kind.searchWord : asked,
+            in: collection,
+            near: centre,
+            search: search,
+            tmdb: tmdb,
+        )
+        guard asked == trimmed else { return }
+        results = found
+        searchedFor = asked
+        isSearching = false
     }
 
     /// Prints what's known at once (the drawer's recent things), opens the keyboard only if
