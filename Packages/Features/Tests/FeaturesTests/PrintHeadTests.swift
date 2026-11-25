@@ -24,16 +24,20 @@ struct PrintHeadTests {
     @Test func tearingPrintsTheNextAndSwipingBackRestores() {
         var head = PrintHead(guesses: [guess("Prufrock"), guess("Monmouth")])
         #expect(!head.canRestore)
-        #expect(head.tear())
+        // Mutating calls can't sit inside #expect, so their results are taken first.
+        let tore = head.tear()
+        #expect(tore)
         #expect(head.current?.title == "Monmouth")
         #expect(head.sourceLine == "Again? · 2 of 2")
-        #expect(head.restore())
+        let restored = head.restore()
+        #expect(restored)
         #expect(head.current?.title == "Prufrock")
         // Tearing the last guess leaves the blank empty, ready to type.
         head.tear()
         head.tear()
         #expect(head.current == nil)
-        #expect(!head.tear())
+        let toreAgain = head.tear()
+        #expect(!toreAgain)
     }
 
     @Test func laterGuessesJoinTheEndWithoutRepeats() {
