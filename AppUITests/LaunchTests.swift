@@ -62,11 +62,18 @@ final class LaunchTests: UITestCase {
         aboutLink.tap()
         XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["appVersion"].label.hasPrefix("Version "))
-        // Bundled data is credited as its licences ask (Natural Earth, OpenFlights under ODbL).
-        let credits = app.staticTexts["dataCredits"]
-        XCTAssertTrue(credits.exists)
-        XCTAssertTrue(credits.label.contains("OpenFlights"))
         attachScreenshot(of: app, named: "about")
+        // Every source is credited as its licence or terms ask, with what it sends.
+        for source in ["apple-maps", "tmdb", "natural-earth", "openflights", "icloud"] {
+            XCTAssertTrue(app.descendants(matching: .any)["dataSource-\(source)"].exists, "\(source) isn't credited")
+        }
+        let tmdb = app.descendants(matching: .any)["dataSource-tmdb"]
+        XCTAssertTrue(tmdb.label.contains("not endorsed or certified by TMDB"), tmdb.label)
+        let openFlights = app.descendants(matching: .any)["dataSource-openflights"]
+        XCTAssertTrue(openFlights.label.contains("ODbL"), openFlights.label)
+        // The rows sit below the fold: scroll the page, not an off-screen row.
+        app.scrollViews.firstMatch.swipeUp()
+        attachScreenshot(of: app, named: "about-data-sources")
     }
 
     @MainActor

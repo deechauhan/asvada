@@ -117,5 +117,11 @@ renumbering; periodic rebalance.
 ## Privacy & security
 
 - No third-party analytics or ads SDKs. Privacy nutrition label: "Data not collected".
+- What leaves the phone: place searches and "near you" guesses go to Apple Maps (the typed text and,
+  only with location allowed, roughly where you are); film searches go to TMDB (the typed title, and
+  the country for "now showing"); map tiles; later, backups to the user's own iCloud. Everything
+  else is bundled (Natural Earth, OpenFlights). About lists each source from `DataSource.all`, and
+  its privacy seal must stay in step with that list. TMDB is credited with the notice its terms ask
+  for.
 - TMDB key stored outside the repo (xcconfig not committed; CI secret).
 - Optional app lock (Face ID) post-MVP.
