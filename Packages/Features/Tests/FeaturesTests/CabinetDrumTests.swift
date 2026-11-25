@@ -100,6 +100,36 @@ struct DrawerGeometryTests {
         #expect(right.zIndex < DrawerGeometry(offset: 0, count: 7, drawerWidth: 248).zIndex)
     }
 
+    @Test func theDrawerInFocusFillsAbout78PercentOfTheWidth() {
+        // iPhone SE, 17 and Pro Max widths.
+        #expect(abs(DrawerGeometry.frontScale(forWidth: 375, drawerWidth: 248) * 248 - 375 * 0.78) < 0.5)
+        #expect(abs(DrawerGeometry.frontScale(forWidth: 402, drawerWidth: 248) - 1.264) < 0.01)
+        // Never smaller than the drawer itself, never more than ×1.45 (an iPad).
+        #expect(DrawerGeometry.frontScale(forWidth: 200, drawerWidth: 248) == 1)
+        #expect(DrawerGeometry.frontScale(forWidth: 1024, drawerWidth: 248) == 1.45)
+        #expect(DrawerGeometry.frontScale(forWidth: 0, drawerWidth: 248) == 1)
+    }
+
+    @Test func rollingHandsTheExtraSizeToTheNextDrawer() {
+        #expect(DrawerGeometry.focusScale(offset: 0, frontScale: 1.3) == 1.3)
+        #expect(abs(DrawerGeometry.focusScale(offset: 0.5, frontScale: 1.3) - 1.15) < 1e-9)
+        #expect(DrawerGeometry.focusScale(offset: -1, frontScale: 1.3) == 1)
+        #expect(DrawerGeometry.focusScale(offset: 2, frontScale: 1.3) == 1)
+    }
+
+    @Test func neighboursStillPeekPastTheBiggerFrontDrawer() {
+        // How much of the right-hand neighbour shows between the front drawer's edge and the
+        // screen's, roughly (its face foreshortened by its turn and depth).
+        for screen in [375.0, 402, 440] {
+            let half = 248.0 / 2
+            let front = half * DrawerGeometry.frontScale(forWidth: screen, drawerWidth: 248)
+            let right = DrawerGeometry(offset: 1, count: 7, drawerWidth: 248)
+            let face = half * cos(45 * Double.pi / 180) * right.scale
+            let peek = min(screen / 2, right.x + face) - max(front, right.x - face)
+            #expect(peek > 30, "only \(peek) pt of the next drawer shows on a \(screen) pt screen")
+        }
+    }
+
     @Test func drawersBehindTheDrumFadeOut() {
         let behind = DrawerGeometry(offset: 3, count: 8, drawerWidth: 248)
         #expect(behind.opacity == 0)
