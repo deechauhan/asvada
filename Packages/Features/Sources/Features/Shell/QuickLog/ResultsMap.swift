@@ -118,33 +118,42 @@ struct ResultsMap: View {
                 position = .automatic
             }
         }
-        .onChange(of: feature) { _, tapped in
-            if let tapped {
-                lookUp(tapped)
-            }
-        }
+        .modifier(FeatureTaps(feature: feature, lookUp: lookUp))
     }
 
     private var map: some View {
-        Map(position: $position, selection: $feature) {
-            UserAnnotation()
-            ForEach(placedHeld, id: \.item.id) { held in
-                Annotation(held.item.name, coordinate: held.point.coordinate, anchor: .center) {
-                    heldPin(held.item)
-                }
-                .annotationTitles(.hidden)
+        selectableMap
+            .mapStyle(.standard(pointsOfInterest: pointsOfInterest))
+            .onMapCameraChange(frequency: .onEnd) { context in
+                visibleCentre = GeoPoint(longitude: context.region.center.longitude, latitude: context.region.center.latitude)
             }
-            ForEach(placedFound, id: \.found.id) { placed in
-                Annotation(placed.found.title, coordinate: placed.point.coordinate, anchor: .center) {
-                    foundPin(placed.found)
-                }
-                .annotationTitles(.hidden)
+    }
+
+    /// On iOS, Apple's own labels can be tapped (MapFeature selection). macOS, where only the
+    /// package tests build, has no feature selection.
+    private var selectableMap: some View {
+        #if os(iOS)
+            Map(position: $position, selection: $feature) { annotations }
+                .mapFeatureSelectionDisabled { feature in kind == .city || feature.kind != .pointOfInterest }
+        #else
+            Map(position: $position) { annotations }
+        #endif
+    }
+
+    @MapContentBuilder
+    private var annotations: some MapContent {
+        UserAnnotation()
+        ForEach(placedHeld, id: \.item.id) { held in
+            Annotation(held.item.name, coordinate: held.point.coordinate, anchor: .center) {
+                heldPin(held.item)
             }
+            .annotationTitles(.hidden)
         }
-        .mapStyle(.standard(pointsOfInterest: pointsOfInterest))
-        .mapFeatureSelectionDisabled { feature in kind == .city || feature.kind != .pointOfInterest }
-        .onMapCameraChange(frequency: .onEnd) { context in
-            visibleCentre = GeoPoint(longitude: context.region.center.longitude, latitude: context.region.center.latitude)
+        ForEach(placedFound, id: \.found.id) { placed in
+            Annotation(placed.found.title, coordinate: placed.point.coordinate, anchor: .center) {
+                foundPin(placed.found)
+            }
+            .annotationTitles(.hidden)
         }
     }
 
@@ -192,16 +201,18 @@ struct ResultsMap: View {
         .accessibilityIdentifier("pin-held-\(item.name)")
     }
 
-    /// Turns a tapped map label into a place to keep.
+    /// Turns a tapped map label into a place to keep (iOS only, as is the selection).
     private func lookUp(_ tapped: MapFeature) {
-        isLookingUp = true
-        Task {
-            defer { isLookingUp = false }
-            guard let item = try? await MKMapItemRequest(feature: tapped).mapItem,
-                  let place = PlaceResult(mapItem: item)
-            else { return }
-            selection = .place(place)
-        }
+        #if os(iOS)
+            isLookingUp = true
+            Task {
+                defer { isLookingUp = false }
+                guard let item = try? await MKMapItemRequest(feature: tapped).mapItem,
+                      let place = PlaceResult(mapItem: item)
+                else { return }
+                selection = .place(place)
+            }
+        #endif
     }
 
     private func lookUpCity(at point: GeoPoint) {
@@ -267,5 +278,23 @@ struct ResultsMap: View {
 private extension GeoPoint {
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+}
+
+/// Looks up a tapped map label when the selection changes. MapFeature is only Equatable on iOS.
+private struct FeatureTaps: ViewModifier {
+    let feature: MapFeature?
+    let lookUp: (MapFeature) -> Void
+
+    func body(content: Content) -> some View {
+        #if os(iOS)
+            content.onChange(of: feature) { _, tapped in
+                if let tapped {
+                    lookUp(tapped)
+                }
+            }
+        #else
+            content
+        #endif
     }
 }
