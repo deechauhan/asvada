@@ -69,6 +69,17 @@ struct TMDBClientTests {
         #expect(request.url?.query()?.contains("api_key") == false)
     }
 
+    @Test func nowShowingAsksForTheRegionsCinemas() async throws {
+        let http = FakeHTTP { _ in (searchJSON, 200) }
+        let films = try await TMDBClient(configuration: key("v3key"), http: http, language: "en-GB").nowShowing(region: "GB")
+        #expect(films.map(\.title) == ["Perfect Days", "Untitled"])
+        let url = try #require(http.requests.first?.url)
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        #expect(url.path() == "/3/movie/now_playing")
+        #expect(items.contains(URLQueryItem(name: "region", value: "GB")))
+        #expect(!items.contains { $0.name == "query" })
+    }
+
     @Test func anEmptyQueryAsksNothing() async throws {
         let http = FakeHTTP { _ in (searchJSON, 200) }
         let films = try await TMDBClient(configuration: key("k"), http: http).searchFilms("   ")

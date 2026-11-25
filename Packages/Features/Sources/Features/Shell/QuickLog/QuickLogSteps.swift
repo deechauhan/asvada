@@ -2,12 +2,14 @@ import DesignSystem
 import Geo
 import Model
 import Ranking
+import Sources
 import Storage
 import SwiftData
 import SwiftUI
 
-/// "What was it?": type a name; things already in the drawer match as you go, and anything new
-/// is added by hand. Countries match the bundled catalogue.
+/// "What was it?": the print head prints its best guess onto the blank (tear it off for the next,
+/// or "That's it"); typing prints the top result instead. Things already in the drawer match as
+/// you go, and anything new is added by hand. Countries match the bundled catalogue.
 struct PickStep: View {
     let collection: ExperienceCollection
     let onPick: (Item) -> Void
@@ -15,6 +17,27 @@ struct PickStep: View {
     @Environment(\.modelContext) private var context
     @State private var query = ""
     @FocusState private var focused: Bool
+    @State private var head = PrintHead()
+    /// The top result for what's typed, printed instead of the guesses while typing.
+    @State private var typed: Guess?
+    @State private var whereYouAre = WhereYouAre()
+    @State private var tears = 0
+    private let search = MapKitPlaceSearch()
+    private let tmdb = TMDBClient(configuration: TMDBConfiguration.fromBundle())
+
+    /// What the blank shows: the typed top result while typing, else the print head's guess.
+    private var printed: Guess? {
+        trimmed.isEmpty ? head.current : typed
+    }
+
+    private var sourceLine: String? {
+        trimmed.isEmpty ? head.sourceLine : typed.map { _ in GuessSource.typed.title }
+    }
+
+    /// Whether this drawer can guess from where you are.
+    private var guessesFromLocation: Bool {
+        collection.itemSource == .countryCatalog || Guesses.placeKind(of: collection) != nil
+    }
 
     private var trimmed: String {
         query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -36,6 +59,37 @@ struct PickStep: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.medium) {
+            PrintedBlank(
+                collection: collection,
+                guess: printed,
+                sourceLine: sourceLine,
+                canRestore: trimmed.isEmpty && head.canRestore,
+                onTear: tear,
+                onRestore: restore,
+            )
+            .frame(maxWidth: .infinity)
+            .haptic(.tear, trigger: tears)
+            if let printed {
+                HStack(spacing: Spacing.medium) {
+                    Button("That's it") { accept(printed) }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Palette.brand.color)
+                        .accessibilityIdentifier("printAccept")
+                    if trimmed.isEmpty {
+                        Button("Next guess", action: tear)
+                            .buttonStyle(.bordered)
+                            .tint(Palette.brand.color)
+                            .accessibilityIdentifier("printNext")
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
+            if guessesFromLocation, whereYouAre.canAsk {
+                Button("Guess from where you are", systemImage: "location") { whereYouAre.ask() }
+                    .typeToken(.callout)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("printUseLocation")
+            }
             TextField("What was it?", text: $query)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.title3, design: .serif))
@@ -54,7 +108,52 @@ struct PickStep: View {
                 choice("Add “\(trimmed)”", systemImage: "square.and.pencil", id: "quickLogAddNew", action: addNew)
             }
         }
-        .onAppear { focused = true }
+        .task { await gatherGuesses() }
+        .onChange(of: whereYouAre.isAllowed) { _, allowed in
+            if allowed {
+                Task { await gatherLocalGuesses() }
+            }
+        }
+        .task(id: trimmed) {
+            guard !trimmed.isEmpty else {
+                typed = nil
+                return
+            }
+            // Wait for a pause in typing before searching.
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            let point = await whereYouAre.current()
+            typed = await Guesses.top(for: trimmed, in: collection, near: point, search: search, tmdb: tmdb)
+        }
+    }
+
+    /// Prints what's known at once (the drawer's recent things), opens the keyboard only if
+    /// there's nothing to guess, then adds guesses from where you are and the network.
+    private func gatherGuesses() async {
+        head = PrintHead(guesses: Guesses.again(in: collection))
+        focused = head.current == nil
+        await gatherLocalGuesses()
+        await head.append(Guesses.nowShowing(in: collection, tmdb: tmdb))
+    }
+
+    private func gatherLocalGuesses() async {
+        guard guessesFromLocation, let point = await whereYouAre.current() else { return }
+        head.append(Guesses.youreIn(at: point, in: collection))
+        await head.append(Guesses.nearYou(at: point, in: collection, search: search))
+    }
+
+    private func tear() {
+        if head.tear() {
+            tears += 1
+        }
+    }
+
+    private func restore() {
+        head.restore()
+    }
+
+    private func accept(_ guess: Guess) {
+        onPick(Guesses.accept(guess, in: collection, repository: Repository(context: context)))
     }
 
     private func choice(_ title: String, systemImage: String, id: String, action: @escaping () -> Void) -> some View {

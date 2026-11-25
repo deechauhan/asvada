@@ -69,6 +69,15 @@ public protocol PlaceSearching: Sendable {
     /// Places matching `query`, nearest first when `near` is given. Without `near` (no location
     /// permission, say) it's a plain worldwide search.
     func search(_ query: String, kind: PlaceKind, near: GeoPoint?) async throws -> [PlaceResult]
+    /// Places of `kind` right where you are (within about 50 m), nearest first, with no query:
+    /// the print head's "near you" guesses.
+    func nearby(_ kind: PlaceKind, around point: GeoPoint) async throws -> [PlaceResult]
+}
+
+public extension PlaceSearching {
+    func nearby(_: PlaceKind, around _: GeoPoint) async throws -> [PlaceResult] {
+        []
+    }
 }
 
 /// Place search with MapKit's `MKLocalSearch`: no API key, nothing sent but the query and,
@@ -99,6 +108,21 @@ public struct MapKitPlaceSearch: PlaceSearching {
         let places = response.mapItems.compactMap(PlaceResult.init(mapItem:))
         guard let near else { return places }
         return Self.nearestFirst(places, to: near)
+    }
+
+    /// How close "near you" is, in metres.
+    public static let hereRadius: CLLocationDistance = 50
+
+    public func nearby(_ kind: PlaceKind, around point: GeoPoint) async throws -> [PlaceResult] {
+        let request = MKLocalPointsOfInterestRequest(
+            center: CLLocationCoordinate2D(latitude: point.latitude, longitude: point.longitude),
+            radius: Self.hereRadius,
+        )
+        if let categories = kind.categories {
+            request.pointOfInterestFilter = MKPointOfInterestFilter(including: categories)
+        }
+        let response = try await MKLocalSearch(request: request).start()
+        return Self.nearestFirst(response.mapItems.compactMap(PlaceResult.init(mapItem:)), to: point)
     }
 
     /// `places` ordered by distance from `point` (stable for ties).
