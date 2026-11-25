@@ -7,7 +7,10 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # A newer push to a PR replaces its older run. Every push to main gets a group of its own, so
+  # a docs-only merge can't cancel (or, while queued, replace) the run still testing the code
+  # merged before it (#198).
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: true
 
 jobs:
