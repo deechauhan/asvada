@@ -118,6 +118,7 @@ final class QuickLogUITests: UITestCase {
         app.buttons["quickLogDetails"].tap()
         let people = app.textFields["peopleField"]
         XCTAssertTrue(people.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["addPhotosButton"].exists, "No way to add photos while sealing")
         people.tap()
         people.typeText("Ana\n")
         XCTAssertTrue(app.buttons["people-chip-Ana"].waitForExistence(timeout: 5))
@@ -133,6 +134,7 @@ final class QuickLogUITests: UITestCase {
         XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["people-chip-Ana"].exists)
         XCTAssertTrue(app.buttons["tags-chip-rainy day"].exists)
+        XCTAssertTrue(app.buttons["addPhotosButton"].exists, "No way to add photos to a sealed entry")
         let moreTags = app.textFields["tagsField"]
         moreTags.tap()
         moreTags.typeText("cinema\n")

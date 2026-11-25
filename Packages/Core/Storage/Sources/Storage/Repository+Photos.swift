@@ -13,6 +13,12 @@ public extension Repository {
         return photo
     }
 
+    /// Takes a photo off its entry and out of the store.
+    func remove(_ photo: Photo) {
+        photo.entry = nil
+        context.delete(photo)
+    }
+
     /// The entry's photos, oldest first by when they were taken (untimed ones last).
     func photos(of entry: Entry) -> [Photo] {
         (entry.photos ?? []).sorted { lhs, rhs in

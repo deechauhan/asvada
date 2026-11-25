@@ -412,7 +412,7 @@ struct SealStep: View {
             Button {
                 showsDetails.toggle()
             } label: {
-                Label("When, who with, tags", systemImage: showsDetails ? "chevron.down" : "chevron.right")
+                Label("When, who with, tags, photos", systemImage: showsDetails ? "chevron.down" : "chevron.right")
                     .typeToken(.callout)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -427,6 +427,19 @@ struct SealStep: View {
                     tags: $savouring.tags,
                     knownPeople: Repository(context: context).peopleNames(),
                     knownTags: Repository(context: context).tagNames(),
+                )
+                EntryPhotosField(
+                    thumbnails: savouring.photos.enumerated().map { index, photo in
+                        PhotoThumbnail(id: "picked-\(index)", data: photo.thumbnailData)
+                    },
+                    onAdd: { savouring.photos += $0 },
+                    onRemove: { thumbnail in
+                        if let index = Int(thumbnail.id.replacingOccurrences(of: "picked-", with: "")),
+                           savouring.photos.indices.contains(index)
+                        {
+                            savouring.photos.remove(at: index)
+                        }
+                    },
                 )
             }
             SealButton(action: onSeal)
