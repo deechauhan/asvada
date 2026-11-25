@@ -267,7 +267,7 @@ final class QuickLogUITests: UITestCase {
     }
 
     @MainActor
-    func testStarsRateInHalvesAndTheRatingCanBeAdjusted() {
+    func testStarsRateInHalvesAndTheRatingCanBeChanged() {
         let app = launch(["-resetState"])
         // Custom collections rate with the relish scale (stars).
         openCollectionsAndWait(app)
@@ -288,13 +288,14 @@ final class QuickLogUITests: UITestCase {
         scale.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5)).tap()
         seal(app, drawer: "Concerts")
 
-        // The details show 3½, and VoiceOver's adjust steps it by halves.
+        // The details show 3½, and the rating can be changed there. (VoiceOver's adjust action
+        // steps by halves; XCUITest on iOS can't drive it, so RelishInputTests cover that.)
         app.descendants(matching: .any)["savouredToast"].tap()
         XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
         let rating = app.descendants(matching: .any)["relishScale"]
         XCTAssertTrue(rating.waitForExistence(timeout: 5))
         XCTAssertEqual(rating.value as? String, "3½ of 5, Lovely")
-        rating.increment()
+        rating.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
         XCTAssertEqual(rating.value as? String, "4 of 5, Lovely")
         attachScreenshot(of: app, named: "relish-details")
     }
