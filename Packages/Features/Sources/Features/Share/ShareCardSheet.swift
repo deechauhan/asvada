@@ -66,6 +66,7 @@ struct ShareCardSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
+                        .accessibilityIdentifier("shareCardDone")
                 }
             }
             .task {

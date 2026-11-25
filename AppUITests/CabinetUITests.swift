@@ -105,7 +105,8 @@ final class CabinetUITests: UITestCase {
         attachScreenshot(of: app, named: "open-drawer-toolbar")
         share.tap()
         XCTAssertTrue(app.descendants(matching: .any)["shareCardPreview"].waitForExistence(timeout: 15))
-        app.swipeDown(velocity: .fast)
+        // Close it with its Done button: a swipe over the card can scroll it instead of closing.
+        app.buttons["shareCardDone"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["shareCardPreview"].waitForNonExistence(timeout: 10))
 
         // Customise it from the same toolbar; Cancel leaves it as it was.
