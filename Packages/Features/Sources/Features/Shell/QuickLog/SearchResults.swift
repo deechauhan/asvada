@@ -38,7 +38,11 @@ struct SearchResults {
     var drawer: [Item]
     var found: [Found]
 
-    static let empty = SearchResults(drawer: [], found: [])
+    /// Nothing typed, nothing found. Computed: results hold SwiftData items, which aren't
+    /// Sendable, so it can't be a shared constant.
+    static var empty: SearchResults {
+        SearchResults(drawer: [], found: [])
+    }
 
     /// Groups `online` results after the drawer's `matches`, moving any result the collection
     /// already holds (same `externalRef`) into the drawer group, and numbering the rest from 1.

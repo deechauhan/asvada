@@ -120,15 +120,16 @@ struct ResultsMap: View {
                     Annotation(held.item.name, coordinate: held.point.coordinate, anchor: .center) {
                         heldPin(held.item)
                     }
+                    .annotationTitles(.hidden)
                 }
                 ForEach(placedFound, id: \.found.id) { placed in
                     Annotation(placed.found.title, coordinate: placed.point.coordinate, anchor: .center) {
                         foundPin(placed.found)
                     }
+                    .annotationTitles(.hidden)
                 }
             }
             .mapStyle(.standard(pointsOfInterest: .excludingAll))
-            .annotationTitles(.hidden)
             .frame(height: 340)
             .clipShape(RoundedRectangle(cornerRadius: Radius.medium))
             .onChange(of: found.map(\.id)) { _, _ in
