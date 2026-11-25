@@ -23,9 +23,9 @@ struct QuickLogSheet: View {
     /// When the sheet opened, for the "Savoured in 6.4 s" toast.
     @State private var startedAt = Date.now
     /// Called with the toast's words once a keepsake is sealed; the presenter closes the sheet.
-    var onSealed: (String) -> Void = { _ in }
+    var onSealed: (String, UUID) -> Void = { _, _ in }
 
-    init(drawn: ExperienceCollection? = nil, onSealed: @escaping (String) -> Void = { _ in }) {
+    init(drawn: ExperienceCollection? = nil, onSealed: @escaping (String, UUID) -> Void = { _, _ in }) {
         _drawn = State(initialValue: drawn)
         self.onSealed = onSealed
     }

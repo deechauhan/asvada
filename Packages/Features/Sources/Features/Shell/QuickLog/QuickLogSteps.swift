@@ -287,6 +287,8 @@ struct SealStep: View {
     let collection: ExperienceCollection
     @Binding var savouring: Savouring
     let onSeal: () -> Void
+    @Environment(\.modelContext) private var context
+    @State private var showsDetails = false
 
     private var summary: String? {
         if let position = savouring.rankPosition {
@@ -308,6 +310,26 @@ struct SealStep: View {
                 .lineLimit(1 ... 4)
                 .textFieldStyle(.roundedBorder)
                 .accessibilityIdentifier("quickLogNote")
+            Button {
+                showsDetails.toggle()
+            } label: {
+                Label("When, who with, tags", systemImage: showsDetails ? "chevron.down" : "chevron.right")
+                    .typeToken(.callout)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Palette.brand.color)
+            .accessibilityValue(showsDetails ? "Shown" : "Hidden")
+            .accessibilityIdentifier("quickLogDetails")
+            if showsDetails {
+                EntryDetailsFields(
+                    date: $savouring.date,
+                    people: $savouring.people,
+                    tags: $savouring.tags,
+                    knownPeople: Repository(context: context).peopleNames(),
+                    knownTags: Repository(context: context).tagNames(),
+                )
+            }
             SealButton(action: onSeal)
             Text("Hold the ā to seal it")
                 .font(.caption)

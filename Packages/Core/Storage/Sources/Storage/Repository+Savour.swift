@@ -11,12 +11,24 @@ public struct Savouring: Sendable, Equatable {
     /// The item's new place in its collection's ranking (0 is the top), when a duel placed it.
     /// Nil keeps any place it already had.
     public var rankPosition: Int?
+    /// Who you were with, and tags, as typed.
+    public var people: [String]
+    public var tags: [String]
 
-    public init(date: Date = .now, rating: Double? = nil, note: String = "", rankPosition: Int? = nil) {
+    public init(
+        date: Date = .now,
+        rating: Double? = nil,
+        note: String = "",
+        rankPosition: Int? = nil,
+        people: [String] = [],
+        tags: [String] = [],
+    ) {
         self.date = date
         self.rating = rating
         self.note = note
         self.rankPosition = rankPosition
+        self.people = people
+        self.tags = tags
     }
 }
 
@@ -27,6 +39,8 @@ public extension Repository {
     func savour(_ item: Item, _ savouring: Savouring) throws -> Entry {
         let note = savouring.note.trimmingCharacters(in: .whitespacesAndNewlines)
         let entry = addEntry(to: item, date: savouring.date, rating: savouring.rating, notes: note)
+        setPeople(savouring.people, on: entry)
+        setTags(savouring.tags, on: entry)
         if let position = savouring.rankPosition, let collection = item.collection {
             place(item, at: position, in: collection)
         }

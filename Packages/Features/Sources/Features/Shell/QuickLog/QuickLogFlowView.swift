@@ -11,7 +11,8 @@ import SwiftUI
 struct QuickLogFlowView: View {
     let collection: ExperienceCollection
     let startedAt: Date
-    let onSealed: (String) -> Void
+    /// The toast's words and the new entry, once sealed.
+    let onSealed: (String, UUID) -> Void
 
     @Environment(\.modelContext) private var context
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -30,7 +31,7 @@ struct QuickLogFlowView: View {
         collection: ExperienceCollection,
         again: Item? = nil,
         startedAt: Date,
-        onSealed: @escaping (String) -> Void,
+        onSealed: @escaping (String, UUID) -> Void,
     ) {
         self.collection = collection
         self.startedAt = startedAt
@@ -140,8 +141,8 @@ struct QuickLogFlowView: View {
     private func seal() {
         guard let item else { return }
         do {
-            try repository.savour(item, savouring)
-            onSealed(QuickLogFlow.toast(seconds: Date.now.timeIntervalSince(startedAt), collection: collection.name))
+            let entry = try repository.savour(item, savouring)
+            onSealed(QuickLogFlow.toast(seconds: Date.now.timeIntervalSince(startedAt), collection: collection.name), entry.id)
         } catch {
             assertionFailure("Sealing failed: \(error)")
         }
