@@ -241,4 +241,28 @@ final class QuickLogUITests: UITestCase {
         // Prufrock is already ranked, so Workshop meets it in a duel.
         XCTAssertTrue(app.staticTexts["Which did you savour more?"].waitForExistence(timeout: 5))
     }
+
+    @MainActor
+    func testJournalChipsDrawTheirOwnBlank() {
+        let app = launch(["-resetState"])
+
+        // "The last film you saw" goes straight to a film blank: no grid asking what it was.
+        let film = app.buttons["start-films"]
+        XCTAssertTrue(film.waitForExistence(timeout: 10))
+        film.tap()
+        XCTAssertTrue(app.textFields["quickLogName"].waitForExistence(timeout: 10), "The film chip didn't draw a blank")
+        XCTAssertFalse(app.buttons["Savour a café"].exists, "The film chip showed the grid")
+        addNew("Perfect Days", in: app)
+        // Films are a log, so it asks when: proof the blank was a film.
+        XCTAssertTrue(app.staticTexts["When?"].waitForExistence(timeout: 5))
+        app.buttons["when-Today"].tap()
+        seal(app, drawer: "Films")
+
+        // "Your favourite café" draws a café blank.
+        app.buttons["start-cafes"].tap()
+        XCTAssertTrue(app.textFields["quickLogName"].waitForExistence(timeout: 10), "The café chip didn't draw a blank")
+        XCTAssertFalse(app.buttons["Savour a film"].exists, "The café chip showed the grid")
+        addNew("Corner Kiosk", in: app)
+        XCTAssertEqual(app.staticTexts["quickLogSummary"].label, "No. 1 in Cafés")
+    }
 }

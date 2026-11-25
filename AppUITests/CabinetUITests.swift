@@ -202,4 +202,53 @@ final class CabinetUITests: UITestCase {
         entry.tap()
         XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
     }
+
+    @MainActor
+    func testAnEntryIsEditedDeletedAndPutBack() {
+        let app = launch(["-resetState", "-sampleData"])
+        openCollectionsAndWait(app)
+        openDrawer(app, "Cafés")
+        let receipt = labelled("Receipt, Prufrock Coffee", in: app, prefix: true)
+        XCTAssertTrue(receipt.waitForExistence(timeout: 10))
+        receipt.tap()
+        XCTAssertTrue(app.navigationBars["Prufrock Coffee"].waitForExistence(timeout: 10))
+        let count = app.staticTexts["itemCount"]
+        XCTAssertEqual(count.label, "1 visit")
+
+        // Edit: a note written in the details is filled in when they open again.
+        let entry = app.buttons["itemEntry"].firstMatch
+        entry.tap()
+        let notes = app.descendants(matching: .any)["entryNotes"]
+        XCTAssertTrue(notes.waitForExistence(timeout: 10))
+        notes.tap()
+        notes.typeText("Edited by hand")
+        app.buttons["entryDetailsDone"].tap()
+        XCTAssertTrue(app.navigationBars["Details"].waitForNonExistence(timeout: 10))
+        entry.tap()
+        XCTAssertTrue(notes.waitForExistence(timeout: 10))
+        XCTAssertTrue((notes.value as? String ?? "").contains("Edited by hand"), "The note wasn't filled in again")
+
+        // Delete from the details: the sheet closes, and Undo puts the entry back.
+        app.buttons["deleteEntryButton"].tap()
+        XCTAssertTrue(app.navigationBars["Details"].waitForNonExistence(timeout: 10))
+        let undo = app.buttons["undoDelete"]
+        XCTAssertTrue(undo.waitForExistence(timeout: 5), "No undo after deleting")
+        XCTAssertEqual(count.label, "Not savoured yet")
+        attachScreenshot(of: app, named: "entry-deleted-undo")
+        undo.tap()
+        XCTAssertTrue(undo.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(count.label, "1 visit")
+
+        // Swipe it away (a full swipe deletes outright; a short one shows Delete). Once Undo
+        // has gone, so has the entry.
+        entry.swipeLeft()
+        if !undo.waitForExistence(timeout: 2) {
+            app.buttons["Delete"].tap()
+        }
+        XCTAssertTrue(undo.waitForExistence(timeout: 5), "No undo after swiping to delete")
+        XCTAssertEqual(count.label, "Not savoured yet")
+        XCTAssertTrue(undo.waitForNonExistence(timeout: 15), "Undo never went away")
+        XCTAssertEqual(count.label, "Not savoured yet")
+        XCTAssertFalse(app.buttons["itemEntry"].exists)
+    }
 }

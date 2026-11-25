@@ -616,6 +616,22 @@ epics:
           - Weighted toward anniversaries (×2), keepsakes unseen for 90 days or more, and ones with a note or photo. Never an empty drawer, never the same keepsake twice in a row
           - VoiceOver announces the keepsake; Reduce Motion crossfades with no spin
           - 'Optional (P2): long-press a drawer''s lip to shuffle it'
+      - title: "Cabinet: make the front drawer fill the screen"
+        type: story
+        points: 2
+        priority: P1
+        sprint: 9
+        depends_on:
+          - 'The turning cabinet: roll, ajar and pull to open'
+        story: "As a user rolling through my collections, I want the one in front to be big, so the cabinet feels like holding one drawer rather than glancing at a carousel."
+        body: "Found on device: the front drawer was a fixed 248 × 236 pt, about 60% of an iPhone's width. The owner asked whether a vertical scroll would give it more room; decision: keep the roll horizontal (pull-to-open is vertical, and a vertical cabinet would make the two gestures fight) and make the drawer in focus bigger."
+        design: "INTERACTION.md §3 (Roll)."
+        ac:
+          - "The drawer in focus is sized from the container: about 78% of the width, never smaller than its own size, at most ×1.45 (iPad)"
+          - "Neighbours still peek about 40 pt in from each edge; the extra size hands over smoothly as the drum rolls"
+          - "The drawer name, count line and best three keepsakes scale up with it (serif numerals stay)"
+          - "Works on iPhone SE, Pro Max and with Dynamic Type at AX sizes; Reduce Motion keeps drawers equal"
+          - "Screenshots before and after attached to the PR; CabinetUITests stay green"
 
   - key: E5
     title: "Epic: Item sources — search and catalogs"
@@ -682,6 +698,19 @@ epics:
           - "Point-in-polygon lookup returns ISO code for a coordinate offline"
           - "Logging a place marks its country as visited"
           - "Unit tests with border and island cases"
+      - title: "About: say where every piece of data comes from, and fix the privacy line"
+        type: story
+        points: 2
+        priority: P0
+        sprint: 9
+        story: "As a user I want to see plainly where Asvada's data comes from and what leaves my phone, so I can trust it."
+        body: "Found on device: the Colophon credited only Natural Earth and OpenFlights. TMDB's API terms ask for their notice and logo, and the privacy seal left out that place searches go to Apple Maps."
+        ac:
+          - "A 'Where your data comes from' section in About: one row each for Apple Maps, TMDB, Natural Earth, OpenFlights and your iCloud, saying what it gives, what is sent, the licence and a link"
+          - "TMDB credited with 'This product uses the TMDB API but is not endorsed or certified by TMDB.' and their logo"
+          - "The privacy seal names Apple Maps searches alongside TMDB, map tiles and iCloud"
+          - "VoiceOver reads each row as one element; the About UI test checks every source"
+          - "docs/ARCHITECTURE.md privacy section matches"
 
   - key: E6
     title: "Epic: Quick-log & entries"
@@ -742,6 +771,46 @@ epics:
         ac:
           - "Swipe to delete with undo toast"
           - "Edit reopens the entry form with values filled in"
+      - title: 'Journal start chips open the wrong blank: "Your favourite café" asks what you savoured'
+        type: bug
+        points: 1
+        priority: P0
+        sprint: 9
+        body: "Found on device: the Journal's three start chips all called the same onSavour(), so quick-log opened on the 'What did you savour?' grid after you'd already said which."
+        ac:
+          - "Each chip draws its own blank straight away (Cafés, Films, Countries), the same path as drawing from the hand"
+          - "If that collection is hidden, quick-log falls back to the grid"
+          - "UI test: 'The last film you saw' shows the film blank's name field, not the grid"
+      - title: "Quick-log search shows a list of results, not just the top match"
+        type: story
+        points: 5
+        priority: P0
+        sprint: 9
+        story: "As a user typing what I savoured, I want to see several results to choose from, as a list or on a map, so I can pick the right café or film when the top guess is wrong."
+        body: "Found on device: typing printed only the top Apple Maps or TMDB result, and the list showed only things already in the drawer."
+        design: "List first (the keyboard covers half the sheet); places get a List | Map switch showing the same results as numbered pins, remembered per collection. INTERACTION.md §5."
+        ac:
+          - "Two groups under the blank: 'In your drawer', then up to 8 numbered results 'From Apple Maps', 'From TMDB' or 'From the catalogue'"
+          - "Place rows show address and distance; film rows year and poster; countries their flag; airlines their code"
+          - "The print head still prints the top result; tapping any row or pin picks it instead"
+          - "Place collections have a List | Map switch, remembered per collection; the map shows the same numbered pins, drawer things as tinted pins, and you"
+          - "Results already in the drawer aren't listed twice (match on externalRef); quiet loading and no-results text"
+          - "Unit tests for grouping, numbering and de-duplication; UI tests pick from the list and from the map; VoiceOver reads each row as one element"
+      - title: "Browse the map to pick a place: tap any café, search this area, tap a city"
+        type: story
+        points: 3
+        priority: P1
+        sprint: 10
+        depends_on:
+          - "Quick-log search shows a list of results, not just the top match"
+        story: "As a user savouring a place, I want to browse the map and tap the place itself, even before I've typed anything, because I often know where it was better than what it's called."
+        ac:
+          - "Map in the List | Map switch works with nothing typed, centred on you if allowed, else your last savoured place in that collection"
+          - "Apple's own points of interest can be tapped (Map selection with MapFeature, then MKMapItemRequest), filtered to the collection's kind"
+          - "After panning, 'Search this area' re-runs the search in the visible region"
+          - "For cities, a tap anywhere picks the city there (reverse geocode)"
+          - "Choosing a place prints it onto the blank and continues; held things pick the existing item"
+          - "Only asks for location when tapped; the list stays available for VoiceOver; UI test with a stubbed PlaceSearching"
 
   - key: E7
     title: "Epic: Rating modes & ranking engine"
