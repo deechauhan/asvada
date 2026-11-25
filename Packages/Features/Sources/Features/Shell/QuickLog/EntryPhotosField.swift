@@ -39,8 +39,9 @@ struct EntryPhotosField: View {
             }
             HStack(spacing: Spacing.small) {
                 PhotosPicker(selection: $picked, maxSelectionCount: Self.maximumPick, matching: .images) {
+                    // PhotosPicker's label isn't main-actor isolated, so a plain font, not typeToken.
                     Label("Add photos", systemImage: "photo.on.rectangle.angled")
-                        .typeToken(.callout)
+                        .font(.callout)
                 }
                 .accessibilityIdentifier("addPhotosButton")
                 if isProcessing {
