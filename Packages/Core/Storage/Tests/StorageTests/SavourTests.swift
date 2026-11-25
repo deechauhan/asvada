@@ -52,4 +52,15 @@ struct SavourTests {
         #expect(repository.ranking(of: cafes).map(\.name) == ["Prufrock", "Monmouth"])
         #expect(first.entries?.count == 2)
     }
+
+    @Test func photosPickedWhileSealingAreKeptOnTheEntry() throws {
+        let films = try collection(.films)
+        let film = try repository.addManualItem(ManualItemDraft(name: "Perfect Days"), in: films)
+        let shot = try PhotoProcessor.process(TestImage.make(width: 800, height: 600))
+        let entry = try repository.savour(film, Savouring(photos: [shot, shot]))
+        let photos = repository.photos(of: entry)
+        #expect(photos.count == 2)
+        let allKept = photos.allSatisfy { $0.thumbnailData != nil && $0.imageData != nil }
+        #expect(allKept)
+    }
 }

@@ -14,6 +14,8 @@ public struct Savouring: Sendable, Equatable {
     /// Who you were with, and tags, as typed.
     public var people: [String]
     public var tags: [String]
+    /// Photos picked while sealing, already downscaled (`PhotoProcessor`).
+    public var photos: [ProcessedPhoto]
 
     public init(
         date: Date = .now,
@@ -22,6 +24,7 @@ public struct Savouring: Sendable, Equatable {
         rankPosition: Int? = nil,
         people: [String] = [],
         tags: [String] = [],
+        photos: [ProcessedPhoto] = [],
     ) {
         self.date = date
         self.rating = rating
@@ -29,6 +32,7 @@ public struct Savouring: Sendable, Equatable {
         self.rankPosition = rankPosition
         self.people = people
         self.tags = tags
+        self.photos = photos
     }
 }
 
@@ -41,6 +45,9 @@ public extension Repository {
         let entry = addEntry(to: item, date: savouring.date, rating: savouring.rating, notes: note)
         setPeople(savouring.people, on: entry)
         setTags(savouring.tags, on: entry)
+        for photo in savouring.photos {
+            attach(photo, to: entry)
+        }
         if let position = savouring.rankPosition, let collection = item.collection {
             place(item, at: position, in: collection)
         }

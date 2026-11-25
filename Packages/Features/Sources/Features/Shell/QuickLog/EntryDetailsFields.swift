@@ -104,6 +104,8 @@ struct EntryDetailsSheet: View {
     @Environment(\.modelContext) private var context
     @State private var details = EntryDetails()
     @State private var loaded = false
+    /// Bumped when photos change, so the thumbnails are read again.
+    @State private var photoChanges = 0
 
     private var repository: Repository {
         Repository(context: context)
@@ -130,6 +132,11 @@ struct EntryDetailsSheet: View {
                         .lineLimit(1 ... 6)
                         .textFieldStyle(.roundedBorder)
                         .accessibilityIdentifier("entryNotes")
+                    EntryPhotosField(
+                        thumbnails: keptPhotos,
+                        onAdd: addPhotos,
+                        onRemove: removePhoto,
+                    )
                     Text("Changes are saved as you go.")
                         .font(.caption)
                         .foregroundStyle(Palette.textSecondary.color)
@@ -151,6 +158,33 @@ struct EntryDetailsSheet: View {
             guard loaded, let entry = repository.entry(id: entryID) else { return }
             try? repository.update(entry, with: newValue)
         }
+    }
+
+    /// The entry's kept photos (re-read whenever one is added or removed).
+    private var keptPhotos: [PhotoThumbnail] {
+        _ = photoChanges
+        guard let entry = repository.entry(id: entryID) else { return [] }
+        return repository.photos(of: entry).compactMap { photo in
+            photo.thumbnailData.map { PhotoThumbnail(id: photo.id.uuidString, data: $0) }
+        }
+    }
+
+    private func addPhotos(_ photos: [ProcessedPhoto]) {
+        guard let entry = repository.entry(id: entryID) else { return }
+        for photo in photos {
+            repository.attach(photo, to: entry)
+        }
+        try? repository.save()
+        photoChanges += 1
+    }
+
+    private func removePhoto(_ thumbnail: PhotoThumbnail) {
+        guard let entry = repository.entry(id: entryID),
+              let photo = (entry.photos ?? []).first(where: { $0.id.uuidString == thumbnail.id })
+        else { return }
+        repository.remove(photo)
+        try? repository.save()
+        photoChanges += 1
     }
 
     private func load() {
