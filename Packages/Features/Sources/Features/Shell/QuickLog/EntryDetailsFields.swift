@@ -100,6 +100,9 @@ struct EntryDetailsFields: View {
 /// Details for an entry already sealed (from the toast): every change is saved as you make it.
 struct EntryDetailsSheet: View {
     let entryID: UUID
+    /// Offers "Delete this entry" when set: the sheet deletes it, closes, and hands what it held
+    /// back so the screen underneath can offer Undo.
+    var onDelete: ((DeletedEntry) -> Void)?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @State private var details = EntryDetails()
@@ -140,6 +143,12 @@ struct EntryDetailsSheet: View {
                     Text("Changes are saved as you go.")
                         .font(.caption)
                         .foregroundStyle(Palette.textSecondary.color)
+                    if onDelete != nil {
+                        Button("Delete this entry", systemImage: "trash", role: .destructive, action: delete)
+                            .font(.callout)
+                            .padding(.top, Spacing.large)
+                            .accessibilityIdentifier("deleteEntryButton")
+                    }
                 }
                 .padding(Spacing.large)
             }
@@ -185,6 +194,15 @@ struct EntryDetailsSheet: View {
         repository.remove(photo)
         try? repository.save()
         photoChanges += 1
+    }
+
+    private func delete() {
+        guard let onDelete, let entry = repository.entry(id: entryID) else { return }
+        // Stop saving edits first: the entry is about to go.
+        loaded = false
+        guard let deleted = try? repository.deleteEntry(entry) else { return }
+        dismiss()
+        onDelete(deleted)
     }
 
     private func load() {
