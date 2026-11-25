@@ -75,7 +75,9 @@ struct QuickLogSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        // The hand fits half a screen; once a blank is drawn the flow needs the whole sheet, so
+        // the note and the seal are never below the fold.
+        .presentationDetents(drawn == nil ? [.medium, .large] : [.large])
     }
 
     /// The tap path: the same blanks as the hand, as a grid, plus "Again?" chips.

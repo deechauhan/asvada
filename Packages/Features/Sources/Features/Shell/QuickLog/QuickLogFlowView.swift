@@ -52,7 +52,6 @@ struct QuickLogFlowView: View {
                     .scaleEffect(1.6)
                     .frame(width: BlankKeepsake.size.width * 1.6, height: BlankKeepsake.size.height * 1.6)
                     .padding(.top, Spacing.large)
-                    .accessibilityIdentifier("drawnBlank")
                 if let item {
                     Text(item.name)
                         .font(.system(.title2, design: .serif, weight: .semibold))
@@ -65,6 +64,9 @@ struct QuickLogFlowView: View {
             .padding(.horizontal, Spacing.large)
             .padding(.bottom, Spacing.xl)
             .frame(maxWidth: .infinity)
+            // The blank itself is decoration; the drawn flow is the container VoiceOver and tests find.
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("drawnBlank")
         }
         .scrollDismissesKeyboard(.interactively)
         .animation(Motion.animation(Motion.settle, reduceMotion: reduceMotion), value: stage)
