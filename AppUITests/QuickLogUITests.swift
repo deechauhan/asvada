@@ -155,4 +155,41 @@ final class QuickLogUITests: UITestCase {
         XCTAssertTrue(app.buttons["people-chip-Ana"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["tags-suggestion-rainy day"].exists || app.buttons["tags-suggestion-cinema"].exists)
     }
+
+    @MainActor
+    func testThePrintHeadGuessesTearsAndTypes() {
+        let app = launch(["-resetState", "-sampleData"])
+        let pill = app.buttons["quickLogButton"]
+        XCTAssertTrue(pill.waitForExistence(timeout: 10))
+        pill.tap()
+        XCTAssertTrue(app.navigationBars["What did you savour?"].waitForExistence(timeout: 10))
+        app.buttons["Savour a café"].tap()
+
+        // The blank prints the café savoured last, and says where the guess came from.
+        let printed = app.descendants(matching: .any)["printedGuess"]
+        XCTAssertTrue(printed.waitForExistence(timeout: 10))
+        XCTAssertEqual(printed.label, "Printed: Prufrock Coffee")
+        let source = app.staticTexts["printSource"]
+        XCTAssertEqual(source.label, "Again? · 1 of 3")
+        attachScreenshot(of: app, named: "print-head")
+
+        // Tear it off for the next; swipe back to restore it.
+        app.buttons["printNext"].tap()
+        XCTAssertTrue(labelled("Printed: Monmouth", in: app).waitForExistence(timeout: 5))
+        XCTAssertEqual(source.label, "Again? · 2 of 3")
+        printed.swipeRight()
+        XCTAssertTrue(labelled("Printed: Prufrock Coffee", in: app).waitForExistence(timeout: 5))
+
+        // Typing prints the top result instead.
+        let field = app.textFields["quickLogName"]
+        field.tap()
+        field.typeText("Kaff")
+        XCTAssertTrue(labelled("Printed: Kaffeine", in: app).waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["printSource"].label, "Top result")
+        attachScreenshot(of: app, named: "print-head-typed")
+
+        // That's it: Kaffeine is ranked, so it's a repeat visit.
+        app.buttons["printAccept"].tap()
+        XCTAssertTrue(labelled("Still No.", in: app, prefix: true).waitForExistence(timeout: 5))
+    }
 }

@@ -49,10 +49,13 @@ struct QuickLogFlowView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Spacing.large) {
-                BlankKeepsake(collection: collection, isLifted: true)
-                    .scaleEffect(1.6)
-                    .frame(width: BlankKeepsake.size.width * 1.6, height: BlankKeepsake.size.height * 1.6)
-                    .padding(.top, Spacing.large)
+                // While picking, the print head shows the blank with its guess printed on it.
+                if stage != .pick {
+                    BlankKeepsake(collection: collection, isLifted: true)
+                        .scaleEffect(1.6)
+                        .frame(width: BlankKeepsake.size.width * 1.6, height: BlankKeepsake.size.height * 1.6)
+                        .padding(.top, Spacing.large)
+                }
                 if let item {
                     Text(item.name)
                         .font(.system(.title2, design: .serif, weight: .semibold))

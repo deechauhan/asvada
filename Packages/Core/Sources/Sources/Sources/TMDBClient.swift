@@ -105,6 +105,22 @@ public struct TMDBClient: Sendable {
         }
     }
 
+    /// Films in cinemas now, most popular first: the print head's "now showing" guesses. Sends
+    /// only the language and region, nothing about the user.
+    public func nowShowing(region: String? = Locale.current.region?.identifier) async throws -> [TMDBFilm] {
+        var query = [URLQueryItem(name: "language", value: language)]
+        if let region {
+            query.append(URLQueryItem(name: "region", value: region))
+        }
+        let request = try makeRequest(path: "movie/now_playing", query: query)
+        let data = try await send(request)
+        do {
+            return try JSONDecoder().decode(SearchPage.self, from: data).results
+        } catch {
+            throw TMDBError.unreadable
+        }
+    }
+
     /// The URL of a poster at a TMDB size ("w185" for thumbnails, "w342" for keepsakes).
     public static func posterURL(_ path: String, size: String = "w342") -> URL {
         imageBase.appending(path: size).appending(path: path.hasPrefix("/") ? String(path.dropFirst()) : path)
