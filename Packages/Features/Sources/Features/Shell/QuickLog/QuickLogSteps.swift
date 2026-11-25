@@ -69,21 +69,29 @@ struct PickStep: View {
             )
             .frame(maxWidth: .infinity)
             .haptic(.tear, trigger: tears)
-            if let printed {
-                HStack(spacing: Spacing.medium) {
-                    Button("That's it") { accept(printed) }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Palette.brand.color)
-                        .accessibilityIdentifier("printAccept")
-                    if trimmed.isEmpty {
-                        Button("Next guess", action: tear)
-                            .buttonStyle(.bordered)
-                            .tint(Palette.brand.color)
-                            .accessibilityIdentifier("printNext")
+            // The row keeps its place even with nothing printed, so the matches below don't
+            // jump when a typed result arrives (a tap mid-jump lands on the wrong row).
+            HStack(spacing: Spacing.medium) {
+                Button("That's it") {
+                    if let printed {
+                        accept(printed)
                     }
                 }
-                .frame(maxWidth: .infinity)
+                .buttonStyle(.borderedProminent)
+                .tint(Palette.brand.color)
+                .accessibilityIdentifier("printAccept")
+                Button("Next guess", action: tear)
+                    .buttonStyle(.bordered)
+                    .tint(Palette.brand.color)
+                    .opacity(trimmed.isEmpty ? 1 : 0)
+                    .disabled(!trimmed.isEmpty)
+                    .accessibilityHidden(!trimmed.isEmpty)
+                    .accessibilityIdentifier("printNext")
             }
+            .frame(maxWidth: .infinity)
+            .opacity(printed == nil ? 0 : 1)
+            .disabled(printed == nil)
+            .accessibilityHidden(printed == nil)
             if guessesFromLocation, whereYouAre.canAsk {
                 Button("Guess from where you are", systemImage: "location") { whereYouAre.ask() }
                     .typeToken(.callout)

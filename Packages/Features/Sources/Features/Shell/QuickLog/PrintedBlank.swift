@@ -50,12 +50,12 @@ struct PrintedBlank: View {
                 }
             }
             .accessibilityIdentifier("printedGuess")
-            if let sourceLine {
-                Text(sourceLine)
-                    .font(.system(.caption, design: .serif).italic())
-                    .foregroundStyle(Palette.textSecondary.color)
-                    .accessibilityIdentifier("printSource")
-            }
+            // Always there (blank when there's no guess) so nothing below shifts as guesses come and go.
+            Text(sourceLine ?? " ")
+                .font(.system(.caption, design: .serif).italic())
+                .foregroundStyle(Palette.textSecondary.color)
+                .accessibilityHidden(sourceLine == nil)
+                .accessibilityIdentifier("printSource")
         }
         .task(id: guess?.id) { await print(guess?.title ?? "") }
     }
