@@ -105,7 +105,8 @@ final class CabinetUITests: UITestCase {
         attachScreenshot(of: app, named: "open-drawer-toolbar")
         share.tap()
         XCTAssertTrue(app.descendants(matching: .any)["shareCardPreview"].waitForExistence(timeout: 15))
-        app.swipeDown(velocity: .fast)
+        // Close it with its Done button: a swipe over the card can scroll it instead of closing.
+        app.buttons["shareCardDone"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["shareCardPreview"].waitForNonExistence(timeout: 10))
 
         // Customise it from the same toolbar; Cancel leaves it as it was.
@@ -178,5 +179,27 @@ final class CabinetUITests: UITestCase {
         app.buttons["drawerAddByHand"].tap()
         XCTAssertTrue(app.textFields["manualItemName"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.descendants(matching: .any)["manualItemMap"].exists)
+    }
+
+    @MainActor
+    func testAKeepsakeOpensItsThingsPage() {
+        let app = launch(["-resetState", "-sampleData"])
+        openCollectionsAndWait(app)
+        openDrawer(app, "Cafés")
+
+        // Tap Prufrock Coffee's receipt: its page shows its rank, how often, and every visit.
+        let receipt = labelled("Receipt, Prufrock Coffee", in: app, prefix: true)
+        XCTAssertTrue(receipt.waitForExistence(timeout: 10))
+        receipt.tap()
+        XCTAssertTrue(app.navigationBars["Prufrock Coffee"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts["itemRank"].label, "No. 1 in Cafés")
+        XCTAssertEqual(app.staticTexts["itemCount"].label, "1 visit")
+        attachScreenshot(of: app, named: "item-detail")
+
+        // Each entry opens its details.
+        let entry = app.buttons["itemEntry"].firstMatch
+        XCTAssertTrue(entry.exists)
+        entry.tap()
+        XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
     }
 }
