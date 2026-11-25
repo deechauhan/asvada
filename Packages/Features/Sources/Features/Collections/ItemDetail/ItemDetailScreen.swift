@@ -185,8 +185,8 @@ private struct EntryRow: View {
 
     private var subtitle: String {
         var parts: [String] = []
-        if let word = Relish.word(for: entry.rating) {
-            parts.append(word)
+        if let rating = entry.rating, let word = Relish.word(for: rating) {
+            parts.append("\(word) \(RelishInput.numeral(rating))")
         }
         let people = (entry.people ?? []).map(\.name).sorted()
         if !people.isEmpty {

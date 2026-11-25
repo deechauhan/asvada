@@ -116,34 +116,38 @@ struct StillStep: View {
     }
 }
 
-/// Stars: five ā marks; the relish word prints under them.
+/// Stars: five ā marks, rated in halves; the relish word prints under them. Lifting the finger
+/// moves on; with VoiceOver, swipe up or down to rate, then Next.
 struct RelishStep: View {
-    let rating: Double?
     let onRate: (Double) -> Void
+    @State private var rating: Double?
+
+    init(rating: Double?, onRate: @escaping (Double) -> Void) {
+        self.onRate = onRate
+        _rating = State(initialValue: rating)
+    }
 
     var body: some View {
         VStack(spacing: Spacing.medium) {
             Text("How did it land?")
                 .font(.system(.title3, design: .serif, weight: .semibold))
                 .foregroundStyle(Palette.textPrimary.color)
-            HStack(spacing: Spacing.small) {
-                ForEach(1 ... Relish.words.count, id: \.self) { step in
-                    Button {
-                        onRate(Double(step))
-                    } label: {
-                        Text("ā")
-                            .font(.system(size: 28, weight: .heavy, design: .serif))
-                            .foregroundStyle(Double(step) <= (rating ?? 0) ? Palette.brand.color : Palette.textSecondary.color)
-                            .frame(width: 48, height: 48)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Relish.words[step - 1])
-                    .accessibilityIdentifier("relish-\(step)")
-                }
-            }
-            Text(Relish.word(for: rating) ?? "Tap an ā")
+                .accessibilityAddTraits(.isHeader)
+            RelishScale(rating: $rating, onCommit: onRate)
+            Text(rating.map { "\(Relish.word(for: $0) ?? "") · \(RelishInput.numeral($0))" } ?? "Tap or slide along the ā")
                 .font(.system(.body, design: .serif).italic())
                 .foregroundStyle(Palette.textSecondary.color)
+                .accessibilityHidden(true)
+                .accessibilityIdentifier("relishWord")
+            Button("Next") {
+                if let rating {
+                    onRate(rating)
+                }
+            }
+            .buttonStyle(.bordered)
+            .tint(Palette.brand.color)
+            .disabled(rating == nil)
+            .accessibilityIdentifier("relishNext")
         }
     }
 }
