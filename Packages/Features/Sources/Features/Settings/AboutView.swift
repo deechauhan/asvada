@@ -1,8 +1,8 @@
 import DesignSystem
 import SwiftUI
 
-/// The Colophon: the ā mark on the aubergine field, what the name means, how the app is set,
-/// the privacy seal and the version.
+/// The Colophon: the ā mark on the aubergine field, what the name means, the privacy seal, where
+/// every piece of data comes from, how the app is set and the version.
 struct AboutView: View {
     var version = AppVersion.current
 
@@ -31,6 +31,7 @@ struct AboutView: View {
                 .typeToken(.voice)
                 .foregroundStyle(Palette.onAubergine.color)
                 PrivacySeal()
+                DataSourcesSection()
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Colophon")
                         .typeToken(.ticketLabel)
@@ -38,10 +39,6 @@ struct AboutView: View {
                     Text("Set in New York and SF Pro. Keepsakes sealed with the ā.")
                         .typeToken(.callout)
                         .foregroundStyle(Palette.onAubergine.color.opacity(0.85))
-                    Text("Maps from Natural Earth (public domain). Airline data © OpenFlights contributors, ODbL.")
-                        .typeToken(.caption)
-                        .foregroundStyle(Palette.onAubergine.color.opacity(0.7))
-                        .accessibilityIdentifier("dataCredits")
                     Text(version.displayString)
                         .typeToken(.code)
                         .foregroundStyle(Palette.onAubergine.color.opacity(0.85))
@@ -114,8 +111,8 @@ private struct PrivacySeal: View {
                 .accessibilityHidden(true)
             Text(
                 """
-                Nothing leaves this phone except film lookups (TMDB), map tiles and, if you turn it \
-                on, your own iCloud.
+                Nothing leaves this phone except your searches (places go to Apple Maps, films to \
+                TMDB) and map tiles. No account, no tracking, no server of our own.
                 """,
             )
             .typeToken(.callout)
@@ -131,5 +128,57 @@ private struct PrivacySeal: View {
 #Preview {
     NavigationStack {
         AboutView(version: AppVersion(infoDictionary: ["CFBundleShortVersionString": "0.1.0", "CFBundleVersion": "7"]))
+    }
+}
+
+/// One row per source: what it gives, what's sent, the licence and a link.
+private struct DataSourcesSection: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.medium) {
+            Text("Where your data comes from")
+                .typeToken(.ticketLabel)
+                .foregroundStyle(Palette.saffron.color)
+                .accessibilityAddTraits(.isHeader)
+            ForEach(DataSource.all) { source in
+                DataSourceRow(source: source)
+            }
+        }
+    }
+}
+
+private struct DataSourceRow: View {
+    let source: DataSource
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.small) {
+                Image(systemName: source.isOnline ? "arrow.up.forward.circle" : "shippingbox")
+                    .foregroundStyle(Palette.saffron.color)
+                    .accessibilityHidden(true)
+                Text(source.name)
+                    .typeToken(.headline)
+                    .foregroundStyle(Palette.onAubergine.color)
+            }
+            Text(source.provides)
+                .typeToken(.callout)
+                .foregroundStyle(Palette.onAubergine.color.opacity(0.9))
+            Text("Sends: \(source.sends)")
+                .typeToken(.caption)
+                .foregroundStyle(Palette.onAubergine.color.opacity(0.85))
+            Text(source.licence)
+                .typeToken(.caption)
+                .foregroundStyle(Palette.onAubergine.color.opacity(0.7))
+            Link(destination: source.link) {
+                Text(source.link.host() ?? source.link.absoluteString)
+                    .typeToken(.caption)
+                    .underline()
+                    .foregroundStyle(Palette.saffron.color)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.medium)
+        .background(Palette.onAubergine.color.opacity(0.06), in: RoundedRectangle(cornerRadius: Radius.medium))
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("dataSource-\(source.id)")
     }
 }
