@@ -47,6 +47,8 @@ public struct AppShellView: View {
         }
         .sheet(isPresented: $isShowingQuickLog) {
             QuickLogSheet(drawn: drawn) { words in
+                // The shell closes the sheet itself, so the toast and the dismissal can't race.
+                isShowingQuickLog = false
                 withAnimation(Motion.settle) { toast = words }
             }
         }

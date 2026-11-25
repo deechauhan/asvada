@@ -22,7 +22,7 @@ struct QuickLogSheet: View {
     @State private var again: Item?
     /// When the sheet opened, for the "Savoured in 6.4 s" toast.
     @State private var startedAt = Date.now
-    /// Called with the toast's words once a keepsake is sealed.
+    /// Called with the toast's words once a keepsake is sealed; the presenter closes the sheet.
     var onSealed: (String) -> Void = { _ in }
 
     init(drawn: ExperienceCollection? = nil, onSealed: @escaping (String) -> Void = { _ in }) {
@@ -45,10 +45,7 @@ struct QuickLogSheet: View {
                         collection: drawn,
                         again: again,
                         startedAt: startedAt,
-                        onSealed: { toast in
-                            onSealed(toast)
-                            dismiss()
-                        },
+                        onSealed: onSealed,
                     )
                     .id(drawn.id)
                 } else {

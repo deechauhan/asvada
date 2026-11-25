@@ -30,6 +30,8 @@ final class QuickLogUITests: UITestCase {
         let seal = app.descendants(matching: .any)["sealButton"]
         XCTAssertTrue(seal.waitForExistence(timeout: 5))
         seal.press(forDuration: 1.2)
+        // The sheet closes, then the toast shows over the app.
+        XCTAssertTrue(app.textFields["quickLogNote"].waitForNonExistence(timeout: 10), "The sheet didn't close after sealing")
         let toast = app.descendants(matching: .any)["savouredToast"]
         XCTAssertTrue(toast.waitForExistence(timeout: 10), "No toast after sealing")
         XCTAssertTrue(toast.label.hasPrefix("Savoured in "), toast.label)
