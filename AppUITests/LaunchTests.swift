@@ -71,7 +71,8 @@ final class LaunchTests: UITestCase {
         XCTAssertTrue(tmdb.label.contains("not endorsed or certified by TMDB"), tmdb.label)
         let openFlights = app.descendants(matching: .any)["dataSource-openflights"]
         XCTAssertTrue(openFlights.label.contains("ODbL"), openFlights.label)
-        openFlights.swipeUp()
+        // The rows sit below the fold: scroll the page, not an off-screen row.
+        app.scrollViews.firstMatch.swipeUp()
         attachScreenshot(of: app, named: "about-data-sources")
     }
 
