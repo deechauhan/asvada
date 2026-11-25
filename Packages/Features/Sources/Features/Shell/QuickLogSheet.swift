@@ -5,9 +5,9 @@ import SwiftData
 import SwiftUI
 
 /// Quick-log. Opened by a tap on the savour pill it lays the hand of blanks out as a grid, with
-/// "Again?" chips for the latest things savoured; opened by drawing from the hand it starts on
-/// the drawn blank. The print head (suggestions printed onto the blank) and the rest of the flow
-/// follow in #154 and #31.
+/// "Again?" chips for the latest things savoured (they skip straight to sealing); opened by
+/// drawing from the hand it starts on the drawn blank. Then: what was it, the savour step for its
+/// collection, and the seal. The print head (#154) will print guesses onto the blank.
 struct QuickLogSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -18,9 +18,16 @@ struct QuickLogSheet: View {
     )
     private var collections: [ExperienceCollection]
     @State private var drawn: ExperienceCollection?
+    /// Something to savour again, from an "Again?" chip.
+    @State private var again: Item?
+    /// When the sheet opened, for the "Savoured in 6.4 s" toast.
+    @State private var startedAt = Date.now
+    /// Called with the toast's words once a keepsake is sealed.
+    var onSealed: (String) -> Void = { _ in }
 
-    init(drawn: ExperienceCollection? = nil) {
+    init(drawn: ExperienceCollection? = nil, onSealed: @escaping (String) -> Void = { _ in }) {
         _drawn = State(initialValue: drawn)
+        self.onSealed = onSealed
     }
 
     /// The latest few things savoured, newest first, one per item.
@@ -34,9 +41,16 @@ struct QuickLogSheet: View {
         NavigationStack {
             Group {
                 if let drawn {
-                    DrawnBlank(collection: drawn) {
-                        withAnimation(Motion.animation(Motion.settle, reduceMotion: reduceMotion)) { self.drawn = nil }
-                    }
+                    QuickLogFlowView(
+                        collection: drawn,
+                        again: again,
+                        startedAt: startedAt,
+                        onSealed: { toast in
+                            onSealed(toast)
+                            dismiss()
+                        },
+                    )
+                    .id(drawn.id)
                 } else {
                     hand
                 }
@@ -47,6 +61,17 @@ struct QuickLogSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                }
+                if drawn != nil {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button("Draw another") {
+                            withAnimation(Motion.animation(Motion.settle, reduceMotion: reduceMotion)) {
+                                drawn = nil
+                                again = nil
+                            }
+                        }
+                        .accessibilityIdentifier("drawAnotherButton")
+                    }
                 }
             }
         }
@@ -59,6 +84,7 @@ struct QuickLogSheet: View {
             VStack(alignment: .leading, spacing: Spacing.large) {
                 if !recentItems.isEmpty {
                     AgainChips(items: recentItems) { item in
+                        again = item
                         draw(item.collection)
                     }
                 }
@@ -116,35 +142,5 @@ private struct AgainChips: View {
                 }
             }
         }
-    }
-}
-
-/// The blank just drawn: it lands big, waiting for the print head.
-private struct DrawnBlank: View {
-    let collection: ExperienceCollection
-    let drawAnother: () -> Void
-
-    @State private var landed = 0
-
-    var body: some View {
-        VStack(spacing: Spacing.large) {
-            BlankKeepsake(collection: collection, isLifted: true)
-                .scaleEffect(2.2)
-                .frame(width: BlankKeepsake.size.width * 2.2, height: BlankKeepsake.size.height * 2.2)
-                .thunk(trigger: landed)
-                .padding(.top, Spacing.xl)
-            Text(collection.name)
-                .font(.system(.title2, design: .serif, weight: .semibold))
-                .foregroundStyle(Palette.textPrimary.color)
-            Button("Draw another", action: drawAnother)
-                .buttonStyle(.bordered)
-                .tint(Palette.brand.color)
-                .accessibilityIdentifier("drawAnotherButton")
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity)
-        .onAppear { landed += 1 }
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("drawnBlank")
     }
 }

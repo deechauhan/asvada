@@ -20,6 +20,8 @@ public struct AppShellView: View {
     @State private var drawn: ExperienceCollection?
     @State private var hand = HandState()
     @State private var pillFrame = PillFrame()
+    /// "Savoured in 6.4 s · it's in your Cafés drawer", for a few seconds after sealing.
+    @State private var toast: String?
 
     public init() {}
 
@@ -44,7 +46,21 @@ public struct AppShellView: View {
             )
         }
         .sheet(isPresented: $isShowingQuickLog) {
-            QuickLogSheet(drawn: drawn)
+            QuickLogSheet(drawn: drawn) { words in
+                withAnimation(Motion.settle) { toast = words }
+            }
+        }
+        .overlay(alignment: .top) {
+            if let toast {
+                SavouredToast(text: toast)
+                    .padding(.top, Spacing.small)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .task(id: toast) {
+            guard toast != nil else { return }
+            try? await Task.sleep(for: .seconds(4))
+            withAnimation(Motion.settle) { toast = nil }
         }
     }
 
@@ -121,3 +137,28 @@ public struct AppShellView: View {
         }
     }
 #endif
+
+/// The toast after sealing a keepsake: how long it took and which drawer it's in.
+private struct SavouredToast: View {
+    let text: String
+
+    var body: some View {
+        HStack(spacing: Spacing.small) {
+            Text("ā")
+                .font(.system(size: 13, weight: .heavy, design: .serif))
+                .foregroundStyle(Palette.onBrand.color)
+                .frame(width: 22, height: 22)
+                .background(Palette.brand.color, in: Circle())
+            Text(text)
+                .typeToken(.callout)
+                .foregroundStyle(Palette.textPrimary.color)
+        }
+        .padding(.horizontal, Spacing.medium)
+        .padding(.vertical, Spacing.small)
+        .glassEffect(.regular, in: Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+        .accessibilityAddTraits(.isStaticText)
+        .accessibilityIdentifier("savouredToast")
+    }
+}
