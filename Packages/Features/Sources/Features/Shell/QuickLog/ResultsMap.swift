@@ -108,8 +108,10 @@ struct ResultsMap: View {
             }
             .frame(height: 340)
             .clipShape(RoundedRectangle(cornerRadius: Radius.medium))
-            .overlay(alignment: .top) { searchHereButton }
+            // On the map alone: an identifier on a container is handed down to what's inside it,
+            // so after the overlay it would rename "Search this area" too.
             .accessibilityIdentifier("resultsMap")
+            .overlay(alignment: .top) { searchHereButton }
             selectedCard
         }
         .onChange(of: found.map(\.id)) { _, _ in
