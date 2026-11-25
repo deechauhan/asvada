@@ -100,13 +100,18 @@ public struct EntryDetails: Sendable, Equatable {
         self.tags = tags
     }
 
-    /// What `entry` holds now.
+    /// What `entry` holds now. Relationships come back in no particular order, so names are
+    /// listed A to Z and chips don't shuffle between views.
     public init(_ entry: Entry) {
         self.init(
             date: entry.date,
             notes: entry.notes,
-            people: (entry.people ?? []).map(\.name),
-            tags: (entry.tags ?? []).map(\.name),
+            people: Self.sorted((entry.people ?? []).map(\.name)),
+            tags: Self.sorted((entry.tags ?? []).map(\.name)),
         )
+    }
+
+    private static func sorted(_ names: [String]) -> [String] {
+        names.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
 }

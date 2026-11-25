@@ -34,10 +34,17 @@ struct EntryDetailsTests {
     @Test func savouringWithPeopleAndTagsStoresEachNameOnce() throws {
         let first = try repository.savour(cafe("Prufrock"), Savouring(people: ["Ana", "Ben"], tags: ["birthday"]))
         let second = try repository.savour(cafe("Monmouth"), Savouring(people: ["ana"], tags: ["Birthday", "rainy"]))
-        #expect((first.people ?? []).map(\.name) == ["Ana", "Ben"])
-        // "ana" and "Birthday" reuse the people and tags already there.
-        #expect(second.people?.first?.id == first.people?.first?.id)
-        #expect(second.tags?.first?.id == first.tags?.first?.id)
+        // Relationships are unordered: compare as details (A to Z) and look people up by name.
+        #expect(EntryDetails(first).people == ["Ana", "Ben"])
+        // Typing "ana" found Ana, so the second entry shows her name as first spelled.
+        #expect(EntryDetails(second).people == ["Ana"])
+        // "ana" and "Birthday" reuse the person and tag already there.
+        let ana = { (entry: Entry) in entry.people?.first { $0.name == "Ana" }?.id }
+        let birthday = { (entry: Entry) in entry.tags?.first { $0.name == "birthday" }?.id }
+        #expect(ana(second) != nil)
+        #expect(ana(second) == ana(first))
+        #expect(birthday(second) != nil)
+        #expect(birthday(second) == birthday(first))
         #expect(try container.mainContext.fetchCount(FetchDescriptor<Model.Person>()) == 2)
         #expect(try container.mainContext.fetchCount(FetchDescriptor<Model.Tag>()) == 2)
     }
