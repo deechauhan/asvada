@@ -179,4 +179,26 @@ final class CabinetUITests: UITestCase {
         XCTAssertTrue(app.textFields["manualItemName"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.descendants(matching: .any)["manualItemMap"].exists)
     }
+
+    @MainActor
+    func testAKeepsakeOpensItsThingsPage() {
+        let app = launch(["-resetState", "-sampleData"])
+        openCollectionsAndWait(app)
+        openDrawer(app, "Cafés")
+
+        // Tap Prufrock Coffee's receipt: its page shows its rank, how often, and every visit.
+        let receipt = labelled("Receipt, Prufrock Coffee", in: app, prefix: true)
+        XCTAssertTrue(receipt.waitForExistence(timeout: 10))
+        receipt.tap()
+        XCTAssertTrue(app.navigationBars["Prufrock Coffee"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts["itemRank"].label, "No. 1 in Cafés")
+        XCTAssertEqual(app.staticTexts["itemCount"].label, "1 visit")
+        attachScreenshot(of: app, named: "item-detail")
+
+        // Each entry opens its details.
+        let entry = app.buttons["itemEntry"].firstMatch
+        XCTAssertTrue(entry.exists)
+        entry.tap()
+        XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
+    }
 }

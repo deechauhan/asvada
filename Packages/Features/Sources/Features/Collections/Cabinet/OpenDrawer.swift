@@ -37,11 +37,17 @@ struct OpenDrawer: View {
                     .padding(.top, Spacing.xl)
                 }
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    ItemKeepsake(
-                        item: item,
-                        collection: collection,
-                        rank: collection.ratingMode == .ranked ? index + 1 : nil,
-                    )
+                    // Tap a keepsake for the thing's own page.
+                    NavigationLink {
+                        ItemDetailScreen(item: item)
+                    } label: {
+                        ItemKeepsake(
+                            item: item,
+                            collection: collection,
+                            rank: collection.ratingMode == .ranked ? index + 1 : nil,
+                        )
+                    }
+                    .buttonStyle(.plain)
                     .paperTilt(index.isMultiple(of: 2) ? -1.2 : 1)
                 }
             }
