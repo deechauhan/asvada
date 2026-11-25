@@ -16,10 +16,18 @@ public struct AppShellView: View {
     )
     private var collections: [ExperienceCollection]
     @State private var isShowingQuickLog = false
+    /// Between asking the sheet to close and it having gone: a sheet asked to open in that
+    /// window is dropped, so the request waits for `onDismiss`.
+    @State private var isClosingQuickLog = false
+    @State private var pendingOpen: PendingQuickLog?
+    /// The toast waiting for the sheet to finish closing.
+    @State private var pendingToast: String?
     /// The blank drawn from the hand, if quick-log opened by drawing.
     @State private var drawn: ExperienceCollection?
     @State private var hand = HandState()
     @State private var pillFrame = PillFrame()
+    /// "Savoured in 6.4 s · it's in your Cafés drawer", for a few seconds after sealing.
+    @State private var toast: String?
 
     public init() {}
 
@@ -43,8 +51,25 @@ public struct AppShellView: View {
                 onDraw: { openQuickLog(drawing: $0) },
             )
         }
-        .sheet(isPresented: $isShowingQuickLog) {
-            QuickLogSheet(drawn: drawn)
+        .sheet(isPresented: $isShowingQuickLog, onDismiss: quickLogClosed) {
+            QuickLogSheet(drawn: drawn) { words in
+                // The shell closes the sheet; the toast shows once it has really gone.
+                pendingToast = words
+                isClosingQuickLog = true
+                isShowingQuickLog = false
+            }
+        }
+        .overlay(alignment: .top) {
+            if let toast {
+                SavouredToast(text: toast)
+                    .padding(.top, Spacing.small)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .task(id: toast) {
+            guard toast != nil else { return }
+            try? await Task.sleep(for: .seconds(4))
+            withAnimation(Motion.settle) { toast = nil }
         }
     }
 
@@ -76,8 +101,26 @@ public struct AppShellView: View {
     }
 
     private func openQuickLog(drawing collection: ExperienceCollection?) {
+        guard !isClosingQuickLog else {
+            pendingOpen = PendingQuickLog(drawing: collection)
+            return
+        }
         drawn = collection
         isShowingQuickLog = true
+    }
+
+    /// The sheet has finished closing (sealed, cancelled or swiped away): show the toast, and
+    /// open quick-log again if the pill was tapped while it was on its way out.
+    private func quickLogClosed() {
+        isClosingQuickLog = false
+        if let words = pendingToast {
+            pendingToast = nil
+            withAnimation(Motion.settle) { toast = words }
+        }
+        if let pending = pendingOpen {
+            pendingOpen = nil
+            openQuickLog(drawing: pending.drawing)
+        }
     }
 
     private var selection: Binding<AppTab> {
@@ -121,3 +164,33 @@ public struct AppShellView: View {
         }
     }
 #endif
+
+/// A quick-log asked for while the last one was still closing.
+private struct PendingQuickLog {
+    let drawing: ExperienceCollection?
+}
+
+/// The toast after sealing a keepsake: how long it took and which drawer it's in.
+private struct SavouredToast: View {
+    let text: String
+
+    var body: some View {
+        HStack(spacing: Spacing.small) {
+            Text("ā")
+                .font(.system(size: 13, weight: .heavy, design: .serif))
+                .foregroundStyle(Palette.onBrand.color)
+                .frame(width: 22, height: 22)
+                .background(Palette.brand.color, in: Circle())
+            Text(text)
+                .typeToken(.callout)
+                .foregroundStyle(Palette.textPrimary.color)
+        }
+        .padding(.horizontal, Spacing.medium)
+        .padding(.vertical, Spacing.small)
+        .glassEffect(.regular, in: Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+        .accessibilityAddTraits(.isStaticText)
+        .accessibilityIdentifier("savouredToast")
+    }
+}

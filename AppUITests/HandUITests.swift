@@ -17,8 +17,14 @@ final class HandUITests: UITestCase {
         XCTAssertTrue(app.navigationBars["Savour a café"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.descendants(matching: .any)["drawnBlank"].exists)
         attachScreenshot(of: app, named: "hand-drawn")
-        app.buttons["drawAnotherButton"].tap()
-        XCTAssertTrue(app.navigationBars["What did you savour?"].waitForExistence(timeout: 5))
+        // Draw another is in the sheet's glass toolbar, which drops a tap while it's still
+        // settling (as openChest notes), so tap until the hand is back.
+        let grid = app.navigationBars["What did you savour?"]
+        for _ in 0 ..< 3 where !grid.exists {
+            app.buttons["drawAnotherButton"].tap()
+            _ = grid.waitForExistence(timeout: 5)
+        }
+        XCTAssertTrue(grid.exists, "Draw another didn't bring the hand back")
     }
 
     @MainActor

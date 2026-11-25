@@ -11,6 +11,7 @@ let package = Package(
         .package(path: "../Core/DesignSystem"),
         .package(path: "../Core/Geo"),
         .package(path: "../Core/Model"),
+        .package(path: "../Core/Ranking"),
         .package(path: "../Core/Storage"),
     ],
     targets: [
@@ -20,6 +21,7 @@ let package = Package(
                 "DesignSystem",
                 "Geo",
                 "Model",
+                "Ranking",
                 "Storage",
             ],
         ),
