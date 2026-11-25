@@ -14,7 +14,8 @@ struct AsvadaApp: App {
     /// the built-ins with sample keepsakes (only together with `-inMemoryStore`), `-countryPicker`
     /// opens the country picker on its own, `-skipOnboarding` keeps first-launch onboarding away,
     /// `-cabinetMidRoll` stops the turning cabinet between two drawers (for screenshots),
-    /// `-stressItems N` adds N ranked cafés (with `-inMemoryStore`, for performance runs).
+    /// `-stressItems N` adds N ranked cafés (with `-inMemoryStore`, for performance runs),
+    /// `-samplePlaces` searches a fixed set of London places instead of Apple Maps.
     private let arguments = ProcessInfo.processInfo.arguments
     private let container: ModelContainer
 
@@ -64,6 +65,8 @@ struct AsvadaApp: App {
                     KeepsakeGallery()
                 } else if arguments.contains("-countryPicker") {
                     CountryPickerScreen()
+                } else if arguments.contains("-samplePlaces") {
+                    RootView().searchingSamplePlaces()
                 } else {
                     RootView()
                 }
