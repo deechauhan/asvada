@@ -22,6 +22,9 @@ public struct AppShellView: View {
     @State private var pendingOpen: PendingQuickLog?
     /// The toast waiting for the sheet to finish closing.
     @State private var pendingToast: String?
+    /// The entry just sealed: tapping the toast opens its details.
+    @State private var sealedEntry: UUID?
+    @State private var editingEntry: EditingEntry?
     /// The blank drawn from the hand, if quick-log opened by drawing.
     @State private var drawn: ExperienceCollection?
     @State private var hand = HandState()
@@ -52,24 +55,32 @@ public struct AppShellView: View {
             )
         }
         .sheet(isPresented: $isShowingQuickLog, onDismiss: quickLogClosed) {
-            QuickLogSheet(drawn: drawn) { words in
+            QuickLogSheet(drawn: drawn) { words, entry in
                 // The shell closes the sheet; the toast shows once it has really gone.
                 pendingToast = words
+                sealedEntry = entry
                 isClosingQuickLog = true
                 isShowingQuickLog = false
             }
         }
         .overlay(alignment: .top) {
             if let toast {
-                SavouredToast(text: toast)
-                    .padding(.top, Spacing.small)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                SavouredToast(text: toast) {
+                    guard let sealedEntry else { return }
+                    withAnimation(Motion.settle) { self.toast = nil }
+                    editingEntry = EditingEntry(id: sealedEntry)
+                }
+                .padding(.top, Spacing.small)
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .task(id: toast) {
             guard toast != nil else { return }
             try? await Task.sleep(for: .seconds(4))
             withAnimation(Motion.settle) { toast = nil }
+        }
+        .sheet(item: $editingEntry) { entry in
+            EntryDetailsSheet(entryID: entry.id)
         }
     }
 
@@ -165,6 +176,11 @@ public struct AppShellView: View {
     }
 #endif
 
+/// The entry whose details are open.
+private struct EditingEntry: Identifiable {
+    let id: UUID
+}
+
 /// A quick-log asked for while the last one was still closing.
 private struct PendingQuickLog {
     let drawing: ExperienceCollection?
@@ -173,8 +189,21 @@ private struct PendingQuickLog {
 /// The toast after sealing a keepsake: how long it took and which drawer it's in.
 private struct SavouredToast: View {
     let text: String
+    /// Opens the new entry's details.
+    let addDetails: () -> Void
 
     var body: some View {
+        Button(action: addDetails) {
+            content
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+        .accessibilityHint("Add when, who with and tags")
+        .accessibilityIdentifier("savouredToast")
+    }
+
+    private var content: some View {
         HStack(spacing: Spacing.small) {
             Text("ā")
                 .font(.system(size: 13, weight: .heavy, design: .serif))
@@ -184,13 +213,12 @@ private struct SavouredToast: View {
             Text(text)
                 .typeToken(.callout)
                 .foregroundStyle(Palette.textPrimary.color)
+            Image(systemName: "square.and.pencil")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Palette.brand.color)
         }
         .padding(.horizontal, Spacing.medium)
         .padding(.vertical, Spacing.small)
         .glassEffect(.regular, in: Capsule())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(text)
-        .accessibilityAddTraits(.isStaticText)
-        .accessibilityIdentifier("savouredToast")
     }
 }

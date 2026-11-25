@@ -106,4 +106,53 @@ final class QuickLogUITests: UITestCase {
         stamp.tap()
         seal(app, drawer: "Countries")
     }
+
+    @MainActor
+    func testDetailsAddPeopleAndTagsThatAreSuggestedNextTime() {
+        let app = launch(["-resetState"])
+
+        // While sealing: who with and a tag, under the details.
+        draw("Savour a film", in: app)
+        addNew("Perfect Days", in: app)
+        app.buttons["when-Today"].tap()
+        app.buttons["When, who with, tags"].tap()
+        let people = app.textFields["peopleField"]
+        XCTAssertTrue(people.waitForExistence(timeout: 5))
+        people.tap()
+        people.typeText("Ana\n")
+        XCTAssertTrue(app.buttons["people-chip-Ana"].waitForExistence(timeout: 5))
+        let tags = app.textFields["tagsField"]
+        tags.tap()
+        tags.typeText("rainy day\n")
+        XCTAssertTrue(app.buttons["tags-chip-rainy day"].waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "quick-log-details")
+        seal(app, drawer: "Films")
+
+        // The toast opens the entry's details, which save as you go.
+        app.descendants(matching: .any)["savouredToast"].tap()
+        XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["people-chip-Ana"].exists)
+        XCTAssertTrue(app.buttons["tags-chip-rainy day"].exists)
+        let moreTags = app.textFields["tagsField"]
+        moreTags.tap()
+        moreTags.typeText("cinema\n")
+        XCTAssertTrue(app.buttons["tags-chip-cinema"].waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "entry-details")
+        app.buttons["entryDetailsDone"].tap()
+        XCTAssertTrue(app.navigationBars["Details"].waitForNonExistence(timeout: 10))
+
+        // Next time, Ana and the tags are suggested as you type.
+        draw("Savour a film", in: app)
+        addNew("Past Lives", in: app)
+        app.buttons["when-Today"].tap()
+        app.buttons["When, who with, tags"].tap()
+        let again = app.textFields["peopleField"]
+        XCTAssertTrue(again.waitForExistence(timeout: 5))
+        again.tap()
+        again.typeText("an")
+        XCTAssertTrue(app.buttons["people-suggestion-Ana"].waitForExistence(timeout: 5))
+        app.buttons["people-suggestion-Ana"].tap()
+        XCTAssertTrue(app.buttons["people-chip-Ana"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["tags-suggestion-rainy day"].exists || app.buttons["tags-suggestion-cinema"].exists)
+    }
 }
