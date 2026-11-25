@@ -1,4 +1,5 @@
 import DesignSystem
+import Model
 import SwiftUI
 
 /// Home. Until entries exist (quick-log, E6) it shows the empty Journal from the concept:
@@ -9,7 +10,8 @@ struct JournalScreen: View {
     @State private var breathe = false
     /// How many slow breaths the ghost keepsake takes when the Journal appears.
     static let breaths = 3
-    let onSavour: () -> Void
+    /// Opens quick-log with that kind's blank already drawn.
+    let onSavour: (CollectionKind) -> Void
 
     private var month: String {
         Date.now.formatted(.dateTime.month(.wide))
@@ -28,9 +30,9 @@ struct JournalScreen: View {
                         Text("Start with something you loved:")
                             .typeToken(.voice)
                             .foregroundStyle(Palette.textSecondary.color)
-                        startChip("Stamp your countries", symbol: "globe.europe.africa.fill", accent: .country)
-                        startChip("Your favourite café", symbol: "cup.and.saucer.fill", accent: .cafe)
-                        startChip("The last film you saw", symbol: "film.fill", accent: .film)
+                        startChip("Stamp your countries", symbol: "globe.europe.africa.fill", accent: .country, kind: .countries)
+                        startChip("Your favourite café", symbol: "cup.and.saucer.fill", accent: .cafe, kind: .cafes)
+                        startChip("The last film you saw", symbol: "film.fill", accent: .film, kind: .films)
                     }
                 }
                 .padding(Spacing.large)
@@ -92,8 +94,10 @@ struct JournalScreen: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func startChip(_ title: String, symbol: String, accent: CollectionAccent) -> some View {
-        Button(action: onSavour) {
+    private func startChip(_ title: String, symbol: String, accent: CollectionAccent, kind: CollectionKind) -> some View {
+        Button {
+            onSavour(kind)
+        } label: {
             HStack(spacing: Spacing.medium) {
                 Image(systemName: symbol)
                     .foregroundStyle(accent.token.color)
@@ -113,6 +117,7 @@ struct JournalScreen: View {
             .background(Palette.surface.color, in: RoundedRectangle(cornerRadius: Radius.medium))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("start-\(kind.rawValue)")
     }
 }
 

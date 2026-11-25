@@ -15,7 +15,10 @@ public struct AppShellView: View {
         sort: [SortDescriptor(\ExperienceCollection.sortIndex), SortDescriptor(\ExperienceCollection.name)],
     )
     private var collections: [ExperienceCollection]
-    @State private var isShowingQuickLog = false
+    /// Quick-log while it's open, carrying the blank it opened on. An item, not a flag: a sheet
+    /// shown from a flag is built from the shell's last render, so a blank drawn in the same tap
+    /// (a Journal start chip) arrived as nil and the grid asked again (#186).
+    @State private var quickLog: OpenQuickLog?
     /// Between asking the sheet to close and it having gone: a sheet asked to open in that
     /// window is dropped, so the request waits for `onDismiss`.
     @State private var isClosingQuickLog = false
@@ -25,8 +28,6 @@ public struct AppShellView: View {
     /// The entry just sealed: tapping the toast opens its details.
     @State private var sealedEntry: UUID?
     @State private var editingEntry: EditingEntry?
-    /// The blank drawn from the hand, if quick-log opened by drawing.
-    @State private var drawn: ExperienceCollection?
     @State private var hand = HandState()
     @State private var pillFrame = PillFrame()
     /// "Savoured in 6.4 s · it's in your Cafés drawer", for a few seconds after sealing.
@@ -54,13 +55,13 @@ public struct AppShellView: View {
                 onDraw: { openQuickLog(drawing: $0) },
             )
         }
-        .sheet(isPresented: $isShowingQuickLog, onDismiss: quickLogClosed) {
-            QuickLogSheet(drawn: drawn) { words, entry in
+        .sheet(item: $quickLog, onDismiss: quickLogClosed) { open in
+            QuickLogSheet(drawn: open.drawn) { words, entry in
                 // The shell closes the sheet; the toast shows once it has really gone.
                 pendingToast = words
                 sealedEntry = entry
                 isClosingQuickLog = true
-                isShowingQuickLog = false
+                quickLog = nil
             }
         }
         .overlay(alignment: .top) {
@@ -116,8 +117,7 @@ public struct AppShellView: View {
             pendingOpen = PendingQuickLog(drawing: collection)
             return
         }
-        drawn = collection
-        isShowingQuickLog = true
+        quickLog = OpenQuickLog(drawn: collection)
     }
 
     /// The sheet has finished closing (sealed, cancelled or swiped away): show the toast, and
@@ -145,7 +145,8 @@ public struct AppShellView: View {
     private func screen(for tab: AppTab) -> some View {
         switch tab {
         case .journal:
-            JournalScreen(onSavour: { openQuickLog(drawing: nil) })
+            // A start chip draws its own blank; if that collection is hidden, the grid asks.
+            JournalScreen(onSavour: { kind in openQuickLog(drawing: collections.first { $0.kind == kind }) })
         case .collections:
             CollectionsScreen()
         case .atlas:
@@ -179,6 +180,12 @@ public struct AppShellView: View {
 /// The entry whose details are open.
 private struct EditingEntry: Identifiable {
     let id: UUID
+}
+
+/// Quick-log as it was opened: on a drawn blank, or on the grid.
+private struct OpenQuickLog: Identifiable {
+    let id = UUID()
+    let drawn: ExperienceCollection?
 }
 
 /// A quick-log asked for while the last one was still closing.
