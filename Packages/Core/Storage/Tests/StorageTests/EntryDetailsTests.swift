@@ -38,8 +38,8 @@ struct EntryDetailsTests {
         // "ana" and "Birthday" reuse the people and tags already there.
         #expect(second.people?.first?.id == first.people?.first?.id)
         #expect(second.tags?.first?.id == first.tags?.first?.id)
-        #expect(try container.mainContext.fetchCount(FetchDescriptor<Person>()) == 2)
-        #expect(try container.mainContext.fetchCount(FetchDescriptor<Tag>()) == 2)
+        #expect(try container.mainContext.fetchCount(FetchDescriptor<Model.Person>()) == 2)
+        #expect(try container.mainContext.fetchCount(FetchDescriptor<Model.Tag>()) == 2)
     }
 
     @Test func theMostUsedNamesComeFirst() throws {
