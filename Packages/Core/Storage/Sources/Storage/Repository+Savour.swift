@@ -14,6 +14,8 @@ public struct Savouring: Sendable, Equatable {
     /// Who you were with, and tags, as typed.
     public var people: [String]
     public var tags: [String]
+    /// What was entered in the collection's custom fields, by field id (#22).
+    public var extra: [UUID: FieldValue]
     /// Photos picked while sealing, already downscaled (`PhotoProcessor`).
     public var photos: [ProcessedPhoto]
 
@@ -24,6 +26,7 @@ public struct Savouring: Sendable, Equatable {
         rankPosition: Int? = nil,
         people: [String] = [],
         tags: [String] = [],
+        extra: [UUID: FieldValue] = [:],
         photos: [ProcessedPhoto] = [],
     ) {
         self.date = date
@@ -32,6 +35,7 @@ public struct Savouring: Sendable, Equatable {
         self.rankPosition = rankPosition
         self.people = people
         self.tags = tags
+        self.extra = extra
         self.photos = photos
     }
 }
@@ -45,6 +49,7 @@ public extension Repository {
         let entry = addEntry(to: item, date: savouring.date, rating: savouring.rating, notes: note)
         setPeople(savouring.people, on: entry)
         setTags(savouring.tags, on: entry)
+        entry.extraValues = savouring.extra
         for photo in savouring.photos {
             attach(photo, to: entry)
         }

@@ -168,6 +168,9 @@ struct SealStep: View {
                     knownPeople: Repository(context: context).peopleNames(),
                     knownTags: Repository(context: context).tagNames(),
                 )
+                if !collection.fields.isEmpty {
+                    CustomFieldsForm(fields: collection.fields, values: $savouring.extra)
+                }
                 EntryPhotosField(
                     thumbnails: savouring.photos.enumerated().map { index, photo in
                         PhotoThumbnail(id: "picked-\(index)", data: photo.thumbnailData)

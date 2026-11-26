@@ -70,6 +70,7 @@ public extension Repository {
         entry.notes = details.notes.trimmingCharacters(in: .whitespacesAndNewlines)
         setPeople(details.people, on: entry)
         setTags(details.tags, on: entry)
+        entry.extraValues = details.extra
         try save()
     }
 
@@ -96,6 +97,8 @@ public struct EntryDetails: Sendable, Equatable {
     public var notes: String
     public var people: [String]
     public var tags: [String]
+    /// What was entered in the collection's custom fields, by field id (#22).
+    public var extra: [UUID: FieldValue]
 
     public init(
         date: Date = .now,
@@ -103,12 +106,14 @@ public struct EntryDetails: Sendable, Equatable {
         notes: String = "",
         people: [String] = [],
         tags: [String] = [],
+        extra: [UUID: FieldValue] = [:],
     ) {
         self.date = date
         self.rating = rating
         self.notes = notes
         self.people = people
         self.tags = tags
+        self.extra = extra
     }
 
     /// What `entry` holds now. Relationships come back in no particular order, so names are
@@ -120,6 +125,7 @@ public struct EntryDetails: Sendable, Equatable {
             notes: entry.notes,
             people: Self.sorted((entry.people ?? []).map(\.name)),
             tags: Self.sorted((entry.tags ?? []).map(\.name)),
+            extra: entry.extraValues,
         )
     }
 

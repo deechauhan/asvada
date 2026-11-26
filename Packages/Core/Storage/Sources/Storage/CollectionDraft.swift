@@ -10,6 +10,8 @@ public struct CollectionDraft: Equatable, Sendable {
     public var ratingMode: RatingMode = .stars
     public var defaultView: ViewMode = .list
     public var itemSource: ItemSource = .manual
+    /// The collection's custom fields (#22), in the order the entry form shows them.
+    public var fields: [CollectionField] = []
     /// Built-ins keep their kind and item source; only custom collections choose a source.
     public private(set) var kind: CollectionKind = .custom
 
@@ -26,6 +28,7 @@ public struct CollectionDraft: Equatable, Sendable {
         ratingMode = collection.ratingMode
         defaultView = collection.defaultView
         itemSource = collection.itemSource
+        fields = collection.fields
         kind = collection.kind
     }
 
@@ -80,6 +83,7 @@ public extension Repository {
             sortIndex: nextIndex,
         )
         collection.accentName = draft.accentName
+        collection.fields = CollectionField.cleaned(draft.fields)
         context.insert(collection)
         try context.save()
         return collection
@@ -93,6 +97,7 @@ public extension Repository {
         collection.accentName = draft.accentName
         collection.ratingMode = draft.ratingMode
         collection.defaultView = draft.defaultView
+        collection.fields = CollectionField.cleaned(draft.fields)
         if !collection.isBuiltIn {
             collection.itemSource = draft.itemSource
         }
