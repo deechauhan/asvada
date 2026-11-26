@@ -110,19 +110,24 @@ struct TurningCabinet: View {
         let isFront = index == drum.frontIndex
         switch face {
         case let .drawer(collection):
-            DrumDrawer(collection: collection, isAjar: ajar == index, pull: isFront ? pull : 0)
-                .zoomSource(id: collection.id, in: namespace)
-                .offset(y: isFront ? pull * 0.5 : 0)
-                .scaleEffect(isFront ? 1 + pull / 1000 : 1)
-                .onTapGesture { tap(index) }
-                .contextMenu {
-                    Button("Open", systemImage: "tray.and.arrow.down") { actions.open(collection) }
-                    Button("Customise", systemImage: "slider.horizontal.3") { actions.customise(collection) }
-                    if ShareContent(collection: collection) != nil {
-                        Button("Share", systemImage: "square.and.arrow.up") { actions.share(collection) }
-                    }
-                    Button("Put away", systemImage: "archivebox") { actions.hide(collection) }
+            DrumDrawer(
+                collection: collection,
+                isAjar: ajar == index,
+                pull: isFront ? pull : 0,
+                onAnniversary: { actions.onThisDay(collection) },
+            )
+            .zoomSource(id: collection.id, in: namespace)
+            .offset(y: isFront ? pull * 0.5 : 0)
+            .scaleEffect(isFront ? 1 + pull / 1000 : 1)
+            .onTapGesture { tap(index) }
+            .contextMenu {
+                Button("Open", systemImage: "tray.and.arrow.down") { actions.open(collection) }
+                Button("Customise", systemImage: "slider.horizontal.3") { actions.customise(collection) }
+                if ShareContent(collection: collection) != nil {
+                    Button("Share", systemImage: "square.and.arrow.up") { actions.share(collection) }
                 }
+                Button("Put away", systemImage: "archivebox") { actions.hide(collection) }
+            }
         case .blank:
             BlankDrawer()
                 .onTapGesture { tap(index) }
@@ -301,6 +306,8 @@ struct CabinetActions {
     var share: (ExperienceCollection) -> Void
     var hide: (ExperienceCollection) -> Void
     var move: (ExperienceCollection, Int) -> Void
+    /// Pulls out what a drawer holds from this day in earlier years (#69).
+    var onThisDay: (ExperienceCollection) -> Void = { _ in }
 }
 
 /// Places one face on the drum. Animatable in the drum's position, so a spring carries every
@@ -407,6 +414,11 @@ private struct AccessibleDrawer: View {
             .accessibilityAction(named: "Move earlier", moveEarlier)
             .accessibilityAction(named: "Move later", moveLater)
             .accessibilityAction(named: "Put away", putAway)
+            .accessibilityActions {
+                if !collection.anniversaries().isEmpty {
+                    Button("On this day") { actions.onThisDay(collection) }
+                }
+            }
     }
 
     private func open() {

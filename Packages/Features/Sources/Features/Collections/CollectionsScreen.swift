@@ -21,6 +21,8 @@ struct CollectionsScreen: View {
     @State private var editing: ExperienceCollection?
     @State private var sharing: ExperienceCollection?
     @State private var opened: ExperienceCollection?
+    /// The drawer whose "on this day" keepsake has been pulled out.
+    @State private var anniversaryDrawer: ExperienceCollection?
     /// Set by a sheet when it appears, so a sheet requested from a context menu can be retried.
     @State private var sheetAppeared = false
     /// The view the owner chose this session; `nil` follows the default for the text size.
@@ -89,6 +91,9 @@ struct CollectionsScreen: View {
             }
             .sheet(isPresented: $isCreating) {
                 CollectionEditor(mode: .create)
+            }
+            .sheet(item: $anniversaryDrawer) { collection in
+                OnThisDaySheet(collection: collection)
             }
             // Clear the item explicitly on dismiss: customising the same drawer twice in a row
             // must change `editing`, or the second sheet never presents.
@@ -165,6 +170,7 @@ struct CollectionsScreen: View {
                 guard let index = visible.firstIndex(where: { $0.id == collection.id }) else { return }
                 step(collection, by: slot - index)
             },
+            onThisDay: { anniversaryDrawer = $0 },
         )
     }
 
