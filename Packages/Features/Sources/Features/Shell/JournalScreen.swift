@@ -1,5 +1,6 @@
 import DesignSystem
 import Model
+import SwiftData
 import SwiftUI
 
 /// Home. Until entries exist (quick-log, E6) it shows the empty Journal from the concept:
@@ -8,6 +9,8 @@ struct JournalScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isShowingSettings = false
     @State private var breathe = false
+    /// Every entry, newest first; the feed groups them by month.
+    @Query(sort: \Entry.date, order: .reverse) private var entries: [Entry]
     /// How many slow breaths the ghost keepsake takes when the Journal appears.
     static let breaths = 3
     /// Opens quick-log with that kind's blank already drawn.
@@ -20,19 +23,12 @@ struct JournalScreen: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.xl) {
-                    Text(month)
-                        .typeToken(.masthead)
-                        .foregroundStyle(Palette.textPrimary.color)
-                        .accessibilityAddTraits(.isHeader)
-                    ghostKeepsake
-                    VStack(alignment: .leading, spacing: Spacing.medium) {
-                        Text("Start with something you loved:")
-                            .typeToken(.voice)
-                            .foregroundStyle(Palette.textSecondary.color)
-                        startChip("Stamp your countries", symbol: "globe.europe.africa.fill", accent: .country, kind: .countries)
-                        startChip("Your favourite café", symbol: "cup.and.saucer.fill", accent: .cafe, kind: .cafes)
-                        startChip("The last film you saw", symbol: "film.fill", accent: .film, kind: .films)
+                Group {
+                    let months = JournalMonths.group(entries)
+                    if months.isEmpty {
+                        emptyJournal
+                    } else {
+                        JournalFeed(months: months)
                     }
                 }
                 .padding(Spacing.large)
@@ -55,6 +51,25 @@ struct JournalScreen: View {
             }
             .sheet(isPresented: $isShowingSettings) {
                 SettingsScreen()
+            }
+        }
+    }
+
+    /// Before the first keepsake: the month, a ghost where it will land, and three ways to start.
+    private var emptyJournal: some View {
+        VStack(alignment: .leading, spacing: Spacing.xl) {
+            Text(month)
+                .typeToken(.masthead)
+                .foregroundStyle(Palette.textPrimary.color)
+                .accessibilityAddTraits(.isHeader)
+            ghostKeepsake
+            VStack(alignment: .leading, spacing: Spacing.medium) {
+                Text("Start with something you loved:")
+                    .typeToken(.voice)
+                    .foregroundStyle(Palette.textSecondary.color)
+                startChip("Stamp your countries", symbol: "globe.europe.africa.fill", accent: .country, kind: .countries)
+                startChip("Your favourite café", symbol: "cup.and.saucer.fill", accent: .cafe, kind: .cafes)
+                startChip("The last film you saw", symbol: "film.fill", accent: .film, kind: .films)
             }
         }
     }

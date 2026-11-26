@@ -258,12 +258,15 @@ final class QuickLogUITests: UITestCase {
         app.buttons["when-Today"].tap()
         seal(app, drawer: "Films")
 
-        // "Your favourite café" draws a café blank.
-        app.buttons["start-cafes"].tap()
-        XCTAssertTrue(app.textFields["quickLogName"].waitForExistence(timeout: 10), "The café chip didn't draw a blank")
-        XCTAssertFalse(app.buttons["Savour a film"].exists, "The café chip showed the grid")
-        addNew("Corner Kiosk", in: app)
-        XCTAssertEqual(app.staticTexts["quickLogSummary"].label, "No. 1 in Cafés")
+        // "Your favourite café" draws a café blank. The film filled the Journal, which swaps the
+        // chips for the feed, so this runs in a fresh launch with an empty one.
+        app.terminate()
+        let fresh = launch(["-resetState"])
+        fresh.buttons["start-cafes"].tap()
+        XCTAssertTrue(fresh.textFields["quickLogName"].waitForExistence(timeout: 10), "The café chip didn't draw a blank")
+        XCTAssertFalse(fresh.buttons["Savour a film"].exists, "The café chip showed the grid")
+        addNew("Corner Kiosk", in: fresh)
+        XCTAssertEqual(fresh.staticTexts["quickLogSummary"].label, "No. 1 in Cafés")
     }
 
     @MainActor

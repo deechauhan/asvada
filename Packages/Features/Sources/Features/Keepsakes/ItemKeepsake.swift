@@ -56,17 +56,23 @@ struct ItemKeepsake: View {
     let collection: ExperienceCollection
     /// Position in a ranked collection (1 = best), if ranked.
     var rank: Int?
+    /// The entry to draw it for (the Journal's cards); without one, the item's latest.
+    var entry: Entry?
+
+    private var shown: Entry? {
+        entry ?? item.latestEntry
+    }
 
     private var ink: ColorToken {
         collection.accent.token
     }
 
     private var date: Date? {
-        item.latestEntry?.date
+        shown?.date
     }
 
     private var relish: String? {
-        Relish.word(for: item.latestEntry?.rating)
+        Relish.word(for: shown?.rating)
     }
 
     var body: some View {
