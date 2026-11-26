@@ -16,6 +16,8 @@ struct CollectionsScreen: View {
     private var collections: [ExperienceCollection]
 
     @State private var isCreating = false
+    /// What's typed in the search field; empty shows the cabinet.
+    @State private var query = ""
     @State private var editing: ExperienceCollection?
     @State private var sharing: ExperienceCollection?
     @State private var opened: ExperienceCollection?
@@ -54,7 +56,9 @@ struct CollectionsScreen: View {
     var body: some View {
         NavigationStack {
             Group {
-                if showsChest {
+                if !GlobalSearch.trimmed(query).isEmpty {
+                    SearchResultsList(query: query)
+                } else if showsChest {
                     chest
                 } else {
                     cabinet
@@ -71,6 +75,7 @@ struct CollectionsScreen: View {
                 }
             }
             .navigationTitle(AppTab.collections.title)
+            .searchable(text: $query, prompt: "Search everything")
             .toolbar { toolbar }
             // A drawer deleted from its own Customise sheet closes behind it.
             .onChange(of: collections.map(\.id)) {
