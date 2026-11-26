@@ -8,6 +8,10 @@ import SwiftUI
 /// "Savour something" pill. Tap it for quick-log; hold it and a hand of blank keepsakes fans out
 /// over the screen to draw from.
 public struct AppShellView: View {
+    /// How long the savoured toast stays. UI tests run on slow simulators that can take seconds
+    /// to look for it, so they get far longer (#215).
+    private static let toastSeconds = ProcessInfo.processInfo.arguments.contains("-inMemoryStore") ? 30 : 4
+
     /// Persisted so the app reopens on the tab you left it on.
     @AppStorage(AppTab.storageKey) private var selectedTabRaw = AppTab.journal.rawValue
     @Query(
@@ -77,7 +81,7 @@ public struct AppShellView: View {
         }
         .task(id: toast) {
             guard toast != nil else { return }
-            try? await Task.sleep(for: .seconds(4))
+            try? await Task.sleep(for: .seconds(Self.toastSeconds))
             withAnimation(Motion.settle) { toast = nil }
         }
         .sheet(item: $editingEntry) { entry in
@@ -117,6 +121,8 @@ public struct AppShellView: View {
             pendingOpen = PendingQuickLog(drawing: collection)
             return
         }
+        // A new blank replaces the last keepsake's toast, so the next one shows afresh.
+        toast = nil
         quickLog = OpenQuickLog(drawn: collection)
     }
 
