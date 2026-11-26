@@ -30,6 +30,24 @@ public enum BackupBundle {
         public var trips = 0
         public var tags = 0
         public var people = 0
+
+        public init(
+            collections: Int = 0,
+            items: Int = 0,
+            entries: Int = 0,
+            photos: Int = 0,
+            trips: Int = 0,
+            tags: Int = 0,
+            people: Int = 0,
+        ) {
+            self.collections = collections
+            self.items = items
+            self.entries = entries
+            self.photos = photos
+            self.trips = trips
+            self.tags = tags
+            self.people = people
+        }
     }
 
     /// `manifest.json`.
