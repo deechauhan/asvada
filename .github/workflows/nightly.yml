@@ -1,0 +1,33 @@
+name: Nightly
+
+# The whole UI suite, every night and on demand, in the three shards PRs used to run (#208).
+# PRs run only a smoke set, so this is where the rest of the UI tests catch regressions; a red
+# nightly is the first thing the next autopilot run fixes (docs/AUTOPILOT.md). It also exports
+# every screenshot, which the autopilot batches into screenshots/<issue>/.
+on:
+  schedule:
+    # 01:23 UTC: done before the 02:05 autopilot run. Off the hour, when GitHub's queues are busy.
+    - cron: '23 1 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  app:
+    name: App
+    uses: ./.github/workflows/ui-tests.yml
+    secrets: inherit
+    with:
+      # Three runners of roughly equal length: the cabinet with the two slow context-menu tests,
+      # the rest of LaunchTests, and every other test class (new ones included).
+      shards: >-
+        [{"name": "menus", "tests": "-only-testing:AsvadaUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
+        -only-testing:AsvadaUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer
+        -only-testing:AsvadaUITests/CabinetUITests"},
+        {"name": "launch", "tests": "-only-testing:AsvadaUITests/LaunchTests
+        -skip-testing:AsvadaUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
+        -skip-testing:AsvadaUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer"},
+        {"name": "features", "tests": "-skip-testing:AsvadaUITests/LaunchTests
+        -skip-testing:AsvadaUITests/CabinetUITests"}]
