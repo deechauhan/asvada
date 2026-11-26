@@ -1,13 +1,22 @@
 import DesignSystem
+import Model
 import Storage
 import SwiftUI
 
 /// "Find places in my photos" (#64): says what it reads (where and when each photo was taken,
 /// on the phone, nothing uploaded), asks for access, shows progress with Pause and Resume, and
-/// lists the visits it found. Adding them to your keepsakes comes with the suggestions inbox (#65).
+/// then suggests the visits it found (#65): each with a few of its photos, to add to your
+/// keepsakes in one tap or dismiss for good.
 struct PhotoBackfillView: View {
+    @Environment(\.modelContext) private var context
     @State private var backfill = PhotoBackfill()
     @State private var scan: Task<Void, Never>?
+    /// Visits already added or dismissed, so they aren't suggested again.
+    @State private var handled = VisitDecisions().handled
+
+    private var pending: [VisitCluster] {
+        Repository(context: context).pendingVisits(from: backfill.visits, handled: handled)
+    }
 
     var body: some View {
         List {
@@ -96,21 +105,50 @@ struct PhotoBackfillView: View {
                 begin()
             }
         }
-        if !backfill.visits.isEmpty {
-            Section("Places you've been") {
-                ForEach(backfill.visits) { visit in
-                    VStack(alignment: .leading, spacing: Spacing.xxs) {
-                        Text(BackfillText.place(visit))
-                            .typeToken(.headline)
-                        Text(BackfillText.detail(visit))
-                            .typeToken(.caption)
-                            .foregroundStyle(Palette.textSecondary.color)
-                    }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityIdentifier("foundVisit")
+        if !pending.isEmpty {
+            Section("You were in…") {
+                ForEach(pending) { visit in
+                    VisitSuggestionRow(
+                        visit: visit,
+                        thumbnails: { await backfill.thumbnails(for: visit) },
+                        add: { add(visit) },
+                        dismiss: { dismiss(visit) },
+                    )
                 }
             }
+        } else if !backfill.visits.isEmpty {
+            Section {
+                Text("Nothing left to add: every visit found is in your keepsakes or dismissed.")
+                    .typeToken(.callout)
+                    .foregroundStyle(Palette.textSecondary.color)
+                    .accessibilityIdentifier("noSuggestions")
+            }
         }
+        if !handled.isEmpty {
+            Section {
+                Button("Show dismissed visits again", systemImage: "eye") {
+                    VisitDecisions().reset()
+                    handled = []
+                }
+                .accessibilityIdentifier("resetDismissed")
+            }
+        }
+    }
+
+    /// Adds the visit to the keepsakes and doesn't suggest it again.
+    private func add(_ visit: VisitCluster) {
+        try? Repository(context: context).acceptVisit(visit)
+        remember(visit)
+    }
+
+    private func dismiss(_ visit: VisitCluster) {
+        remember(visit)
+    }
+
+    private func remember(_ visit: VisitCluster) {
+        let decisions = VisitDecisions()
+        decisions.markHandled(visit.id)
+        handled = decisions.handled
     }
 
     /// Starts or resumes the scan in the background, so the screen stays live.
@@ -138,9 +176,9 @@ enum BackfillText {
         return "Looked at \(photos.formatted()) photos, \(placed.formatted()) with a place. \(found)"
     }
 
-    /// The country a visit was in, or a plain "A place" when it was somewhere without one.
-    static func place(_ visit: VisitCluster) -> String {
-        visit.countryName ?? "Somewhere without a country"
+    /// "You were in Portugal".
+    static func title(_ visit: VisitCluster) -> String {
+        "You were in \(visit.countryName ?? "a place without a country")"
     }
 
     /// "12 Mar 2026", or "12 – 19 Mar 2026" for a visit over several days.
@@ -159,5 +197,57 @@ enum BackfillText {
     /// "1 photo", "30 photos".
     static func photos(_ count: Int) -> String {
         count == 1 ? "1 photo" : "\(count.formatted()) photos"
+    }
+}
+
+/// One suggested visit: a few of its photos, where and when, and Add or Not now.
+private struct VisitSuggestionRow: View {
+    let visit: VisitCluster
+    let thumbnails: () async -> [Data]
+    let add: () -> Void
+    let dismiss: () -> Void
+    @State private var pictures: [PhotoThumbnail] = []
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.small) {
+            if !pictures.isEmpty {
+                HStack(spacing: Spacing.xs) {
+                    ForEach(pictures) { picture in
+                        picture.image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 64, height: 64)
+                            .clipShape(RoundedRectangle(cornerRadius: Radius.small))
+                            .accessibilityHidden(true)
+                    }
+                }
+            }
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                Text(BackfillText.title(visit))
+                    .typeToken(.headline)
+                Text(BackfillText.detail(visit))
+                    .typeToken(.caption)
+                    .foregroundStyle(Palette.textSecondary.color)
+            }
+            .accessibilityElement(children: .combine)
+            HStack {
+                Button("Add", action: add)
+                    .buttonStyle(.borderedProminent)
+                    .tint(Palette.brand.color)
+                    .accessibilityLabel("Add \(BackfillText.title(visit))")
+                    .accessibilityIdentifier("visitAdd")
+                Button("Not now", action: dismiss)
+                    .buttonStyle(.bordered)
+                    .accessibilityLabel("Dismiss \(BackfillText.title(visit))")
+                    .accessibilityIdentifier("visitDismiss")
+            }
+        }
+        .padding(.vertical, Spacing.xs)
+        .accessibilityIdentifier("suggestedVisit")
+        .task {
+            pictures = await thumbnails().enumerated().map { index, data in
+                PhotoThumbnail(id: "\(visit.id)-\(index)", data: data)
+            }
+        }
     }
 }

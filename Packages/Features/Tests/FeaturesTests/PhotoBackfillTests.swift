@@ -34,6 +34,10 @@ private final class FakeLibrary: PhotoLibrarySource {
         return granted
     }
 
+    func thumbnails(for ids: [String]) async -> [Data] {
+        ids.map { Data($0.utf8) }
+    }
+
     func page(from index: Int, limit: Int) async -> PhotoPage {
         pagesRead += 1
         let total = sightings.count + unplaced
@@ -122,6 +126,15 @@ struct PhotoBackfillTests {
         #expect(backfill.visits.first?.photoCount == 40)
     }
 
+    @Test func aVisitsThumbnailsComeFromItsSamples() async throws {
+        let library = FakeLibrary(sightings: holiday(25))
+        let backfill = PhotoBackfill(source: library, pageSize: 100)
+        await backfill.run()
+        let visit = try #require(backfill.visits.first)
+        let pictures = await backfill.thumbnails(for: visit)
+        #expect(pictures == visit.sampleIDs.map { Data($0.utf8) })
+    }
+
     @Test func anEmptyLibraryFinishesWithNoVisits() async {
         let backfill = PhotoBackfill(source: FakeLibrary(sightings: []), pageSize: 10)
         await backfill.run()
@@ -152,6 +165,21 @@ struct BackfillTextTests {
         #expect(BackfillText.summary(photos: 10, placed: 4, visits: 0).hasSuffix("No visits found."))
         #expect(BackfillText.summary(photos: 10, placed: 4, visits: 1).hasSuffix("Found 1 visit."))
         #expect(BackfillText.summary(photos: 10, placed: 4, visits: 6).hasSuffix("Found 6 visits."))
+    }
+
+    @Test func aSuggestionNamesTheCountry() {
+        let visit = VisitCluster(
+            id: "v",
+            start: .now,
+            end: .now,
+            centre: GeoPoint(longitude: -9.14, latitude: 38.72),
+            photoCount: 12,
+            sampleIDs: [],
+            countryCode: "PT",
+            countryName: "Portugal",
+        )
+        #expect(BackfillText.title(visit) == "You were in Portugal")
+        #expect(BackfillText.detail(visit).hasSuffix("12 photos"))
     }
 
     @Test func photosAreSingularOrPlural() {
