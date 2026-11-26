@@ -118,6 +118,14 @@ struct CollectionsScreen: View {
             }
             .accessibilityIdentifier("newCollectionButton")
         }
+        ToolbarItem(placement: .secondaryAction) {
+            NavigationLink {
+                StatsScreen()
+            } label: {
+                Label("Look back", systemImage: "chart.bar")
+            }
+            .accessibilityIdentifier("statsButton")
+        }
         if showsChest {
             ToolbarItem(placement: .navigation) {
                 Button("Done") {
