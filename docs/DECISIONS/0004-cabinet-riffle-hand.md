@@ -68,6 +68,12 @@ not the screens built on it.
 - **Riffle: option 1, `ScrollView` + `visualEffect`,** with a fixed card pitch. If the
   `viewAligned` quirks bite, swap in the drum's physics as a vertical pager; the riffle's
   public view does not change.
+  *Built (#156) as the pager:* tabs need cards that step up by a fixed 36 pt while the finger
+  travels 62 pt per card, and the flipped card must stay in the hierarchy while it turns, which a
+  scroll view's own layout fights. `RifflePager` (position, rubber-banded ends, a fling projecting
+  0.18 s) and `RiffleCardGeometry` are plain types with unit tests; only the cards near the front
+  are drawn, so a long drawer costs the same as a short one. VoiceOver reads the drawn cards
+  front first, with Next card and Previous card actions and the adjustable rail.
 - **Hand: option 1 first, option 2 as the fallback.** The hand's layout (`HandLayout`:
   N blanks on an arc, selection by `atan2` of the finger from the pill with a 46 pt dead
   zone) and its selection maths are plain types with unit tests, independent of which
