@@ -15,7 +15,7 @@ struct EraseEverythingTests {
         repository.context.insert(custom)
         let item = repository.upsertItem(named: "Gail's", externalRef: nil, in: custom)
         let entry = repository.addEntry(to: item, notes: "croissant")
-        let tag = Tag(name: "morning")
+        let tag = Model.Tag(name: "morning")
         let person = Person(name: "Ana")
         let trip = Trip(name: "Weekend")
         let photo = Photo(imageData: Data([1]), thumbnailData: Data([2]))
@@ -45,7 +45,7 @@ struct EraseEverythingTests {
         #expect(try context.fetchCount(FetchDescriptor<Item>()) == 0)
         #expect(try context.fetchCount(FetchDescriptor<Photo>()) == 0)
         #expect(try context.fetchCount(FetchDescriptor<Trip>()) == 0)
-        #expect(try context.fetchCount(FetchDescriptor<Tag>()) == 0)
+        #expect(try context.fetchCount(FetchDescriptor<Model.Tag>()) == 0)
         #expect(try context.fetchCount(FetchDescriptor<Person>()) == 0)
         // The app starts again from its built-in collections, all empty, and no custom ones.
         let collections = try repository.collections(includeHidden: true)
