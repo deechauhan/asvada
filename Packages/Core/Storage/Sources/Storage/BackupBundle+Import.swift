@@ -2,7 +2,22 @@ import Foundation
 import Model
 import SwiftData
 
-extension BackupBundle {
+public extension BackupBundle {
+    /// What restoring a bundle would do, worked out without changing the store.
+    struct Preview: Equatable, Sendable {
+        public var manifest: Manifest
+        /// Rows that would be added (`added`) and rows already in the store (`skipped`).
+        public var summary: ImportSummary
+    }
+
+    /// Checks a bundle and says what restoring it into `context` would add and what is already
+    /// there, so the owner can see the counts before agreeing. Changes nothing.
+    static func preview(_ files: [String: Data], in context: ModelContext) throws -> Preview {
+        let (manifest, data) = try verify(files)
+        let restore = try Restore(context: context, files: files)
+        return Preview(manifest: manifest, summary: restore.tally(data))
+    }
+
     /// Restores a bundle's rows into `context` and saves. The bundle is checked first (see
     /// `verify`), so a damaged or too-new bundle changes nothing.
     ///
@@ -10,7 +25,7 @@ extension BackupBundle {
     /// adds nothing the second time. Choosing between two versions of a row is the merging restore's
     /// job (#58).
     @discardableResult
-    public static func importFiles(_ files: [String: Data], into context: ModelContext) throws -> ImportSummary {
+    static func importFiles(_ files: [String: Data], into context: ModelContext) throws -> ImportSummary {
         let (_, data) = try verify(files)
         var restore = try Restore(context: context, files: files)
         // Rows first, then the links between them: SwiftData is fragile when objects are linked
@@ -26,7 +41,9 @@ extension BackupBundle {
         try context.save()
         return restore.summary
     }
+}
 
+extension BackupBundle {
     /// The store being restored into: what it already holds, by id, and what has been added.
     private struct Restore {
         let context: ModelContext
@@ -50,6 +67,43 @@ extension BackupBundle {
             tags = try Self.existing(Tag.self, in: context, id: \.id)
             people = try Self.existing(Person.self, in: context, id: \.id)
             photoIDs = try Set(Self.existing(Photo.self, in: context, id: \.id).keys)
+        }
+
+        /// How many of a bundle's rows are new and how many are already in the store.
+        func tally(_ data: BackupData) -> ImportSummary {
+            func split(_ ids: [UUID], known: Set<UUID>) -> (added: Int, skipped: Int) {
+                let skipped = ids.filter { known.contains($0) }.count
+                return (ids.count - skipped, skipped)
+            }
+            let counts = [
+                split(data.collections.map(\.id), known: Set(collections.keys)),
+                split(data.items.map(\.id), known: Set(items.keys)),
+                split(data.entries.map(\.id), known: Set(entries.keys)),
+                split(data.photos.map(\.id), known: photoIDs),
+                split(data.trips.map(\.id), known: Set(trips.keys)),
+                split(data.tags.map(\.id), known: Set(tags.keys)),
+                split(data.people.map(\.id), known: Set(people.keys)),
+            ]
+            return ImportSummary(
+                added: Counts(
+                    collections: counts[0].added,
+                    items: counts[1].added,
+                    entries: counts[2].added,
+                    photos: counts[3].added,
+                    trips: counts[4].added,
+                    tags: counts[5].added,
+                    people: counts[6].added,
+                ),
+                skipped: Counts(
+                    collections: counts[0].skipped,
+                    items: counts[1].skipped,
+                    entries: counts[2].skipped,
+                    photos: counts[3].skipped,
+                    trips: counts[4].skipped,
+                    tags: counts[5].skipped,
+                    people: counts[6].skipped,
+                ),
+            )
         }
 
         private static func existing<Row: PersistentModel>(
