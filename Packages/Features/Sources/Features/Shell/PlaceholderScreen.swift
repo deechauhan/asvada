@@ -34,6 +34,14 @@ struct SettingsScreen: View {
                     }
                     .accessibilityIdentifier("aboutLink")
                 }
+                Section("Your data") {
+                    NavigationLink {
+                        RestoreBackupView()
+                    } label: {
+                        Label("Restore from a backup", systemImage: "arrow.down.doc")
+                    }
+                    .accessibilityIdentifier("restoreBackupLink")
+                }
                 Section("Developer") {
                     NavigationLink("Design catalogue") {
                         DesignCatalogView()
