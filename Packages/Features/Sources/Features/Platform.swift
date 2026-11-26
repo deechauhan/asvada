@@ -19,6 +19,11 @@ import SwiftUI
         func zoomTransition(id: some Hashable, in namespace: Namespace.ID) -> some View {
             navigationTransition(.zoom(sourceID: id, in: namespace))
         }
+
+        /// The number pad with a decimal point.
+        func decimalKeyboard() -> some View {
+            keyboardType(.decimalPad)
+        }
     }
 
 #else
@@ -35,6 +40,11 @@ import SwiftUI
 
         /// No-op on macOS.
         func zoomTransition(id _: some Hashable, in _: Namespace.ID) -> some View {
+            self
+        }
+
+        /// No-op on macOS.
+        func decimalKeyboard() -> some View {
             self
         }
     }

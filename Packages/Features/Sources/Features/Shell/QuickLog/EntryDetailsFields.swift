@@ -154,6 +154,9 @@ struct EntryDetailsSheet: View {
                         .lineLimit(1 ... 6)
                         .textFieldStyle(.roundedBorder)
                         .accessibilityIdentifier("entryNotes")
+                    if let fields = repository.entry(id: entryID)?.item?.collection?.fields, !fields.isEmpty {
+                        CustomFieldsForm(fields: fields, values: $details.extra)
+                    }
                     EntryPhotosField(
                         thumbnails: keptPhotos,
                         onAdd: addPhotos,

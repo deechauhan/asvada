@@ -88,6 +88,7 @@ struct CollectionEditor: View {
                         }
                     }
                 }
+                FieldsEditorSection(fields: $draft.fields)
                 if let editing, !editing.isBuiltIn {
                     Section {
                         Button("Delete collection", role: .destructive) {
