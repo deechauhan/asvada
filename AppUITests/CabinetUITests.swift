@@ -271,6 +271,8 @@ final class CabinetUITests: UITestCase {
         XCTAssertTrue(labelled("1 of 195 countries, 1 percent", in: app).waitForExistence(timeout: 5))
         let asia = app.descendants(matching: .any)["continentProgress-Asia"]
         XCTAssertTrue(asia.label.hasPrefix("Asia, 1 of "), asia.label)
+        // Back to the top, where the ring and the continents are.
+        app.scrollViews.firstMatch.swipeDown()
         attachScreenshot(of: app, named: "countries-checklist")
 
         // It's saved: leave the drawer and come back.

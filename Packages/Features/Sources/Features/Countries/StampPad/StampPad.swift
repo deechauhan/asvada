@@ -8,6 +8,9 @@ import SwiftUI
 /// strip and rolls the counter. Long-press a stamp in the passport to wash it off, with Undo.
 struct StampPad: View {
     @Binding var stamped: Set<String>
+    /// Whether the pad shows its own rolling "23 countries · 12% of the world". The Countries
+    /// drawer turns it off: its passport panel already leads with the same count and a ring.
+    var showsCounter = true
     @State private var continent: Continent?
     @State private var query = ""
     /// The country the reticle is on (from search, a tap on the map, or the stamp's foot).
@@ -161,11 +164,13 @@ struct StampPad: View {
 
     private var counter: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(PassportSpreadCard.title(count: stamped.count, worldTotal: DrawerSummary.worldCountries))
-                .font(.system(.title3, design: .serif, weight: .semibold))
-                .foregroundStyle(Palette.brand.color)
-                .contentTransition(.numericText())
-                .accessibilityIdentifier("stampCounter")
+            if showsCounter {
+                Text(PassportSpreadCard.title(count: stamped.count, worldTotal: DrawerSummary.worldCountries))
+                    .font(.system(.title3, design: .serif, weight: .semibold))
+                    .foregroundStyle(Palette.brand.color)
+                    .contentTransition(.numericText())
+                    .accessibilityIdentifier("stampCounter")
+            }
             Spacer(minLength: Spacing.small)
             Button("A to Z") { showsList = true }
                 .typeToken(.callout)

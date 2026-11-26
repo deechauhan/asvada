@@ -23,7 +23,7 @@ struct PassportPanel: View {
         VStack(alignment: .leading, spacing: Spacing.large) {
             header
             continents
-            StampPad(stamped: $stamped)
+            StampPad(stamped: $stamped, showsCounter: false)
         }
         .onAppear(perform: load)
         .onChange(of: stamped) { _, codes in
