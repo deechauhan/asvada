@@ -307,4 +307,38 @@ final class CabinetUITests: UITestCase {
         app.buttons["drawerReorder"].tap()
         XCTAssertTrue(labelled("No. 1, Monmouth", in: app).waitForExistence(timeout: 10))
     }
+
+    @MainActor
+    func testTheRiffleThumbsThroughADrawerAndTipsIntoItsSpread() {
+        let app = launch(["-resetState", "-sampleData"])
+        openCollectionsAndWait(app)
+        openDrawer(app, "Cafés")
+
+        // The keepsakes stand on end, No. 1 at the front.
+        let riffle = app.descendants(matching: .any)["riffle"]
+        XCTAssertTrue(riffle.waitForExistence(timeout: 10), "The drawer didn't open into the riffle")
+        let rail = app.descendants(matching: .any)["riffleRail"]
+        XCTAssertTrue(rail.waitForExistence(timeout: 5))
+        XCTAssertEqual(rail.value as? String, "No. 1")
+        attachScreenshot(of: app, named: "riffle")
+
+        // Thumb down: the front card flips toward you and the next comes up.
+        riffle.swipeDown()
+        let moved = NSPredicate(format: "value != %@", "No. 1")
+        expectation(for: moved, evaluatedWith: rail)
+        waitForExpectations(timeout: 5)
+
+        // Spread tips them all out; Riffle puts them back.
+        let spread = app.buttons["drawerSpread"]
+        XCTAssertTrue(spread.waitForExistence(timeout: 5))
+        spread.tap()
+        XCTAssertTrue(riffle.waitForNonExistence(timeout: 5), "Spread didn't tip the drawer out")
+        XCTAssertEqual(spread.label, "Riffle")
+        spread.tap()
+        XCTAssertTrue(riffle.waitForExistence(timeout: 5))
+
+        // The drawer front shuts it.
+        app.buttons["drawerShut"].tap()
+        XCTAssertTrue(app.navigationBars["Cafés"].waitForNonExistence(timeout: 10), "Tapping the drawer front didn't shut it")
+    }
 }
