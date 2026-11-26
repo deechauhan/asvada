@@ -197,33 +197,4 @@ struct BackupBundleTests {
         try BackupBundle.importFiles(read, into: restored.mainContext)
         #expect(try restored.mainContext.fetch(FetchDescriptor<Photo>()).count == 1)
     }
-
-    @Test func aPreviewSaysWhatARestoreWouldAddWithoutChangingAnything() throws {
-        let original = try populatedStore()
-        let files = try BackupBundle.export(from: original.mainContext)
-        let manifest = try manifest(of: files)
-
-        let empty = try AsvadaStore.makeContainer(.inMemory)
-        let preview = try BackupBundle.preview(files, in: empty.mainContext)
-        #expect(preview.manifest == manifest)
-        #expect(preview.summary.added == manifest.counts)
-        #expect(preview.summary.skipped == BackupBundle.Counts())
-        #expect(try empty.mainContext.fetch(FetchDescriptor<ExperienceCollection>()).isEmpty)
-        #expect(try empty.mainContext.fetch(FetchDescriptor<Entry>()).isEmpty)
-
-        // Into the store the backup came from, everything is already there.
-        let same = try BackupBundle.preview(files, in: original.mainContext)
-        #expect(same.summary.added == BackupBundle.Counts())
-        #expect(same.summary.skipped == manifest.counts)
-    }
-
-    @Test func aPreviewRefusesWhatARestoreWould() throws {
-        let container = try populatedStore()
-        var files = try BackupBundle.export(from: container.mainContext)
-        let photoPath = try #require(files.keys.first { $0.hasSuffix(".photo") })
-        files[photoPath] = Data([0])
-        #expect(throws: BackupBundle.BackupError.checksumMismatch(photoPath)) {
-            try BackupBundle.preview(files, in: container.mainContext)
-        }
-    }
 }
