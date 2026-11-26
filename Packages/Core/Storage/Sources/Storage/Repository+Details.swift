@@ -66,6 +66,7 @@ public extension Repository {
     /// Saves `details` onto `entry` straight away (the entry editor saves every change).
     func update(_ entry: Entry, with details: EntryDetails) throws {
         entry.date = details.date
+        entry.rating = details.rating
         entry.notes = details.notes.trimmingCharacters(in: .whitespacesAndNewlines)
         setPeople(details.people, on: entry)
         setTags(details.tags, on: entry)
@@ -86,15 +87,25 @@ public extension Repository {
     }
 }
 
-/// The parts of an entry you fill in after the fact: when, a note, who with, and tags.
+/// The parts of an entry you fill in after the fact: when, how it landed, a note, who with, and
+/// tags.
 public struct EntryDetails: Sendable, Equatable {
     public var date: Date
+    /// The relish rating (½–5) in star collections; nil elsewhere.
+    public var rating: Double?
     public var notes: String
     public var people: [String]
     public var tags: [String]
 
-    public init(date: Date = .now, notes: String = "", people: [String] = [], tags: [String] = []) {
+    public init(
+        date: Date = .now,
+        rating: Double? = nil,
+        notes: String = "",
+        people: [String] = [],
+        tags: [String] = [],
+    ) {
         self.date = date
+        self.rating = rating
         self.notes = notes
         self.people = people
         self.tags = tags
@@ -105,6 +116,7 @@ public struct EntryDetails: Sendable, Equatable {
     public init(_ entry: Entry) {
         self.init(
             date: entry.date,
+            rating: entry.rating,
             notes: entry.notes,
             people: Self.sorted((entry.people ?? []).map(\.name)),
             tags: Self.sorted((entry.tags ?? []).map(\.name)),

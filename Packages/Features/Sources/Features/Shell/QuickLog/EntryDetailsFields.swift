@@ -122,6 +122,16 @@ struct EntryDetailsSheet: View {
                         Text(item.name)
                             .font(.system(.title2, design: .serif, weight: .semibold))
                             .foregroundStyle(Palette.textPrimary.color)
+                        if item.collection?.ratingMode == .stars {
+                            // How it landed, in halves (#37); saved as you go like the rest.
+                            VStack(alignment: .leading, spacing: Spacing.xs) {
+                                RelishScale(rating: $details.rating, markSize: 24)
+                                Text(details.rating.map { Relish.word(for: $0) ?? "" } ?? "Not rated yet")
+                                    .font(.system(.callout, design: .serif).italic())
+                                    .foregroundStyle(Palette.textSecondary.color)
+                                    .accessibilityHidden(true)
+                            }
+                        }
                     }
                     EntryDetailsFields(
                         date: $details.date,
