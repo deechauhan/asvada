@@ -56,6 +56,13 @@ struct SettingsScreen: View {
                     }
                     .accessibilityIdentifier("photoPlacesLink")
                 }
+                Section {
+                    OnThisDayReminderToggle()
+                } header: {
+                    Text("Reminders")
+                } footer: {
+                    Text("A note at 9 in the morning when something you savoured happened on that day in an earlier year.")
+                }
                 Section("Privacy") {
                     NavigationLink {
                         PrivacyView()

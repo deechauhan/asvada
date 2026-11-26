@@ -70,7 +70,7 @@ struct ChestOfDrawers: View {
 
     private func drawer(_ collection: ExperienceCollection) -> some View {
         let isMakingRoom = makingRoom == collection.id
-        return CabinetDrawer(collection: collection)
+        return CabinetDrawer(collection: collection, onAnniversary: { actions.onThisDay(collection) })
             .scaleEffect(isMakingRoom ? 0.92 : 1)
             .offset(y: isMakingRoom ? 10 : 0)
             .animation(settle, value: isMakingRoom)

@@ -11,6 +11,7 @@ struct JournalScreen: View {
     @State private var breathe = false
     /// What's typed in the search field; empty shows the Journal.
     @State private var query = ""
+    @AppStorage(OnThisDayReminder.enabledKey) private var remindersOn = false
     /// Every entry, newest first; the feed groups them by month.
     @Query(sort: \Entry.date, order: .reverse) private var entries: [Entry]
     /// How many slow breaths the ghost keepsake takes when the Journal appears.
@@ -70,11 +71,23 @@ struct JournalScreen: View {
                 if months.isEmpty {
                     emptyJournal
                 } else {
-                    JournalFeed(months: months)
+                    VStack(alignment: .leading, spacing: Spacing.xl) {
+                        let anniversaries = OnThisDay.anniversaries(in: entries, on: .now)
+                        if !anniversaries.isEmpty {
+                            OnThisDayCard(anniversaries: anniversaries)
+                        }
+                        JournalFeed(months: months)
+                    }
                 }
             }
             .padding(Spacing.large)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        // Tomorrow's "on this day" reminder, when they're on.
+        .task(id: entries.count) {
+            if remindersOn {
+                await OnThisDayReminder.reschedule(entries: entries, enabled: true)
+            }
         }
     }
 

@@ -6,6 +6,8 @@ import SwiftUI
 /// out of the drawer, and a key stat in serif numerals. An empty drawer shows a ghost keepsake.
 struct CabinetDrawer: View {
     let collection: ExperienceCollection
+    /// Pulls out what this drawer holds from this day in earlier years (#69).
+    var onAnniversary: (() -> Void)?
 
     private var accent: CollectionAccent {
         collection.accent
@@ -39,6 +41,12 @@ struct CabinetDrawer: View {
                 .frame(width: 28, height: 4)
                 .padding(.top, 5)
                 .accessibilityHidden(true)
+        }
+        .overlay(alignment: .topTrailing) {
+            if let onAnniversary, !collection.anniversaries().isEmpty {
+                AnniversaryTab(action: onAnniversary)
+                    .offset(x: -Spacing.small, y: -14)
+            }
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("collection-\(collection.kind.rawValue)-\(collection.name)")

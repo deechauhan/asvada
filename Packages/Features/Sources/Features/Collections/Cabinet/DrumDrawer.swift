@@ -11,6 +11,9 @@ struct DrumDrawer: View {
     var isAjar = false
     /// How far the drawer is being pulled toward you, in points.
     var pull: Double = 0
+    /// Pulls out what this drawer holds from this day in earlier years; the saffron tab shows
+    /// when there is something (#69).
+    var onAnniversary: (() -> Void)?
 
     /// The size every drawer is drawn at on the drum.
     static let size = CGSize(width: 248, height: 236)
@@ -34,6 +37,12 @@ struct DrumDrawer: View {
                 .frame(width: Self.size.width - 24, height: 92)
                 .padding(.bottom, Self.frontHeight - 46)
             front(summary: summary)
+                .overlay(alignment: .topTrailing) {
+                    if let onAnniversary, !collection.anniversaries().isEmpty {
+                        AnniversaryTab(action: onAnniversary)
+                            .offset(x: -Spacing.medium, y: -20)
+                    }
+                }
         }
         .frame(width: Self.size.width, height: Self.size.height, alignment: .bottom)
         // The whole drawer (tray and front) answers taps, not just its painted parts.
