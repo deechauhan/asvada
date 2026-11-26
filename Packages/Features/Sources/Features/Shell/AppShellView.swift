@@ -121,6 +121,8 @@ public struct AppShellView: View {
             pendingOpen = PendingQuickLog(drawing: collection)
             return
         }
+        // A new blank replaces the last keepsake's toast, so the next one shows afresh.
+        toast = nil
         quickLog = OpenQuickLog(drawn: collection)
     }
 
