@@ -25,10 +25,9 @@ jobs:
       HOMEBREW_NO_INSTALL_CLEANUP: 1
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0 # full history, for restoring file times
-      # Unchanged sources keep their commit times, so the cached DerivedData only rebuilds what
-      # changed (a fresh checkout would make every file look new).
+      # File times come from content, so the cached DerivedData only rebuilds what changed, on
+      # any branch (a fresh checkout would make every file look new; commit times hid changes
+      # after a branch merged main, #213).
       - name: Restore file times
         run: python3 scripts/ci/restore-mtimes.py
       - uses: maxim-lobanov/setup-xcode@v1

@@ -65,9 +65,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0 # full history, for restoring file times
-      # Unchanged sources keep their commit times, so the cached .build isn't rebuilt from scratch.
+      # File times come from content, so the cached .build only rebuilds what changed (#213).
       - name: Restore file times
         run: python3 scripts/ci/restore-mtimes.py
       - uses: maxim-lobanov/setup-xcode@v1
