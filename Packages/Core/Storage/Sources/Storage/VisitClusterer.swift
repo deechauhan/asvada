@@ -28,6 +28,26 @@ public struct VisitCluster: Sendable, Equatable, Identifiable {
     /// The country the visit was in, when the photos were on land (or near a coast).
     public let countryCode: String?
     public let countryName: String?
+
+    public init(
+        id: String,
+        start: Date,
+        end: Date,
+        centre: GeoPoint,
+        photoCount: Int,
+        sampleIDs: [String],
+        countryCode: String?,
+        countryName: String?,
+    ) {
+        self.id = id
+        self.start = start
+        self.end = end
+        self.centre = centre
+        self.photoCount = photoCount
+        self.sampleIDs = sampleIDs
+        self.countryCode = countryCode
+        self.countryName = countryName
+    }
 }
 
 /// Groups photos into visits, on the phone and from nothing but where and when each was taken.
