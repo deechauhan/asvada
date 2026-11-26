@@ -73,4 +73,13 @@ struct EntryDetailsTests {
             tags: ["weekend"],
         ))
     }
+
+    @Test func aRatingIsEditedInHalves() throws {
+        let entry = try repository.savour(cafe("Prufrock"), Savouring(rating: 3))
+        var details = EntryDetails(entry)
+        #expect(details.rating == 3)
+        details.rating = 4.5
+        try repository.update(entry, with: details)
+        #expect(repository.entry(id: entry.id)?.rating == 4.5)
+    }
 }

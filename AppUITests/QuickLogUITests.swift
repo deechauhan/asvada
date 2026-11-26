@@ -295,4 +295,39 @@ final class QuickLogUITests: UITestCase {
         XCTAssertTrue(picked.waitForExistence(timeout: 5))
         XCTAssertEqual(picked.label, "Monmouth Coffee")
     }
+
+    @MainActor
+    func testStarsRateInHalvesAndTheRatingCanBeChanged() {
+        let app = launch(["-resetState"])
+        // Custom collections rate with the relish scale (stars).
+        openCollectionsAndWait(app)
+        app.buttons["newCollectionButton"].tap()
+        let name = app.textFields["collectionNameField"]
+        XCTAssertTrue(name.waitForExistence(timeout: 15))
+        name.tap()
+        name.typeText("Concerts")
+        tapSaveCollection(app)
+        XCTAssertTrue(app.buttons["Concerts drawer"].waitForExistence(timeout: 5))
+
+        draw("Savour in Concerts", in: app)
+        addNew("Bonobo at the Roundhouse", in: app)
+        // 65% of the way along five ā is the left half of the fourth: 3½.
+        let scale = app.descendants(matching: .any)["relishScale"]
+        XCTAssertTrue(scale.waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "relish-scale")
+        scale.coordinate(withNormalizedOffset: CGVector(dx: 0.65, dy: 0.5)).tap()
+        seal(app, drawer: "Concerts")
+
+        // The details show 3½, and the rating can be changed there. (VoiceOver's adjust action
+        // steps by halves; XCUITest on iOS can't drive it, so RelishInputTests cover that.)
+        app.descendants(matching: .any)["savouredToast"].tap()
+        XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
+        let rating = app.descendants(matching: .any)["relishScale"]
+        XCTAssertTrue(rating.waitForExistence(timeout: 5))
+        XCTAssertEqual(rating.value as? String, "3½ of 5, Lovely")
+        // 75%: the right half of the fourth, so 4.
+        rating.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
+        XCTAssertEqual(rating.value as? String, "4 of 5, Lovely")
+        attachScreenshot(of: app, named: "relish-details")
+    }
 }
