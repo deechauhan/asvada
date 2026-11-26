@@ -1,13 +1,15 @@
 import DesignSystem
+import Geo
 import Model
 import SwiftUI
 
 /// An opened drawer. Its keepsakes stand on end in the riffle (#156): thumb through them, tap a
 /// tab or the rail to jump, tap the front one to lift it out. Pinch, or tap Spread, to tip them
-/// out into the spread, where tapping one goes back to the riffle at that card; until the four
-/// spreads land (#44) the spread is a plain column of keepsakes. Countries keeps its passport,
-/// and at the largest text sizes (AX3 and up) every drawer opens straight into its spread.
-/// The toolbar customises, shares, re-orders and adds to the drawer.
+/// out into the drawer's spread (#44): The Menu for ranked drawers, the Ticket box for logs, the
+/// Passport for checklists and the Pinboard for the rest, sorted and filtered from the toolbar.
+/// Tapping a card there goes back to the riffle at that card. Countries keeps its stamp pad above
+/// its passport, and at the largest text sizes (AX3 and up) every drawer opens straight into its
+/// spread. The toolbar customises, shares, re-orders and adds to the drawer.
 struct OpenDrawer: View {
     let collection: ExperienceCollection
     @Environment(\.dismiss) private var dismiss
@@ -24,7 +26,11 @@ struct OpenDrawer: View {
     @State private var lifted: Item?
     @State private var lifts = 0
     @State private var clunks = 0
+    /// How the spread is sorted and filtered.
+    @State private var options = SpreadOptions()
     @Namespace private var cardZoom
+    /// Cards morph between the riffle and the spread.
+    @Namespace private var morph
 
     private var items: [Item] {
         ExperienceCollection.drawerOrder(collection.items ?? [], mode: collection.ratingMode)
@@ -64,6 +70,7 @@ struct OpenDrawer: View {
                     index: riffleIndex,
                     front: $front,
                     namespace: cardZoom,
+                    morph: morph,
                     lift: liftOut,
                     shut: shut,
                 )
@@ -101,6 +108,9 @@ struct OpenDrawer: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
+            if showsSpread, !items.isEmpty {
+                spreadMenu
+            }
             if hasRiffle {
                 Button(isSpread ? "Riffle" : "Spread", systemImage: isSpread ? "rectangle.stack" : "square.grid.2x2") {
                     setSpread(!isSpread)
@@ -126,8 +136,21 @@ struct OpenDrawer: View {
 
     // MARK: - The spread
 
-    /// Every keepsake at once, one above another. In a drawer with a riffle, tapping one goes back
-    /// to the riffle at that card; otherwise it opens the thing's page.
+    private var spreadKind: SpreadKind {
+        SpreadKind(mode: collection.ratingMode)
+    }
+
+    /// Each item's place in the drawer's own order, for The Menu's numbers whatever the sort.
+    private var ranks: [UUID: Int] {
+        Dictionary(uniqueKeysWithValues: items.enumerated().map { ($0.element.id, $0.offset + 1) })
+    }
+
+    private var spreadItems: [Item] {
+        options.apply(to: collection.items ?? [], mode: collection.ratingMode)
+    }
+
+    /// Every keepsake at once, laid out for the drawer's mode. In a drawer with a riffle, tapping
+    /// one goes back to the riffle at that card; otherwise it opens the thing's page.
     private var spread: some View {
         ScrollView {
             LazyVStack(spacing: Spacing.large) {
@@ -135,46 +158,85 @@ struct OpenDrawer: View {
                 if collection.kind == .countries {
                     PassportPanel(collection: collection)
                 }
-                if items.isEmpty, collection.kind != .countries {
-                    VStack(spacing: Spacing.medium) {
-                        GhostSlip(kind: collection.kind)
-                        Text("Nothing savoured yet. Hold Savour something to draw your first.")
+                if items.isEmpty {
+                    if collection.kind != .countries {
+                        VStack(spacing: Spacing.medium) {
+                            GhostSlip(kind: collection.kind)
+                            Text("Nothing savoured yet. Hold Savour something to draw your first.")
+                                .font(.system(.body, design: .serif).italic())
+                                .foregroundStyle(Palette.textSecondary.color)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.top, Spacing.xl)
+                    }
+                } else if spreadItems.isEmpty {
+                    VStack(spacing: Spacing.small) {
+                        Text("Nothing matches")
                             .font(.system(.body, design: .serif).italic())
                             .foregroundStyle(Palette.textSecondary.color)
-                            .multilineTextAlignment(.center)
+                        Button("Show everything") { options = SpreadOptions(sort: options.sort) }
+                            .accessibilityIdentifier("clearSpreadFilters")
                     }
                     .padding(.top, Spacing.xl)
-                }
-                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    spreadCard(item, rank: collection.ratingMode == .ranked ? index + 1 : nil)
-                        .paperTilt(index.isMultiple(of: 2) ? -1.2 : 1)
+                } else {
+                    DrawerSpread(
+                        collection: collection,
+                        items: spreadItems,
+                        kind: spreadKind,
+                        ranks: ranks,
+                        morph: morph,
+                        pick: pick,
+                        reorder: collection.ratingMode == .ranked ? { isReordering = true } : nil,
+                    )
                 }
             }
             .padding(Spacing.large)
         }
     }
 
-    @ViewBuilder
-    private func spreadCard(_ item: Item, rank: Int?) -> some View {
-        let keepsake = ItemKeepsake(item: item, collection: collection, rank: rank)
+    /// A card tapped in the spread: back to the riffle at that card, or its page without one.
+    private func pick(_ item: Item) {
         if hasRiffle {
-            Button {
-                front = riffleIndex.index(of: item) ?? 0
-                setSpread(false)
-            } label: {
-                keepsake
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint("Back to the riffle at this card")
+            front = riffleIndex.index(of: item) ?? 0
+            setSpread(false)
         } else {
-            // Tap a keepsake for the thing's own page.
-            NavigationLink {
-                ItemDetailScreen(item: item)
-            } label: {
-                keepsake
-            }
-            .buttonStyle(.plain)
+            liftOut(item)
         }
+    }
+
+    /// Sort and filter for the spread: by date, rating or name, and to one year or country.
+    @ViewBuilder
+    private var spreadMenu: some View {
+        let all = collection.items ?? []
+        let years = SpreadOptions.years(in: all)
+        let countries = collection.kind == .countries ? [] : SpreadOptions.countries(in: all)
+        Menu {
+            Picker("Sort", selection: $options.sort) {
+                ForEach(SpreadOptions.Sort.allCases) { sort in
+                    Text(sort == .drawer && collection.ratingMode == .ranked ? "Best first" : sort.title).tag(sort)
+                }
+            }
+            if years.count > 1 {
+                Picker("Year", selection: $options.year) {
+                    Text("Every year").tag(Int?.none)
+                    ForEach(years, id: \.self) { Text(String($0)).tag(Int?.some($0)) }
+                }
+            }
+            if countries.count > 1 {
+                Picker("Country", selection: $options.country) {
+                    Text("Everywhere").tag(String?.none)
+                    ForEach(countries) { Text($0.name).tag(String?.some($0.code)) }
+                }
+            }
+        } label: {
+            Label(
+                "Sort and filter",
+                systemImage: options.isFiltered
+                    ? "line.3.horizontal.decrease.circle.fill"
+                    : "line.3.horizontal.decrease.circle",
+            )
+        }
+        .accessibilityIdentifier("spreadOptions")
     }
 
     // MARK: - Actions
