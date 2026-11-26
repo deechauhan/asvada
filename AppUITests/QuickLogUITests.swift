@@ -330,4 +330,29 @@ final class QuickLogUITests: UITestCase {
         XCTAssertEqual(rating.value as? String, "4 of 5, Lovely")
         attachScreenshot(of: app, named: "relish-details")
     }
+
+    @MainActor
+    func testAFilmCanBeRatedOptionallyAndTheRatingCleared() {
+        let app = launch(["-resetState"])
+        draw("Savour a film", in: app)
+        addNew("Perfect Days", in: app)
+        app.buttons["when-Today"].tap()
+
+        // Logs can say how it landed, but don't have to: 75% along five ā is 4.
+        let scale = app.descendants(matching: .any)["relishScale"]
+        XCTAssertTrue(scale.waitForExistence(timeout: 5), "No optional rating for a film")
+        scale.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
+        XCTAssertEqual(app.staticTexts["quickLogSummary"].label, "Lovely")
+        attachScreenshot(of: app, named: "film-optional-rating")
+        seal(app, drawer: "Films")
+
+        // In the details it can be changed or cleared.
+        app.descendants(matching: .any)["savouredToast"].tap()
+        XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
+        let rating = app.descendants(matching: .any)["relishScale"]
+        XCTAssertTrue(rating.waitForExistence(timeout: 5))
+        XCTAssertEqual(rating.value as? String, "4 of 5, Lovely")
+        app.buttons["clearRating"].tap()
+        XCTAssertEqual(rating.value as? String, "Not rated")
+    }
 }

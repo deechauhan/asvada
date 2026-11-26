@@ -44,6 +44,37 @@ struct ItemStatsTests {
         #expect(stats.rankLine == nil)
     }
 
+    @Test func logItemsCountEveryEntryAndAverageOnlyTheRatedOnes() throws {
+        let container = try AsvadaStore.makeContainer(.inMemory)
+        let repository = Repository(context: container.mainContext)
+        let films = ExperienceCollection(name: "Films", kind: .films, ratingMode: .log)
+        container.mainContext.insert(films)
+        let item = repository.upsertItem(named: "Perfect Days", externalRef: nil, in: films)
+        // Three viewings, two of them rated: the count is every viewing, the relish only the rated.
+        repository.addEntry(to: item, rating: 5)
+        repository.addEntry(to: item)
+        repository.addEntry(to: item, rating: 4)
+        let stats = ItemStats(item: item, collection: films, rank: nil)
+        #expect(stats.count == 3)
+        #expect(stats.countLine == "Watched 3 times")
+        #expect(stats.relish == "Unforgettable · 4.5")
+    }
+
+    @Test func anUnratedLogShowsNoRelish() throws {
+        let container = try AsvadaStore.makeContainer(.inMemory)
+        let repository = Repository(context: container.mainContext)
+        let airlines = ExperienceCollection(name: "Airlines", kind: .airlines, ratingMode: .log)
+        container.mainContext.insert(airlines)
+        let item = repository.upsertItem(named: "British Airways", externalRef: nil, in: airlines)
+        repository.addEntry(to: item)
+        repository.addEntry(to: item)
+        let stats = ItemStats(item: item, collection: airlines, rank: nil)
+        #expect(stats.countLine == "2 flights")
+        #expect(stats.relish == nil)
+        #expect(RatingMode.log.ratesEntries && RatingMode.stars.ratesEntries)
+        #expect(!RatingMode.ranked.ratesEntries && !RatingMode.checklist.ratesEntries)
+    }
+
     @Test func entriesComeNewestFirst() throws {
         let container = try AsvadaStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
