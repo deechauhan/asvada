@@ -251,4 +251,32 @@ final class CabinetUITests: UITestCase {
         XCTAssertEqual(count.label, "Not savoured yet")
         XCTAssertFalse(app.buttons["itemEntry"].exists)
     }
+
+    @MainActor
+    func testCountriesTickOffTheWorldWithProgressPerContinent() {
+        let app = launch(["-resetState"])
+        openCollectionsAndWait(app)
+        openDrawer(app, "Countries")
+
+        // Nothing stamped yet: the ghost line, never a bare 0.
+        let progress = app.descendants(matching: .any)["passportProgress"]
+        XCTAssertTrue(progress.waitForExistence(timeout: 10))
+        XCTAssertEqual(progress.label, "No countries stamped yet")
+
+        // Stamp Japan by search (Return stamps it): the world and Asia both move.
+        let search = app.textFields["stampSearch"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("Japan\n")
+        XCTAssertTrue(labelled("1 of 195 countries, 1 percent", in: app).waitForExistence(timeout: 5))
+        let asia = app.descendants(matching: .any)["continentProgress-Asia"]
+        XCTAssertTrue(asia.label.hasPrefix("Asia, 1 of "), asia.label)
+        attachScreenshot(of: app, named: "countries-checklist")
+
+        // It's saved: leave the drawer and come back.
+        app.navigationBars["Countries"].buttons.firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Countries"].waitForNonExistence(timeout: 10))
+        openDrawer(app, "Countries")
+        XCTAssertTrue(labelled("1 of 195 countries, 1 percent", in: app).waitForExistence(timeout: 10))
+    }
 }

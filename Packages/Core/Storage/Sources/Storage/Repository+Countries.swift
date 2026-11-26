@@ -34,6 +34,30 @@ public extension Repository {
         return stamp
     }
 
+    /// The ISO codes stamped in a checklist collection such as Countries.
+    func stampedCodes(in collection: ExperienceCollection) -> Set<String> {
+        Set((collection.items ?? []).compactMap { $0.countryCode?.uppercased() })
+    }
+
+    /// Makes `collection`'s stamps exactly `codes`: stamps each missing country once (keyed by ISO
+    /// code, as onboarding does) and washes off the rest, with their own dated stamps. Places that
+    /// stamped a country (a café in Lisbon) keep their entries in their own collections.
+    func setStamped(_ codes: Set<String>, in collection: ExperienceCollection) throws {
+        let wanted = Set(codes.map { $0.uppercased() })
+        let have = stampedCodes(in: collection)
+        for code in wanted.subtracting(have).sorted() {
+            guard let country = CountryCatalog.shared.country(code: code) else { continue }
+            let item = upsertItem(named: country.name, externalRef: "iso:\(country.code)", in: collection)
+            item.countryCode = country.code
+        }
+        for item in collection.items ?? [] {
+            guard let code = item.countryCode?.uppercased(), !wanted.contains(code) else { continue }
+            item.collection = nil
+            context.delete(item)
+        }
+        try save()
+    }
+
     /// The ISO code for where `item` is: its own code, or a lookup from its coordinates.
     private func countryCode(of item: Item) -> String? {
         if let code = item.countryCode, !code.isEmpty {

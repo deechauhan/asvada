@@ -79,4 +79,33 @@ struct CountryStampTests {
         #expect(countries.count == 1)
         #expect(japan.entries?.count == 1)
     }
+
+    @Test func theStampPadSetsExactlyTheCountriesTicked() throws {
+        let countries = try collection(.countries)
+        try repository.setStamped(["JP", "pt"], in: countries)
+        #expect(repository.stampedCodes(in: countries) == ["JP", "PT"])
+        #expect(countries.items?.map(\.name).sorted() == ["Japan", "Portugal"])
+
+        // Ticking one more and washing one off.
+        try repository.setStamped(["PT", "BR"], in: countries)
+        #expect(repository.stampedCodes(in: countries) == ["PT", "BR"])
+        let japan = FetchDescriptor<Item>(predicate: #Predicate { $0.name == "Japan" })
+        #expect(try container.mainContext.fetchCount(japan) == 0)
+    }
+
+    @Test func stampingAgainKeepsOneItemAndItsVisits() throws {
+        let countries = try collection(.countries)
+        // Lisbon café stamps Portugal with a dated visit.
+        try repository.addEntry(to: place("Pastéis de Belém", longitude: -9.2032, latitude: 38.6975, in: .cafes))
+        let portugal = try #require(countries.items?.first { $0.countryCode == "PT" })
+        try repository.setStamped(["PT", "ES"], in: countries)
+        #expect(countries.items?.filter { $0.countryCode == "PT" }.count == 1)
+        #expect(portugal.entries?.count == 1, "re-stamping must not drop Portugal's visit")
+    }
+
+    @Test func unknownCodesAreIgnored() throws {
+        let countries = try collection(.countries)
+        try repository.setStamped(["ZZ"], in: countries)
+        #expect(repository.stampedCodes(in: countries).isEmpty)
+    }
 }

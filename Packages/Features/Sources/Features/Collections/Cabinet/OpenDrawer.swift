@@ -27,7 +27,11 @@ struct OpenDrawer: View {
     private var drawer: some View {
         ScrollView {
             LazyVStack(spacing: Spacing.large) {
-                if items.isEmpty {
+                // Countries is a checklist against the world: its progress and stamp pad lead.
+                if collection.kind == .countries {
+                    PassportPanel(collection: collection)
+                }
+                if items.isEmpty, collection.kind != .countries {
                     VStack(spacing: Spacing.medium) {
                         GhostSlip(kind: collection.kind)
                         Text("Nothing savoured yet")
