@@ -94,7 +94,7 @@ struct LookBackStatsTests {
         let cities = try collection(.cities)
         add("Lisbon", to: cities, on: [date(2026, 4)])
         add("Porto", to: cities, on: [date(2026, 5)])
-        let withCities = LookBackStats(collections: try repository.collections(), now: date(2026, 11), calendar: utc)
+        let withCities = try LookBackStats(collections: repository.collections(), now: date(2026, 11), calendar: utc)
         #expect(withCities.drawers.first { $0.collection.kind == .cities }?.standout == "2 ticked off")
         // Empty drawers have nothing to stand out.
         #expect(stats.drawers.first { $0.collection.kind == .restaurants }?.standout == nil)
