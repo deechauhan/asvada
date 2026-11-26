@@ -19,7 +19,7 @@ struct ItemStats: Equatable {
         count = entries.count
         countLine = Self.countLine(entries.count, kind: collection.kind)
         let ratings = entries.compactMap(\.rating)
-        if collection.ratingMode == .stars, !ratings.isEmpty {
+        if collection.ratingMode.ratesEntries, !ratings.isEmpty {
             let average = ratings.reduce(0, +) / Double(ratings.count)
             let word = Relish.word(for: average) ?? ""
             relish = "\(word) · \(average.formatted(.number.precision(.fractionLength(1))))"
@@ -51,5 +51,13 @@ extension Item {
     /// Its entries, newest first.
     var entriesNewestFirst: [Entry] {
         (entries ?? []).sorted { $0.date > $1.date }
+    }
+}
+
+extension RatingMode {
+    /// Whether each entry can say how it landed on the relish scale: always for stars, and
+    /// optionally for logs (a rewatch or a flight can be rated too, #39).
+    var ratesEntries: Bool {
+        self == .stars || self == .log
     }
 }
