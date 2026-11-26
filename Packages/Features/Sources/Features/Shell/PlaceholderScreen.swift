@@ -48,6 +48,20 @@ struct SettingsScreen: View {
                     }
                     .accessibilityIdentifier("restoreBackupLink")
                 }
+                Section("Privacy") {
+                    NavigationLink {
+                        PrivacyView()
+                    } label: {
+                        Label("What leaves this phone", systemImage: "lock.shield")
+                    }
+                    .accessibilityIdentifier("privacyLink")
+                    NavigationLink {
+                        DeleteDataView()
+                    } label: {
+                        Label("Delete all data", systemImage: "trash")
+                    }
+                    .accessibilityIdentifier("deleteDataLink")
+                }
                 Section("Developer") {
                     NavigationLink("Design catalogue") {
                         DesignCatalogView()
