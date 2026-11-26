@@ -8,9 +8,10 @@ screenshots/
   12/entry-detail.png
 ```
 
-**How they get here:** the CI `app` job runs the UI tests on an iOS simulator, exports every
-screenshot attachment from the test results, shows them in the run summary and uploads them
-as the `screenshots` artifact. Before merging, pull them into the PR:
+**How they get here:** the **Nightly** workflow runs every UI test on an iOS simulator (PRs run
+only a smoke set), exports every screenshot attachment from the test results and uploads them as
+`screenshots-<shard>` artifacts. The autopilot batches them into one docs PR per night (see
+`docs/AUTOPILOT.md`). By hand:
 
 ```bash
 scripts/fetch-screenshots.sh   # → screenshots/<issue>/, issue taken from the branch name

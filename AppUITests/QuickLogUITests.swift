@@ -23,6 +23,10 @@ final class QuickLogUITests: UITestCase {
         XCTAssertTrue(app.staticTexts["Which did you savour more?"].waitForExistence(timeout: 5))
         attachScreenshot(of: app, named: "quick-log-duel")
         app.buttons["duelNew"].tap()
+        // "No. 1" stamps onto it in the re-flowed list, then the seal.
+        let stamp = app.descendants(matching: .any)["duelPlaced"]
+        XCTAssertTrue(stamp.waitForExistence(timeout: 5), "No placement after the duel")
+        attachScreenshot(of: app, named: "duel-stamped")
         XCTAssertTrue(app.staticTexts["quickLogSummary"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["quickLogSummary"].label, "No. 1 in Cafés")
         seal(app, drawer: "Cafés")

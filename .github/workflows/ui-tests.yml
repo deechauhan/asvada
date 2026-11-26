@@ -1,0 +1,179 @@
+name: UI tests
+
+# Builds the app and its UI tests once per shard and runs that shard's tests on a simulator,
+# exporting every screenshot. Called by CI (a quick smoke shard on every PR and push to main) and
+# by Nightly (the whole suite in three shards), so both run the same job (#208).
+on:
+  workflow_call:
+    inputs:
+      shards:
+        description: 'JSON list of {"name": ..., "tests": "-only-testing:… / -skip-testing:…"}'
+        type: string
+        required: true
+
+jobs:
+  app:
+    name: App build + UI test (${{ matrix.shard.name }})
+    runs-on: macos-26
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(inputs.shards) }}
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
+    steps:
+      - uses: actions/checkout@v5
+      # File times come from content, so the cached DerivedData only rebuilds what changed, on
+      # any branch (a fresh checkout would make every file look new; commit times hid changes
+      # after a branch merged main, #213).
+      - name: Restore file times
+        run: python3 scripts/ci/restore-mtimes.py
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      # Started now, in the background, so the simulator service's start (~2 min) and the first
+      # boot's data migration (~2.5 min) overlap XcodeGen, the caches and the build instead of
+      # following them (#211). "Wait for the simulator" picks it up before the tests.
+      - name: Start the simulator
+        run: |
+          mkdir -p build
+          nohup bash -c '
+            (
+              set -e
+              scripts/ci/pick-simulator.sh > build/simulator-udid
+              xcrun simctl boot "$(cat build/simulator-udid)" || true
+              xcrun simctl bootstatus "$(cat build/simulator-udid)" -b
+            )
+            echo $? > build/simulator-status
+          ' > build/simulator.log 2>&1 &
+      - name: Cache SwiftPM
+        uses: actions/cache@v5
+        with:
+          path: build/SourcePackages
+          key: spm-app-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift', 'Packages/**/Package.resolved') }}
+          restore-keys: spm-app-${{ runner.os }}-
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Write secrets
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          # Optional: builds still work without it (film search reports "no key").
+          if [ -n "$TMDB_API_KEY" ]; then
+            printf 'TMDB_API_KEY = %s\n' "$TMDB_API_KEY" > Config/Secrets.xcconfig
+          else
+            echo "::notice::TMDB_API_KEY secret not set; building without a TMDB key"
+          fi
+      - name: Generate project
+        run: xcodegen generate
+      # Build products from the last run on this branch (or main): with file times restored,
+      # only what changed recompiles. Keyed per commit; the newest match is restored.
+      - name: Cache DerivedData
+        uses: actions/cache@v5
+        with:
+          path: build/DerivedData
+          key: derived-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift') }}-${{ github.sha }}-${{ matrix.shard.name }}
+          restore-keys: |
+            derived-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift') }}-
+            derived-${{ runner.os }}-
+      - name: Build for testing
+        run: |
+          set -o pipefail
+          # Restored files have new inodes; let the build system trust their times instead.
+          defaults write com.apple.dt.XCBuild IgnoreFileSystemDeviceInodeChanges -bool YES
+          # Build for the generic simulator, not a specific device: with a device destination
+          # xcodebuild waited ~3 min on the simulator service before starting, and actool spent
+          # ~2 min thinning an 80 KB asset catalog for that device. arm64 only (the runners).
+          # No app icon: rendering the iOS 26 icon took actool over 2 min, and tests don't see it.
+          xcodebuild build-for-testing \
+            -project Asvada.xcodeproj -scheme Asvada \
+            -destination "generic/platform=iOS Simulator" \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            ASSETCATALOG_COMPILER_APPICON_NAME= \
+            -derivedDataPath build/DerivedData \
+            -clonedSourcePackagesDirPath build/SourcePackages \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Wait for the simulator
+        id: simulator
+        timeout-minutes: 10
+        run: |
+          until [ -s build/simulator-status ]; do sleep 2; done
+          grep -v -E "Migration|Reason:|Status=" build/simulator.log || true
+          if [ "$(cat build/simulator-status)" != 0 ]; then
+            echo "::error::The simulator didn't boot"
+            exit 1
+          fi
+          echo "udid=$(cat build/simulator-udid)" >> "$GITHUB_OUTPUT"
+      - name: UI tests
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project Asvada.xcodeproj -scheme Asvada \
+            -destination "id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath build/DerivedData \
+            -resultBundlePath build/Asvada.xcresult \
+            ${{ matrix.shard.tests }}
+      - name: Export screenshots
+        if: always()
+        run: |
+          [ -d build/Asvada.xcresult ] || exit 0
+          scripts/ci/export-screenshots.sh build/Asvada.xcresult build/screenshots
+          # Also print each PNG as base64 so tools that can read logs but not artifacts can recover them
+          # (scripts/screenshots-from-log.py).
+          for f in build/screenshots/*.png; do
+            [ -e "$f" ] || continue
+            echo "SCREENSHOT-BEGIN $(basename "$f")"
+            base64 -i "$f" | fold -w 76
+            echo "SCREENSHOT-END"
+          done
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: screenshots-${{ matrix.shard.name }}
+          path: build/screenshots
+          if-no-files-found: ignore
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: xcresult-${{ matrix.shard.name }}
+          path: build/Asvada.xcresult
+          if-no-files-found: ignore
+      # Last, so the report sits at the very end of the log, after the screenshot dump: the
+      # slowest tests (to see where CI time goes), then any failures with file:line.
+      - name: Test report
+        if: always()
+        run: |
+          [ -d build/Asvada.xcresult ] || exit 0
+          xcrun xcresulttool get test-results summary --path build/Asvada.xcresult --compact > build/summary.json || exit 0
+          xcrun xcresulttool get test-results tests --path build/Asvada.xcresult --compact > build/tests.json || exit 0
+          python3 - build/summary.json build/tests.json <<'PY'
+          import json, sys
+
+          summary = json.load(open(sys.argv[1]))
+          tree = json.load(open(sys.argv[2]))
+          cases, failures = [], []
+
+          def walk(node, test=None):
+              if node.get("nodeType") == "Test Case":
+                  test = node.get("name")
+                  cases.append((node.get("durationInSeconds") or 0, node.get("nodeIdentifier") or test))
+              if node.get("nodeType") == "Failure Message":
+                  failures.append(f"  at {test}: {node.get('name')}")
+              for child in node.get("children", []):
+                  walk(child, test)
+
+          for root in tree.get("testNodes", []):
+              walk(root)
+          print(f"{summary.get('result')}: {summary.get('passedTests')} passed, {summary.get('failedTests')} failed of {summary.get('totalTestCount')}")
+          print("Slowest tests:")
+          for seconds, name in sorted(cases, reverse=True)[:12]:
+              print(f"  {seconds:7.1f}s  {name}")
+          for failure in summary.get("testFailures", []):
+              print(f"FAILED {failure.get('testIdentifierString') or failure.get('testName')}: {failure.get('failureText')}")
+          print("\n".join(failures))
+          PY
