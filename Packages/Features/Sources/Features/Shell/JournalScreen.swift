@@ -9,6 +9,8 @@ struct JournalScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isShowingSettings = false
     @State private var breathe = false
+    /// What's typed in the search field; empty shows the Journal.
+    @State private var query = ""
     /// Every entry, newest first; the feed groups them by month.
     @Query(sort: \Entry.date, order: .reverse) private var entries: [Entry]
     /// How many slow breaths the ghost keepsake takes when the Journal appears.
@@ -22,20 +24,16 @@ struct JournalScreen: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                Group {
-                    let months = JournalMonths.group(entries)
-                    if months.isEmpty {
-                        emptyJournal
-                    } else {
-                        JournalFeed(months: months)
-                    }
+            Group {
+                if GlobalSearch.trimmed(query).isEmpty {
+                    feed
+                } else {
+                    SearchResultsList(query: query)
                 }
-                .padding(Spacing.large)
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(Palette.background.color)
             .navigationTitle("Journal")
+            .searchable(text: $query, prompt: "Search everything")
             .toolbar {
                 ToolbarItem(placement: .topBarLeadingCompat) {
                     Button {
@@ -52,6 +50,22 @@ struct JournalScreen: View {
             .sheet(isPresented: $isShowingSettings) {
                 SettingsScreen()
             }
+        }
+    }
+
+    /// The Journal itself: the feed once there are entries, the empty Journal before.
+    private var feed: some View {
+        ScrollView {
+            Group {
+                let months = JournalMonths.group(entries)
+                if months.isEmpty {
+                    emptyJournal
+                } else {
+                    JournalFeed(months: months)
+                }
+            }
+            .padding(Spacing.large)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
