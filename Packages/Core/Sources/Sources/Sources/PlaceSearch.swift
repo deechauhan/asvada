@@ -55,11 +55,21 @@ public enum PlaceKind: Sendable, CaseIterable {
     case any
 
     /// The MapKit categories that count, or `nil` for no filter.
-    var categories: [MKPointOfInterestCategory]? {
+    public var categories: [MKPointOfInterestCategory]? {
         switch self {
         case .cafe: [.cafe, .bakery]
         case .restaurant: [.restaurant, .foodMarket, .brewery, .winery]
         case .city, .any: nil
+        }
+    }
+
+    /// What "Search this area" looks for when nothing's typed.
+    public var searchWord: String {
+        switch self {
+        case .cafe: "café"
+        case .restaurant: "restaurant"
+        case .city: "city"
+        case .any: "places"
         }
     }
 }
@@ -72,11 +82,17 @@ public protocol PlaceSearching: Sendable {
     /// Places of `kind` right where you are (within about 50 m), nearest first, with no query:
     /// the print head's "near you" guesses.
     func nearby(_ kind: PlaceKind, around point: GeoPoint) async throws -> [PlaceResult]
+    /// The city at `point`, for tapping anywhere on a map of cities.
+    func city(at point: GeoPoint) async throws -> PlaceResult?
 }
 
 public extension PlaceSearching {
     func nearby(_: PlaceKind, around _: GeoPoint) async throws -> [PlaceResult] {
         []
+    }
+
+    func city(at _: GeoPoint) async throws -> PlaceResult? {
+        nil
     }
 }
 
@@ -125,6 +141,19 @@ public struct MapKitPlaceSearch: PlaceSearching {
         return Self.nearestFirst(response.mapItems.compactMap(PlaceResult.init(mapItem:)), to: point)
     }
 
+    public func city(at point: GeoPoint) async throws -> PlaceResult? {
+        let location = CLLocation(latitude: point.latitude, longitude: point.longitude)
+        guard let request = MKReverseGeocodingRequest(location: location),
+              let item = try await request.mapItems.first,
+              let name = item.addressRepresentations?.cityName
+        else { return nil }
+        // Look the city itself up, so tapping the same city twice finds one item.
+        if let city = try await search(name, kind: .city, near: point).first {
+            return city
+        }
+        return PlaceResult(name: name, latitude: point.latitude, longitude: point.longitude, address: item.address?.shortAddress)
+    }
+
     /// `places` ordered by distance from `point` (stable for ties).
     static func nearestFirst(_ places: [PlaceResult], to point: GeoPoint) -> [PlaceResult] {
         let distances: [Double] = places.map { kilometres(from: point, to: $0) }
@@ -145,7 +174,7 @@ public struct MapKitPlaceSearch: PlaceSearching {
     }
 }
 
-extension PlaceResult {
+public extension PlaceResult {
     /// What Asvada keeps of a MapKit result, or `nil` if it has no name.
     init?(mapItem: MKMapItem) {
         guard let name = mapItem.name, !name.isEmpty else { return nil }
