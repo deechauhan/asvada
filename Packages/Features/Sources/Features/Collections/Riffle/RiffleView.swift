@@ -17,6 +17,8 @@ struct RiffleView: View {
     /// The card at the front, kept by the drawer so the spread can come back to it.
     @Binding var front: Int
     let namespace: Namespace.ID
+    /// Shared with the spread, so cards morph between the two.
+    let morph: Namespace.ID
     var lift: (Item) -> Void
     var shut: () -> Void
 
@@ -85,6 +87,7 @@ struct RiffleView: View {
             width: cardWidth,
         )
         .zoomSource(id: card.id, in: namespace)
+        .matchedGeometryEffect(id: card.id, in: morph)
         .onTapGesture { tap(cardIndex) }
         .accessibilityAddTraits(.isButton)
         .accessibilityHint(isFront ? "Lifts it out" : "Brings it to the front")

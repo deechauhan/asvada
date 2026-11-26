@@ -341,4 +341,41 @@ final class CabinetUITests: UITestCase {
         app.buttons["drawerShut"].tap()
         XCTAssertTrue(app.navigationBars["Cafés"].waitForNonExistence(timeout: 10), "Tapping the drawer front didn't shut it")
     }
+
+    @MainActor
+    func testEachDrawerTipsIntoItsOwnSpread() {
+        let app = launch(["-resetState", "-sampleData"])
+        openCollectionsAndWait(app)
+
+        // Cafés are ranked: The Menu.
+        openDrawer(app, "Cafés")
+        let spread = app.buttons["drawerSpread"]
+        XCTAssertTrue(spread.waitForExistence(timeout: 10))
+        spread.tap()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["spread-The Menu"].waitForExistence(timeout: 5),
+            "No Menu for a ranked drawer",
+        )
+        XCTAssertTrue(app.buttons["spreadOptions"].exists, "No way to sort or filter the spread")
+        attachScreenshot(of: app, named: "spread-menu")
+        app.navigationBars["Cafés"].buttons.firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Cafés"].waitForNonExistence(timeout: 10))
+
+        // Films are a log: the Ticket box.
+        openDrawer(app, "Films")
+        XCTAssertTrue(spread.waitForExistence(timeout: 10))
+        spread.tap()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["spread-Ticket box"].waitForExistence(timeout: 5),
+            "No Ticket box for a log",
+        )
+        attachScreenshot(of: app, named: "spread-ticket-box")
+
+        // A card there goes back to the riffle.
+        let card = app.descendants(matching: .any)["spreadCard"].firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+        let riffle = app.descendants(matching: .any)["riffle"]
+        XCTAssertTrue(riffle.waitForExistence(timeout: 5), "Tapping a card didn't go back to the riffle")
+    }
 }
