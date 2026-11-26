@@ -90,8 +90,9 @@ jobs:
             echo "::endgroup::"
           done
 
-  # PRs and pushes to main run a smoke set of UI tests: about 80 s of tests covering launch,
-  # the tabs, quick-log and sealing, so every check finishes in about 5 minutes. Building the UI
+  # PRs and pushes to main run a smoke set of UI tests: about a minute of tests covering launch,
+  # the journal, quick-log, sealing and a country stamp, to keep the checks short. Most of the
+  # job is simulator setup, so each test added costs more than it seems (#211). Building the UI
   # test target still catches compile errors in every test. The whole suite runs nightly
   # (nightly.yml); see docs/AUTOPILOT.md for fixing what it finds (#208).
   app:
@@ -103,6 +104,4 @@ jobs:
     with:
       shards: >-
         [{"name": "smoke", "tests": "-only-testing:AsvadaUITests/LaunchTests/testLaunchShowsJournal
-        -only-testing:AsvadaUITests/LaunchTests/testAllThreeTabsAreReachable
-        -only-testing:AsvadaUITests/LaunchTests/testLogButtonOpensQuickLogFromAnyTab
         -only-testing:AsvadaUITests/QuickLogUITests/testAFilmIsLoggedAndACountryStamped"}]

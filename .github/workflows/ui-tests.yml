@@ -34,6 +34,21 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+      # Started now, in the background, so the simulator service's start (~2 min) and the first
+      # boot's data migration (~2.5 min) overlap XcodeGen, the caches and the build instead of
+      # following them (#211). "Wait for the simulator" picks it up before the tests.
+      - name: Start the simulator
+        run: |
+          mkdir -p build
+          nohup bash -c '
+            (
+              set -e
+              scripts/ci/pick-simulator.sh > build/simulator-udid
+              xcrun simctl boot "$(cat build/simulator-udid)" || true
+              xcrun simctl bootstatus "$(cat build/simulator-udid)" -b
+            )
+            echo $? > build/simulator-status
+          ' > build/simulator.log 2>&1 &
       - name: Cache SwiftPM
         uses: actions/cache@v5
         with:
@@ -64,11 +79,6 @@ jobs:
           restore-keys: |
             derived-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift') }}-
             derived-${{ runner.os }}-
-      - name: Pick a simulator
-        id: simulator
-        run: |
-          UDID=$(scripts/ci/pick-simulator.sh)
-          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
       - name: Build for testing
         run: |
           set -o pipefail
@@ -87,12 +97,17 @@ jobs:
             -clonedSourcePackagesDirPath build/SourcePackages \
             COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO
-      # Booted after the build, not during it: on these runners a booting simulator slowed the
-      # whole machine, so the build step sat idle for ~3 min before xcodebuild even started.
-      - name: Boot the simulator
+      - name: Wait for the simulator
+        id: simulator
+        timeout-minutes: 10
         run: |
-          xcrun simctl boot "${{ steps.simulator.outputs.udid }}" || true
-          xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
+          until [ -s build/simulator-status ]; do sleep 2; done
+          grep -v -E "Migration|Reason:|Status=" build/simulator.log || true
+          if [ "$(cat build/simulator-status)" != 0 ]; then
+            echo "::error::The simulator didn't boot"
+            exit 1
+          fi
+          echo "udid=$(cat build/simulator-udid)" >> "$GITHUB_OUTPUT"
       - name: UI tests
         run: |
           set -o pipefail
