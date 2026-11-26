@@ -16,4 +16,18 @@ final class RestoreUITests: UITestCase {
         XCTAssertTrue(app.buttons["chooseBackupButton"].waitForExistence(timeout: 5))
         attachScreenshot(of: app, named: "restore-backup")
     }
+
+    @MainActor
+    func testSettingsLeadsToTheBackUpScreen() {
+        let app = launch(["-resetState"])
+        let settings = app.buttons["settingsButton"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 10))
+        settings.tap()
+        let link = app.buttons["exportBackupLink"]
+        XCTAssertTrue(link.waitForExistence(timeout: 10), "No way to back up in Settings")
+        link.tap()
+        XCTAssertTrue(app.navigationBars["Back up"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["exportBackupButton"].waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "back-up-to-files")
+    }
 }

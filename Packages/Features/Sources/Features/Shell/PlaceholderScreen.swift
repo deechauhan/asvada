@@ -36,6 +36,12 @@ struct SettingsScreen: View {
                 }
                 Section("Your data") {
                     NavigationLink {
+                        ExportBackupView()
+                    } label: {
+                        Label("Back up to Files", systemImage: "square.and.arrow.up")
+                    }
+                    .accessibilityIdentifier("exportBackupLink")
+                    NavigationLink {
                         RestoreBackupView()
                     } label: {
                         Label("Restore from a backup", systemImage: "arrow.down.doc")
