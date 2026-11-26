@@ -281,4 +281,30 @@ final class CabinetUITests: UITestCase {
         openDrawer(app, "Countries")
         XCTAssertTrue(labelled("1 of 195 countries, 1 percent", in: app).waitForExistence(timeout: 10))
     }
+
+    @MainActor
+    func testARankedDrawerIsReorderedWithTheArrows() {
+        let app = launch(["-resetState", "-sampleData"])
+        openCollectionsAndWait(app)
+        openDrawer(app, "Cafés")
+
+        // The sample cafés rank Prufrock, Monmouth, Kaffeine, Workshop.
+        let reorder = app.buttons["drawerReorder"]
+        XCTAssertTrue(reorder.waitForExistence(timeout: 10), "No way to re-order a ranked drawer")
+        reorder.tap()
+        XCTAssertTrue(app.navigationBars["Re-order"].waitForExistence(timeout: 10))
+        XCTAssertTrue(labelled("No. 1, Prufrock Coffee", in: app).waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "ranked-reorder")
+
+        // Move Prufrock down one: Monmouth is No. 1.
+        app.buttons["moveDown-Prufrock Coffee"].tap()
+        XCTAssertTrue(labelled("No. 1, Monmouth", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(labelled("No. 2, Prufrock Coffee", in: app).exists)
+
+        // It's saved: close and reopen.
+        app.buttons["reorderDone"].tap()
+        XCTAssertTrue(app.navigationBars["Re-order"].waitForNonExistence(timeout: 10))
+        app.buttons["drawerReorder"].tap()
+        XCTAssertTrue(labelled("No. 1, Monmouth", in: app).waitForExistence(timeout: 10))
+    }
 }

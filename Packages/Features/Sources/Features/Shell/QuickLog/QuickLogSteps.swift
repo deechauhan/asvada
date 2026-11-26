@@ -8,17 +8,20 @@ import SwiftData
 import SwiftUI
 
 /// Ranked and new: "Which did you savour more?", halving the ranking each time, at most
-/// ⌈log₂(n+1)⌉ picks, with saffron macron steps and *Too close to call*.
+/// ⌈log₂(n+1)⌉ picks, with saffron macron steps, *Too close to call* and *Skip* (seal it now and
+/// rank it later). Each card shows the thing's latest photo when it has one.
 struct DuelStep: View {
     let newcomer: Item
     let ranked: [Item]
     let onPlaced: (Int) -> Void
+    let onSkip: () -> Void
     @State private var insertion: BinaryInsertion
 
-    init(newcomer: Item, ranked: [Item], count _: Int, onPlaced: @escaping (Int) -> Void) {
+    init(newcomer: Item, ranked: [Item], count _: Int, onPlaced: @escaping (Int) -> Void, onSkip: @escaping () -> Void) {
         self.newcomer = newcomer
         self.ranked = ranked
         self.onPlaced = onPlaced
+        self.onSkip = onSkip
         _insertion = State(initialValue: BinaryInsertion(count: ranked.count))
     }
 
@@ -30,8 +33,8 @@ struct DuelStep: View {
                 .accessibilityAddTraits(.isHeader)
             if let index = insertion.comparisonIndex, ranked.indices.contains(index) {
                 HStack(spacing: Spacing.medium) {
-                    card(newcomer.name, id: "duelNew") { record(.better) }
-                    card(ranked[index].name, id: "duelOther") { record(.worse) }
+                    card(newcomer, id: "duelNew") { record(.better) }
+                    card(ranked[index], id: "duelOther") { record(.worse) }
                 }
                 MacronSteps(
                     done: insertion.comparisonsMade,
@@ -43,7 +46,11 @@ struct DuelStep: View {
                             .accessibilityIdentifier("duelUndo")
                     }
                     Spacer()
+                    Button("Skip", action: onSkip)
+                        .accessibilityHint("Seal it now without ranking it yet")
+                        .accessibilityIdentifier("duelSkip")
                     Button("Too close to call") { record(.worse) }
+                        .padding(.leading, Spacing.medium)
                         .accessibilityIdentifier("duelTie")
                 }
                 .typeToken(.callout)
@@ -51,20 +58,31 @@ struct DuelStep: View {
         }
     }
 
-    private func card(_ name: String, id: String, action: @escaping () -> Void) -> some View {
+    private func card(_ item: Item, id: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(name)
-                .font(.system(.headline, design: .serif))
-                .foregroundStyle(Palette.textPrimary.color)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity, minHeight: 96)
-                .padding(Spacing.small)
-                .background(Palette.keepsakePaper.color, in: RoundedRectangle(cornerRadius: Radius.medium))
-                .overlay(RoundedRectangle(cornerRadius: Radius.medium).strokeBorder(Palette.separator.color))
+            VStack(spacing: Spacing.small) {
+                if let data = item.latestThumbnailData {
+                    PhotoThumbnail(id: item.id.uuidString, data: data).image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 72)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.small))
+                        .accessibilityHidden(true)
+                }
+                Text(item.name)
+                    .font(.system(.headline, design: .serif))
+                    .foregroundStyle(Palette.textPrimary.color)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity, minHeight: 96)
+            .padding(Spacing.small)
+            .background(Palette.keepsakePaper.color, in: RoundedRectangle(cornerRadius: Radius.medium))
+            .overlay(RoundedRectangle(cornerRadius: Radius.medium).strokeBorder(Palette.separator.color))
         }
         .buttonStyle(.plain)
         .haptic(.pick, trigger: insertion.comparisonsMade)
-        .accessibilityLabel("\(name) was better")
+        .accessibilityLabel("\(item.name) was better")
         .accessibilityIdentifier(id)
     }
 

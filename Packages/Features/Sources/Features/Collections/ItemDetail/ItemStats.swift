@@ -52,6 +52,18 @@ extension Item {
     var entriesNewestFirst: [Entry] {
         (entries ?? []).sorted { $0.date > $1.date }
     }
+
+    /// The thumbnail of its newest photo (newest entry first, then newest taken), for cards that
+    /// show the thing itself, such as the duel's.
+    var latestThumbnailData: Data? {
+        for entry in entriesNewestFirst {
+            let photos = (entry.photos ?? []).filter { $0.thumbnailData != nil }
+            if let newest = photos.max(by: { ($0.takenAt ?? .distantPast) < ($1.takenAt ?? .distantPast) }) {
+                return newest.thumbnailData
+            }
+        }
+        return nil
+    }
 }
 
 extension RatingMode {
