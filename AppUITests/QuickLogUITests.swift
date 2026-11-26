@@ -267,6 +267,36 @@ final class QuickLogUITests: UITestCase {
     }
 
     @MainActor
+    func testTheMapBrowsesWithNothingTypedAndSearchesThisArea() {
+        let app = launch(["-resetState", "-samplePlaces"])
+        draw("Savour a café", in: app)
+
+        // Nothing typed: find it on the map instead.
+        let find = app.buttons["findOnMap"]
+        XCTAssertTrue(find.waitForExistence(timeout: 5), "No way to look on the map")
+        find.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["resultsMap"].waitForExistence(timeout: 10))
+
+        // "Search this area" looks for cafés where the map is.
+        let searchHere = app.buttons["searchThisArea"]
+        XCTAssertTrue(searchHere.waitForExistence(timeout: 10))
+        searchHere.tap()
+        let pin = app.buttons["pin-1"]
+        XCTAssertTrue(pin.waitForExistence(timeout: 10), "Searching this area put no pins down")
+        attachScreenshot(of: app, named: "quick-log-browse-map")
+        if !pin.isHittable {
+            app.swipeUp()
+        }
+        pin.tap()
+        let choose = app.buttons["mapPick"]
+        XCTAssertTrue(choose.waitForExistence(timeout: 5))
+        choose.tap()
+        let picked = app.staticTexts["quickLogItem"]
+        XCTAssertTrue(picked.waitForExistence(timeout: 5))
+        XCTAssertEqual(picked.label, "Monmouth Coffee")
+    }
+
+    @MainActor
     func testStarsRateInHalvesAndTheRatingCanBeChanged() {
         let app = launch(["-resetState"])
         // Custom collections rate with the relish scale (stars).
@@ -299,5 +329,30 @@ final class QuickLogUITests: UITestCase {
         rating.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
         XCTAssertEqual(rating.value as? String, "4 of 5, Lovely")
         attachScreenshot(of: app, named: "relish-details")
+    }
+
+    @MainActor
+    func testAFilmCanBeRatedOptionallyAndTheRatingCleared() {
+        let app = launch(["-resetState"])
+        draw("Savour a film", in: app)
+        addNew("Perfect Days", in: app)
+        app.buttons["when-Today"].tap()
+
+        // Logs can say how it landed, but don't have to: 75% along five ā is 4.
+        let scale = app.descendants(matching: .any)["relishScale"]
+        XCTAssertTrue(scale.waitForExistence(timeout: 5), "No optional rating for a film")
+        scale.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
+        XCTAssertEqual(app.staticTexts["quickLogSummary"].label, "Lovely")
+        attachScreenshot(of: app, named: "film-optional-rating")
+        seal(app, drawer: "Films")
+
+        // In the details it can be changed or cleared.
+        app.descendants(matching: .any)["savouredToast"].tap()
+        XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
+        let rating = app.descendants(matching: .any)["relishScale"]
+        XCTAssertTrue(rating.waitForExistence(timeout: 5))
+        XCTAssertEqual(rating.value as? String, "4 of 5, Lovely")
+        app.buttons["clearRating"].tap()
+        XCTAssertEqual(rating.value as? String, "Not rated")
     }
 }

@@ -219,6 +219,20 @@ struct SealStep: View {
                     .foregroundStyle(Palette.brand.color)
                     .accessibilityIdentifier("quickLogSummary")
             }
+            if collection.ratingMode == .log {
+                // Logs can say how it landed too, but never have to (#39).
+                VStack(spacing: Spacing.xs) {
+                    Text("How did it land? (optional)")
+                        .typeToken(.callout)
+                        .foregroundStyle(Palette.textSecondary.color)
+                    RelishScale(rating: $savouring.rating, markSize: 22)
+                    if savouring.rating != nil {
+                        Button("Clear rating") { savouring.rating = nil }
+                            .typeToken(.caption)
+                            .accessibilityIdentifier("clearRating")
+                    }
+                }
+            }
             TextField("A note to your future self", text: $savouring.note, axis: .vertical)
                 .font(.system(.body, design: .serif).italic())
                 .lineLimit(1 ... 4)
