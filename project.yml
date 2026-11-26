@@ -51,6 +51,7 @@ targets:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Asvada uses where you are to guess the café, restaurant or country you're savouring. Nearby searches go to Apple Maps; your location is never stored or shared."
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "Asvada reads where and when your photos were taken, on this phone only, to find places you've been. No pictures are copied or uploaded."
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

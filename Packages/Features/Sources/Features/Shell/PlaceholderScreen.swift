@@ -48,6 +48,14 @@ struct SettingsScreen: View {
                     }
                     .accessibilityIdentifier("restoreBackupLink")
                 }
+                Section("Photos") {
+                    NavigationLink {
+                        PhotoBackfillView()
+                    } label: {
+                        Label("Find places in my photos", systemImage: "photo.on.rectangle.angled")
+                    }
+                    .accessibilityIdentifier("photoPlacesLink")
+                }
                 Section("Privacy") {
                     NavigationLink {
                         PrivacyView()
