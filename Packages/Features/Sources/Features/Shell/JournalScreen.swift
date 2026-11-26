@@ -35,6 +35,15 @@ struct JournalScreen: View {
             .navigationTitle("Journal")
             .searchable(text: $query, prompt: "Search everything")
             .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    NavigationLink {
+                        TripsScreen()
+                    } label: {
+                        Image(systemName: "airplane")
+                    }
+                    .accessibilityLabel("Trips")
+                    .accessibilityIdentifier("tripsButton")
+                }
                 ToolbarItem(placement: .topBarLeadingCompat) {
                     Button {
                         isShowingSettings = true
