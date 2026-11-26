@@ -172,4 +172,42 @@ class UITestCase: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
     }
+
+    // MARK: - Quick-log steps shared by the quick-log and rating tests
+
+    /// Opens quick-log from the pill and draws `blank` from the grid ("Savour a café").
+    @MainActor
+    func draw(_ blank: String, in app: XCUIApplication) {
+        let pill = app.buttons["quickLogButton"]
+        XCTAssertTrue(pill.waitForExistence(timeout: 10))
+        pill.tap()
+        XCTAssertTrue(app.navigationBars["What did you savour?"].waitForExistence(timeout: 10))
+        app.buttons[blank].tap()
+        XCTAssertTrue(app.textFields["quickLogName"].waitForExistence(timeout: 5))
+    }
+
+    /// Types a new name and adds it by hand.
+    @MainActor
+    func addNew(_ name: String, in app: XCUIApplication) {
+        let field = app.textFields["quickLogName"]
+        field.tap()
+        field.typeText(name)
+        let add = app.buttons["quickLogAddNew"]
+        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        add.tap()
+    }
+
+    /// Holds the ā and waits for the toast.
+    @MainActor
+    func seal(_ app: XCUIApplication, drawer: String) {
+        let seal = app.descendants(matching: .any)["sealButton"]
+        XCTAssertTrue(seal.waitForExistence(timeout: 5))
+        seal.press(forDuration: 1.2)
+        // The sheet closes, then the toast shows over the app.
+        XCTAssertTrue(app.textFields["quickLogNote"].waitForNonExistence(timeout: 10), "The sheet didn't close after sealing")
+        let toast = app.descendants(matching: .any)["savouredToast"]
+        XCTAssertTrue(toast.waitForExistence(timeout: 10), "No toast after sealing")
+        XCTAssertTrue(toast.label.hasPrefix("Savoured in "), toast.label)
+        XCTAssertTrue(toast.label.hasSuffix("it's in your \(drawer) drawer"), toast.label)
+    }
 }

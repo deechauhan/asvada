@@ -10,6 +10,7 @@ struct OpenDrawer: View {
     @State private var isCustomising = false
     @State private var isSharing = false
     @State private var isAddingByHand = false
+    @State private var isReordering = false
 
     private var items: [Item] {
         ExperienceCollection.drawerOrder(collection.items ?? [], mode: collection.ratingMode)
@@ -68,11 +69,19 @@ struct OpenDrawer: View {
                     Button("Share", systemImage: "square.and.arrow.up") { isSharing = true }
                         .accessibilityIdentifier("drawerShare")
                 }
+                // Ranked drawers can be re-ordered by hand (#41).
+                if collection.ratingMode == .ranked, items.count > 1 {
+                    Button("Re-order", systemImage: "arrow.up.arrow.down") { isReordering = true }
+                        .accessibilityIdentifier("drawerReorder")
+                }
                 Button("Add by hand", systemImage: "square.and.pencil") { isAddingByHand = true }
                     .accessibilityIdentifier("drawerAddByHand")
                 Button("Customise", systemImage: "slider.horizontal.3") { isCustomising = true }
                     .accessibilityIdentifier("drawerCustomise")
             }
+        }
+        .sheet(isPresented: $isReordering) {
+            RankReorderSheet(collection: collection)
         }
         .sheet(isPresented: $isAddingByHand) {
             ManualItemSheet(collection: collection)
