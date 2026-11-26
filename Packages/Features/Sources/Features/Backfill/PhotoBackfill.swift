@@ -75,6 +75,11 @@ final class PhotoBackfill {
         phase = .paused
     }
 
+    /// Small pictures of some of a visit's photos, to show with its suggestion.
+    func thumbnails(for visit: VisitCluster) async -> [Data] {
+        await source.thumbnails(for: visit.sampleIDs)
+    }
+
     /// Stops after the page being read; `run()` carries on from there.
     func pause() {
         pauseRequested = true

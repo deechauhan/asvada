@@ -2,6 +2,9 @@ import Foundation
 import Geo
 import Photos
 import Storage
+#if os(iOS)
+    import UIKit
+#endif
 
 /// How far the app may read the photo library.
 enum PhotoAccess: Equatable {
@@ -34,6 +37,9 @@ protocol PhotoLibrarySource {
     /// Up to `limit` photos from position `index` (oldest first). Only photos with a place and a
     /// date are returned, but `next` counts every photo looked at.
     func page(from index: Int, limit: Int) async -> PhotoPage
+    /// Small pictures of the photos with these ids, as JPEG data, for showing a suggestion. Photos
+    /// that can't be loaded quickly (in iCloud, say) are left out.
+    func thumbnails(for ids: [String]) async -> [Data]
 }
 
 /// The device's photo library, read through PhotoKit. Only where and when each photo was taken is
@@ -52,6 +58,12 @@ struct SystemPhotoLibrary: PhotoLibrarySource {
     func page(from index: Int, limit: Int) async -> PhotoPage {
         await Task.detached(priority: .utility) {
             readPhotoPage(from: index, limit: limit)
+        }.value
+    }
+
+    func thumbnails(for ids: [String]) async -> [Data] {
+        await Task.detached(priority: .utility) {
+            loadThumbnails(ids)
         }.value
     }
 
@@ -85,4 +97,38 @@ private func readPhotoPage(from index: Int, limit: Int) -> PhotoPage {
         }
     }
     return PhotoPage(sightings: sightings, next: max(end, index), total: assets.count)
+}
+
+/// A holder for what the photo library hands back, so it can be gathered inside its callback.
+private final class ThumbnailBox: @unchecked Sendable {
+    var pictures: [Data] = []
+}
+
+/// Loads small pictures of the photos with these ids, on this thread. Only on iOS, where the
+/// system hands back a `UIImage`; the Mac builds (package tests only) show none.
+private func loadThumbnails(_ ids: [String]) -> [Data] {
+    #if os(iOS)
+        let assets = PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil)
+        let options = PHImageRequestOptions()
+        options.isSynchronous = true
+        options.deliveryMode = .fastFormat
+        options.resizeMode = .fast
+        options.isNetworkAccessAllowed = false
+        let box = ThumbnailBox()
+        assets.enumerateObjects { asset, _, _ in
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: CGSize(width: 200, height: 200),
+                contentMode: .aspectFill,
+                options: options,
+            ) { image, _ in
+                if let data = image?.jpegData(compressionQuality: 0.7) {
+                    box.pictures.append(data)
+                }
+            }
+        }
+        return box.pictures
+    #else
+        return []
+    #endif
 }
