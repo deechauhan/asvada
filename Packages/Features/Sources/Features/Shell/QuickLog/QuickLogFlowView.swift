@@ -96,6 +96,10 @@ struct QuickLogFlowView: View {
                 DuelStep(newcomer: item, ranked: rankedOthers(than: item), count: count) { position in
                     savouring.rankPosition = position
                     stage = .seal
+                } onSkip: {
+                    // Sealed without a place: it stays unranked and duels next time.
+                    savouring.rankPosition = nil
+                    stage = .seal
                 }
             }
         case let .still(rank):

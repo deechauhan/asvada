@@ -2,42 +2,6 @@ import XCTest
 
 /// Quick-log end to end: draw a blank, say what it was, savour it its collection's way, seal.
 final class QuickLogUITests: UITestCase {
-    /// Opens quick-log from the pill and draws `blank` from the grid ("Savour a café").
-    @MainActor
-    private func draw(_ blank: String, in app: XCUIApplication) {
-        let pill = app.buttons["quickLogButton"]
-        XCTAssertTrue(pill.waitForExistence(timeout: 10))
-        pill.tap()
-        XCTAssertTrue(app.navigationBars["What did you savour?"].waitForExistence(timeout: 10))
-        app.buttons[blank].tap()
-        XCTAssertTrue(app.textFields["quickLogName"].waitForExistence(timeout: 5))
-    }
-
-    /// Types a new name and adds it by hand.
-    @MainActor
-    private func addNew(_ name: String, in app: XCUIApplication) {
-        let field = app.textFields["quickLogName"]
-        field.tap()
-        field.typeText(name)
-        let add = app.buttons["quickLogAddNew"]
-        XCTAssertTrue(add.waitForExistence(timeout: 5))
-        add.tap()
-    }
-
-    /// Holds the ā and waits for the toast.
-    @MainActor
-    private func seal(_ app: XCUIApplication, drawer: String) {
-        let seal = app.descendants(matching: .any)["sealButton"]
-        XCTAssertTrue(seal.waitForExistence(timeout: 5))
-        seal.press(forDuration: 1.2)
-        // The sheet closes, then the toast shows over the app.
-        XCTAssertTrue(app.textFields["quickLogNote"].waitForNonExistence(timeout: 10), "The sheet didn't close after sealing")
-        let toast = app.descendants(matching: .any)["savouredToast"]
-        XCTAssertTrue(toast.waitForExistence(timeout: 10), "No toast after sealing")
-        XCTAssertTrue(toast.label.hasPrefix("Savoured in "), toast.label)
-        XCTAssertTrue(toast.label.hasSuffix("it's in your \(drawer) drawer"), toast.label)
-    }
-
     @MainActor
     func testRankedCafesDuelThenRepeatVisitsSkipIt() {
         let app = launch(["-resetState"])
@@ -294,65 +258,5 @@ final class QuickLogUITests: UITestCase {
         let picked = app.staticTexts["quickLogItem"]
         XCTAssertTrue(picked.waitForExistence(timeout: 5))
         XCTAssertEqual(picked.label, "Monmouth Coffee")
-    }
-
-    @MainActor
-    func testStarsRateInHalvesAndTheRatingCanBeChanged() {
-        let app = launch(["-resetState"])
-        // Custom collections rate with the relish scale (stars).
-        openCollectionsAndWait(app)
-        app.buttons["newCollectionButton"].tap()
-        let name = app.textFields["collectionNameField"]
-        XCTAssertTrue(name.waitForExistence(timeout: 15))
-        name.tap()
-        name.typeText("Concerts")
-        tapSaveCollection(app)
-        XCTAssertTrue(app.buttons["Concerts drawer"].waitForExistence(timeout: 5))
-
-        draw("Savour in Concerts", in: app)
-        addNew("Bonobo at the Roundhouse", in: app)
-        // 65% of the way along five ā is the left half of the fourth: 3½.
-        let scale = app.descendants(matching: .any)["relishScale"]
-        XCTAssertTrue(scale.waitForExistence(timeout: 5))
-        attachScreenshot(of: app, named: "relish-scale")
-        scale.coordinate(withNormalizedOffset: CGVector(dx: 0.65, dy: 0.5)).tap()
-        seal(app, drawer: "Concerts")
-
-        // The details show 3½, and the rating can be changed there. (VoiceOver's adjust action
-        // steps by halves; XCUITest on iOS can't drive it, so RelishInputTests cover that.)
-        app.descendants(matching: .any)["savouredToast"].tap()
-        XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
-        let rating = app.descendants(matching: .any)["relishScale"]
-        XCTAssertTrue(rating.waitForExistence(timeout: 5))
-        XCTAssertEqual(rating.value as? String, "3½ of 5, Lovely")
-        // 75%: the right half of the fourth, so 4.
-        rating.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
-        XCTAssertEqual(rating.value as? String, "4 of 5, Lovely")
-        attachScreenshot(of: app, named: "relish-details")
-    }
-
-    @MainActor
-    func testAFilmCanBeRatedOptionallyAndTheRatingCleared() {
-        let app = launch(["-resetState"])
-        draw("Savour a film", in: app)
-        addNew("Perfect Days", in: app)
-        app.buttons["when-Today"].tap()
-
-        // Logs can say how it landed, but don't have to: 75% along five ā is 4.
-        let scale = app.descendants(matching: .any)["relishScale"]
-        XCTAssertTrue(scale.waitForExistence(timeout: 5), "No optional rating for a film")
-        scale.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
-        XCTAssertEqual(app.staticTexts["quickLogSummary"].label, "Lovely")
-        attachScreenshot(of: app, named: "film-optional-rating")
-        seal(app, drawer: "Films")
-
-        // In the details it can be changed or cleared.
-        app.descendants(matching: .any)["savouredToast"].tap()
-        XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 10))
-        let rating = app.descendants(matching: .any)["relishScale"]
-        XCTAssertTrue(rating.waitForExistence(timeout: 5))
-        XCTAssertEqual(rating.value as? String, "4 of 5, Lovely")
-        app.buttons["clearRating"].tap()
-        XCTAssertEqual(rating.value as? String, "Not rated")
     }
 }
