@@ -42,7 +42,8 @@ enum AtlasLogic {
         return PassportSpreadCard.title(count: count, worldTotal: worldTotal)
     }
 
-    /// The country's outlines as map coordinates, one array per ring.
+    /// The country's outlines as map coordinates, one array per ring. Built fresh each time:
+    /// the map reads them through `AtlasRingCache`, which keeps what it has built.
     static func rings(of country: Country) -> [[CLLocationCoordinate2D]] {
         country.outlines
             .filter { $0.count > 2 }

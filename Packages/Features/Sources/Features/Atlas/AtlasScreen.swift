@@ -66,7 +66,7 @@ struct AtlasScreen: View {
             Map(position: $position, interactionModes: [.pan, .zoom]) {
                 ForEach(visited.sorted(), id: \.self) { code in
                     if let country = catalog.country(code: code) {
-                        ForEach(Array(AtlasLogic.rings(of: country).enumerated()), id: \.offset) { _, ring in
+                        ForEach(Array(AtlasRingCache.rings(of: country).enumerated()), id: \.offset) { _, ring in
                             MapPolygon(coordinates: ring)
                                 .foregroundStyle(Palette.brand.color.opacity(0.55))
                                 .stroke(Palette.brand.color, lineWidth: 1)

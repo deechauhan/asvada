@@ -133,3 +133,62 @@ struct PlaceStorageTests {
         #expect(again.placeAddress == "23-25 Leather Ln, London")
     }
 }
+
+@MainActor
+struct StressPlacesTests {
+    /// A store and its repository; the container is held so the models outlive the call.
+    private struct Store {
+        let container: ModelContainer
+        let repository: Repository
+    }
+
+    private func makeStore() throws -> Store {
+        let container = try AsvadaStore.makeContainer(.inMemory)
+        let repository = Repository(context: container.mainContext)
+        try BuiltInCollections.seedIfNeeded(in: repository.context)
+        return Store(container: container, repository: repository)
+    }
+
+    @Test func placesAreScatteredWithEntriesAndTheirCountriesAreStamped() throws {
+        let store = try makeStore()
+        try withExtendedLifetime(store) {
+            try PreviewData.addStressPlaces(400, to: store.repository)
+            let items = try store.repository.context.fetch(FetchDescriptor<Item>())
+            let places = items.filter { $0.externalRef?.hasPrefix("stress-place:") == true }
+            #expect(places.count == 400)
+            #expect(places.allSatisfy { $0.latitude != nil && $0.longitude != nil && !($0.entries ?? []).isEmpty })
+            // Three collections share them.
+            #expect(Set(places.compactMap { $0.collection?.kind }).count == 3)
+            // Their countries are stamped, as for real places (28 cities in about 25 countries).
+            let stamps = items.filter { $0.collection?.kind == .countries }
+            #expect(stamps.count > 15)
+        }
+    }
+
+    @Test func theSameCountMakesTheSamePlaces() throws {
+        func positions() throws -> [Double] {
+            let store = try makeStore()
+            return try withExtendedLifetime(store) {
+                try PreviewData.addStressPlaces(60, to: store.repository)
+                let items = try store.repository.context.fetch(FetchDescriptor<Item>())
+                return items
+                    .filter { $0.externalRef?.hasPrefix("stress-place:") == true }
+                    .sorted { ($0.externalRef ?? "") < ($1.externalRef ?? "") }
+                    .compactMap(\.latitude)
+            }
+        }
+        let first = try positions()
+        let second = try positions()
+        #expect(first == second)
+        #expect(first.count == 60)
+    }
+
+    @Test func noCountMakesNothing() throws {
+        let store = try makeStore()
+        try withExtendedLifetime(store) {
+            try PreviewData.addStressPlaces(0, to: store.repository)
+            let items = try store.repository.context.fetch(FetchDescriptor<Item>())
+            #expect(items.isEmpty)
+        }
+    }
+}

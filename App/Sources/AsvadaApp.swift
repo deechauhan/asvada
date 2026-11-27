@@ -15,6 +15,7 @@ struct AsvadaApp: App {
     /// opens the country picker on its own, `-skipOnboarding` keeps first-launch onboarding away,
     /// `-cabinetMidRoll` stops the turning cabinet between two drawers (for screenshots),
     /// `-stressItems N` adds N ranked cafés (with `-inMemoryStore`, for performance runs),
+    /// `-stressPlaces N` scatters N places round 28 cities (with `-inMemoryStore`, for the Atlas),
     /// `-samplePlaces` searches a fixed set of London places instead of Apple Maps,
     /// `-fakeAuthenticator` passes the app lock without Face ID (the simulator has none).
     private let arguments = ProcessInfo.processInfo.arguments
@@ -55,6 +56,14 @@ struct AsvadaApp: App {
            let count = Int(arguments[flag + 1])
         {
             try? PreviewData.addStressItems(count, to: Repository(context: container.mainContext))
+        }
+        // Places round the world for measuring the Atlas (#53), also only in memory.
+        if arguments.contains("-inMemoryStore"),
+           let flag = arguments.firstIndex(of: "-stressPlaces"),
+           arguments.indices.contains(flag + 1),
+           let count = Int(arguments[flag + 1])
+        {
+            try? PreviewData.addStressPlaces(count, to: Repository(context: container.mainContext))
         }
     }
 
