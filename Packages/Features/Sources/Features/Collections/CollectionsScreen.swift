@@ -23,6 +23,12 @@ struct CollectionsScreen: View {
     @State private var opened: ExperienceCollection?
     /// The drawer whose "on this day" keepsake has been pulled out.
     @State private var anniversaryDrawer: ExperienceCollection?
+    /// Bumped to spin the cabinet for a lucky dip.
+    @State private var luckyDips = 0
+    /// The keepsake a lucky dip handed out, face down.
+    @State private var dipped: Item?
+    /// The card an opened drawer's riffle starts at (Open drawer from a lucky dip).
+    @State private var openAt: Item?
     /// Set by a sheet when it appears, so a sheet requested from a context menu can be retried.
     @State private var sheetAppeared = false
     /// The view the owner chose this session; `nil` follows the default for the text size.
@@ -86,7 +92,7 @@ struct CollectionsScreen: View {
                 }
             }
             .navigationDestination(item: $opened) { collection in
-                OpenDrawer(collection: collection)
+                OpenDrawer(collection: collection, startItem: openAt?.collection?.id == collection.id ? openAt : nil)
                     .zoomTransition(id: collection.id, in: drawerZoom)
             }
             .sheet(isPresented: $isCreating) {
@@ -94,6 +100,18 @@ struct CollectionsScreen: View {
             }
             .sheet(item: $anniversaryDrawer) { collection in
                 OnThisDaySheet(collection: collection)
+            }
+            .sheet(item: $dipped) { item in
+                LuckyDipSheet(
+                    item: item,
+                    again: { afterSheetCloses { luckyDips += 1 } },
+                    openDrawer: {
+                        afterSheetCloses {
+                            openAt = item
+                            opened = item.collection
+                        }
+                    },
+                )
             }
             // Clear the item explicitly on dismiss: customising the same drawer twice in a row
             // must change `editing`, or the second sheet never presents.
@@ -154,17 +172,36 @@ struct CollectionsScreen: View {
                 frontID: $frontID,
                 actions: cabinetActions,
                 namespace: drawerZoom,
+                luckyDips: luckyDips,
             )
             Text("Swipe to turn · pull a drawer toward you to open it")
                 .font(.system(.footnote, design: .serif).italic())
                 .foregroundStyle(Palette.textSecondary.color)
                 .multilineTextAlignment(.center)
                 .accessibilityHidden(true)
+            // A spin for a forgotten keepsake (a hard fling of the cabinet does the same).
+            if visible.contains(where: { !($0.items ?? []).isEmpty }) {
+                Button("Lucky dip", systemImage: "dice") {
+                    luckyDips += 1
+                }
+                .buttonStyle(.bordered)
+                .tint(Palette.brand.color)
+                .accessibilityIdentifier("luckyDipButton")
+            }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, Spacing.large)
         .padding(.bottom, Spacing.xl)
         .transition(.opacity)
+    }
+
+    /// Runs `change` once a sheet has had time to close, so the next sheet or push isn't lost to
+    /// the one still on its way out.
+    private func afterSheetCloses(_ change: @escaping @MainActor () -> Void) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(450))
+            change()
+        }
     }
 
     private var cabinetActions: CabinetActions {
@@ -179,6 +216,7 @@ struct CollectionsScreen: View {
                 step(collection, by: slot - index)
             },
             onThisDay: { anniversaryDrawer = $0 },
+            luckyDip: { dipped = $0 },
         )
     }
 
