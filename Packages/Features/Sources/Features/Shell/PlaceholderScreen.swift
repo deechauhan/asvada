@@ -3,6 +3,8 @@ import SwiftUI
 
 /// Settings placeholder with About and a link to the design catalogue.
 struct SettingsScreen: View {
+    @Environment(AppLockModel.self) private var lock
+
     var body: some View {
         NavigationStack {
             List {
@@ -43,6 +45,7 @@ struct SettingsScreen: View {
                 } footer: {
                     Text("A note at 9 in the morning when something you savoured happened on that day in an earlier year.")
                 }
+                AppLockSettingsSection(model: lock)
                 Section("Privacy") {
                     NavigationLink {
                         PrivacyView()
