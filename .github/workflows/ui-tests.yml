@@ -55,7 +55,15 @@ jobs:
           key: spm-app-${{ runner.os }}-${{ hashFiles('project.yml', 'Packages/**/Package.swift', 'Packages/**/Package.resolved') }}
           restore-keys: spm-app-${{ runner.os }}-
       - name: Install XcodeGen
-        run: brew install xcodegen
+        # The runner sometimes fails with "Homebrew's files could not be checked inside the macOS
+        # sandbox". Retry; the step still fails if every attempt does.
+        run: |
+          for attempt in 1 2 3; do
+            brew install xcodegen && exit 0
+            echo "::warning::brew install xcodegen failed (attempt $attempt of 3)"
+            sleep 20
+          done
+          exit 1
       - name: Write secrets
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
