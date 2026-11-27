@@ -13,8 +13,13 @@ final class CustomFieldsUITests: UITestCase {
         let customise = app.buttons["drawerCustomise"]
         XCTAssertTrue(customise.waitForExistence(timeout: 10))
         customise.tap()
+        // The form is a lazy list: "Your fields" isn't in it until it has scrolled that far.
         let add = app.buttons["addFieldButton"]
-        XCTAssertTrue(add.waitForExistence(timeout: 10), "No way to add a field")
+        XCTAssertTrue(app.buttons["saveCollectionButton"].waitForExistence(timeout: 10))
+        for _ in 0 ..< 6 where !add.exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "No way to add a field")
         scrollUntilVisible(add, in: app)
         add.tap()
         let name = app.textFields["fieldNameField"].firstMatch
