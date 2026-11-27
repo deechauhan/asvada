@@ -11,6 +11,8 @@ import SwiftUI
 /// ink is there offline; the map underneath is Apple Maps, muted so the ink is the loudest thing.
 struct AtlasScreen: View {
     @Query private var items: [Item]
+    @Query private var entries: [Entry]
+    @State private var store = AtlasFilterStore.shared
     @State private var sheet: AtlasSheet?
     /// What the map shows now; pins appear once it's zoomed in.
     @State private var region: AtlasRegion?
@@ -23,14 +25,15 @@ struct AtlasScreen: View {
 
     private let catalog = CountryCatalog.shared
 
+    /// The countries to ink: the stamped ones, or those the filtered entries were made in.
     private var visited: Set<String> {
-        AtlasLogic.visitedCodes(items: items)
+        AtlasLogic.inkedCodes(items: items, entries: entries, filter: store.filter)
     }
 
     /// The places to pin: none while the world is in view.
     private var pins: [Item] {
         guard let region, AtlasLogic.showsPins(latitudeSpan: region.latitudeSpan) else { return [] }
-        return AtlasLogic.pins(items: items, in: region)
+        return AtlasLogic.pins(items: items, in: region, filter: store.filter)
     }
 
     var body: some View {
@@ -38,6 +41,22 @@ struct AtlasScreen: View {
             atlas
                 .navigationTitle("Atlas")
                 .navigationBarTitleDisplayModeInline()
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            sheet = .filters
+                        } label: {
+                            Label(
+                                "Filter",
+                                systemImage: store.filter.isActive
+                                    ? "line.3.horizontal.decrease.circle.fill"
+                                    : "line.3.horizontal.decrease.circle",
+                            )
+                        }
+                        .accessibilityValue(AtlasFilterText.buttonValue(count: store.filter.partsOn))
+                        .accessibilityIdentifier("atlasFilterButton")
+                    }
+                }
         }
     }
 
@@ -80,15 +99,21 @@ struct AtlasScreen: View {
             }
         }
         .overlay(alignment: .top) {
-            Headline(text: AtlasLogic.headline(visited: visited.count), isEmpty: visited.isEmpty)
-                .padding(.top, Spacing.small)
+            Headline(
+                text: AtlasLogic.headline(visited: visited.count, isFiltered: store.filter.isActive),
+                isEmpty: visited.isEmpty,
+            )
+            .padding(.top, Spacing.small)
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("atlasMap")
         .sheet(item: $sheet) { sheet in
             switch sheet {
             case let .country(code):
-                AtlasCountrySheet(code: code, isVisited: visited.contains(code))
+                AtlasCountrySheet(code: code, isVisited: visited.contains(code), filter: store.filter)
+                    .presentationDetents([.medium, .large])
+            case .filters:
+                AtlasFilterSheet(store: store)
                     .presentationDetents([.medium, .large])
             case let .place(id):
                 AtlasPinCard(itemID: id)
@@ -102,9 +127,11 @@ struct AtlasScreen: View {
 enum AtlasSheet: Identifiable, Equatable {
     case country(String)
     case place(UUID)
+    case filters
 
     var id: String {
         switch self {
+        case .filters: "filters"
         case let .country(code): "country-\(code)"
         case let .place(id): "place-\(id.uuidString)"
         }
