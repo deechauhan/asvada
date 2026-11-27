@@ -67,7 +67,7 @@ enum AtlasLogic {
             }
             .sorted { $0.distance < $1.distance }
             .prefix(limit)
-            .map { $0.item }
+            .map(\.item)
     }
 
     /// "Savoured 3 times, last 12 Nov 2026" / "Savoured once, 4 Mar 2026" / a ghost line.
