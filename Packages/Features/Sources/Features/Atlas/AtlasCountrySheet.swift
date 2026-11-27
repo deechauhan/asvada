@@ -9,6 +9,8 @@ import SwiftUI
 struct AtlasCountrySheet: View {
     let code: String
     let isVisited: Bool
+    /// What the map is filtered to; the sheet lists only the entries that pass.
+    var filter = AtlasFilter()
     @Query private var entries: [Entry]
     @Environment(\.dismiss) private var dismiss
 
@@ -17,7 +19,7 @@ struct AtlasCountrySheet: View {
     }
 
     private var inCountry: [Entry] {
-        AtlasLogic.entries(inCountry: code, from: entries)
+        AtlasLogic.entries(inCountry: code, from: filter.apply(to: entries))
     }
 
     var body: some View {
@@ -32,7 +34,7 @@ struct AtlasCountrySheet: View {
                                 .accessibilityIdentifier("atlasEmpty")
                         }
                     } else {
-                        Section(AtlasLogic.entryCount(inCountry.count)) {
+                        Section {
                             ForEach(inCountry) { entry in
                                 if let item = entry.item {
                                     NavigationLink {
@@ -42,6 +44,12 @@ struct AtlasCountrySheet: View {
                                     }
                                     .accessibilityIdentifier("atlasEntry")
                                 }
+                            }
+                        } header: {
+                            Text(AtlasLogic.entryCount(inCountry.count))
+                        } footer: {
+                            if filter.isActive {
+                                Text("Only what passes the map's filters.")
                             }
                         }
                     }

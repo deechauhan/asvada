@@ -28,4 +28,32 @@ final class AtlasUITests: UITestCase {
         XCTAssertEqual(app.staticTexts["atlasHeadline"].label, "1 country · 1% of the world")
         attachScreenshot(of: app, named: "atlas-japan")
     }
+
+    @MainActor
+    func testTheFilterSheetNarrowsTheMapAndResets() {
+        let app = launch(["-resetState"])
+        app.tabBars.buttons["Atlas"].tap()
+        let button = app.buttons["atlasFilterButton"]
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "No filter button on the Atlas")
+        XCTAssertEqual(button.value as? String, "Off")
+        button.tap()
+
+        // Pick a collection: one filter on, and the map says nothing matches.
+        let cafes = app.buttons["atlasFilterCollection-Cafés"]
+        XCTAssertTrue(cafes.waitForExistence(timeout: 5))
+        let footer = app.staticTexts["atlasFilterFooter"]
+        XCTAssertEqual(footer.label, "Showing everything.")
+        cafes.tap()
+        XCTAssertEqual(footer.label, "1 filter on.")
+        attachScreenshot(of: app, named: "atlas-filters")
+
+        // Reset puts it back.
+        app.buttons["atlasFilterReset"].tap()
+        XCTAssertEqual(footer.label, "Showing everything.")
+        cafes.tap()
+        app.buttons["atlasFilterDone"].tap()
+        XCTAssertTrue(app.staticTexts["atlasHeadline"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["atlasHeadline"].label, "Nothing matches these filters")
+        XCTAssertEqual(button.value as? String, "1 filter on.")
+    }
 }

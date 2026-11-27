@@ -191,3 +191,139 @@ struct AtlasPinTests {
         #expect(AtlasSheet.place(id) == AtlasSheet.place(id))
     }
 }
+
+// MARK: - Filters (#52)
+
+@MainActor
+struct AtlasFilterTests {
+    private struct Rig {
+        let cafes = ExperienceCollection(name: "Cafés", kind: .cafes, ratingMode: .ranked)
+        let films = ExperienceCollection(name: "Films", kind: .films, ratingMode: .log)
+        let trip = Trip(name: "Japan 2025")
+    }
+
+    private func year(_ year: Int) -> Date {
+        Calendar.current.date(from: DateComponents(year: year, month: 6, day: 15, hour: 12)) ?? .now
+    }
+
+    private func entry(
+        _ name: String,
+        in collection: ExperienceCollection,
+        year: Int,
+        country: String?,
+        trip: Trip? = nil,
+    ) -> Entry {
+        let item = Item(name: name)
+        item.collection = collection
+        item.countryCode = country
+        let entry = Entry(date: self.year(year))
+        entry.item = item
+        entry.trip = trip
+        item.entries = [entry]
+        return entry
+    }
+
+    @Test func noFilterPassesEverythingAndCountsNothing() {
+        let rig = Rig()
+        let any = entry("A", in: rig.cafes, year: 2024, country: "PT")
+        #expect(!AtlasFilter().isActive)
+        #expect(AtlasFilter().partsOn == 0)
+        #expect(AtlasFilter().apply(to: [any]).count == 1)
+    }
+
+    @Test func collectionsYearsAndTripEachNarrowTheEntries() {
+        let rig = Rig()
+        let cafe2025 = entry("Lisbon café", in: rig.cafes, year: 2025, country: "PT")
+        let cafe2023 = entry("Old café", in: rig.cafes, year: 2023, country: "PT")
+        let film2025 = entry("Perfect Days", in: rig.films, year: 2025, country: "JP", trip: rig.trip)
+        let all = [cafe2025, cafe2023, film2025]
+
+        var filter = AtlasFilter()
+        filter.toggle(collection: rig.cafes.id)
+        #expect(filter.apply(to: all).count == 2)
+
+        filter.setFromYear(2025)
+        #expect(filter.apply(to: all).map { $0.item?.name } == ["Lisbon café"])
+
+        var onTrip = AtlasFilter()
+        onTrip.trip = rig.trip.id
+        #expect(onTrip.apply(to: all).map { $0.item?.name } == ["Perfect Days"])
+        #expect(filter.partsOn == 2 && onTrip.partsOn == 1)
+    }
+
+    @Test func theYearRangeKeepsItsEndsInOrder() {
+        var filter = AtlasFilter()
+        filter.setFromYear(2024)
+        filter.setToYear(2022)
+        #expect(filter.fromYear == 2022 && filter.toYear == 2022)
+        filter.setToYear(2025)
+        filter.setFromYear(2026)
+        #expect(filter.fromYear == 2026 && filter.toYear == 2026)
+        filter.setFromYear(nil)
+        #expect(filter.toYear == 2026 && filter.isActive)
+    }
+
+    @Test func aCollectionCanBeTakenOutAgain() {
+        let id = UUID()
+        var filter = AtlasFilter()
+        filter.toggle(collection: id)
+        #expect(filter.isActive)
+        filter.toggle(collection: id)
+        #expect(!filter.isActive)
+    }
+
+    @Test func theInkFollowsTheMatchingEntries() {
+        let rig = Rig()
+        let lisbon = entry("Lisbon café", in: rig.cafes, year: 2025, country: "pt")
+        let tokyo = entry("Perfect Days", in: rig.films, year: 2024, country: "JP")
+        let stamp = Item(name: "France")
+        stamp.countryCode = "FR"
+        let countries = ExperienceCollection(name: "Countries", kind: .countries, ratingMode: .checklist)
+        stamp.collection = countries
+        let items = [lisbon.item, tokyo.item, stamp].compactMap(\.self)
+
+        // Nothing filtered: the stamped countries, whatever has or hasn't been logged.
+        #expect(AtlasLogic.inkedCodes(items: items, entries: [lisbon, tokyo], filter: AtlasFilter()) == ["FR"])
+        var films = AtlasFilter()
+        films.toggle(collection: rig.films.id)
+        #expect(AtlasLogic.inkedCodes(items: items, entries: [lisbon, tokyo], filter: films) == ["JP"])
+        var nothing = AtlasFilter()
+        nothing.setFromYear(2030)
+        #expect(AtlasLogic.inkedCodes(items: items, entries: [lisbon, tokyo], filter: nothing).isEmpty)
+    }
+
+    @Test func pinsFollowTheFilterToo() {
+        let rig = Rig()
+        let old = entry("Old café", in: rig.cafes, year: 2022, country: "GB")
+        let recent = entry("New café", in: rig.cafes, year: 2025, country: "GB")
+        for entry in [old, recent] {
+            entry.item?.latitude = 51.5
+            entry.item?.longitude = -0.1
+        }
+        let region = AtlasRegion(centreLatitude: 51.5, centreLongitude: -0.1, latitudeSpan: 1, longitudeSpan: 1.5)
+        let items = [old.item, recent.item].compactMap(\.self)
+        #expect(AtlasLogic.pins(items: items, in: region).count == 2)
+        var from2024 = AtlasFilter()
+        from2024.setFromYear(2024)
+        #expect(AtlasLogic.pins(items: items, in: region, filter: from2024).map(\.name) == ["New café"])
+    }
+
+    @Test func theYearsAreNewestFirstWithoutRepeats() {
+        let rig = Rig()
+        let entries = [
+            entry("A", in: rig.cafes, year: 2023, country: nil),
+            entry("B", in: rig.cafes, year: 2025, country: nil),
+            entry("C", in: rig.cafes, year: 2023, country: nil),
+        ]
+        #expect(AtlasLogic.years(of: entries) == [2025, 2023])
+    }
+
+    @Test func theWordsNeverSayZero() {
+        #expect(AtlasFilterText.footer(count: 0) == "Showing everything.")
+        #expect(AtlasFilterText.footer(count: 1) == "1 filter on.")
+        #expect(AtlasFilterText.footer(count: 3) == "3 filters on.")
+        #expect(AtlasFilterText.buttonValue(count: 0) == "Off")
+        #expect(AtlasLogic.headline(visited: 0, isFiltered: true) == "Nothing matches these filters")
+        #expect(AtlasLogic.headline(visited: 0, isFiltered: false) == "Your countries will fill with ink here")
+    }
+}

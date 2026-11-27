@@ -13,6 +13,18 @@ enum AtlasLogic {
         Set(items.filter { $0.collection?.kind == .countries }.compactMap { $0.countryCode?.uppercased() })
     }
 
+    /// The countries to ink: the stamped ones, or with a filter on, the countries the matching
+    /// entries were made in.
+    static func inkedCodes(items: [Item], entries: [Entry], filter: AtlasFilter) -> Set<String> {
+        guard filter.isActive else { return visitedCodes(items: items) }
+        return Set(filter.apply(to: entries).compactMap { $0.item?.countryCode?.uppercased() })
+    }
+
+    /// The years there are entries in, newest first, for the filter's year pickers.
+    static func years(of entries: [Entry], calendar: Calendar = .current) -> [Int] {
+        Array(Set(entries.map { calendar.component(.year, from: $0.date) })).sorted(by: >)
+    }
+
     /// Every entry made in `code`, newest first: the country's own stamp and the cafés, films
     /// and so on logged there.
     static func entries(inCountry code: String, from entries: [Entry]) -> [Entry] {
@@ -23,8 +35,10 @@ enum AtlasLogic {
 
     /// The line over the map: how much of the world is inked, or a ghost line before the first
     /// stamp (never a bare "0").
-    static func headline(visited count: Int, worldTotal: Int = DrawerSummary.worldCountries) -> String {
-        guard count > 0 else { return "Your countries will fill with ink here" }
+    static func headline(visited count: Int, isFiltered: Bool = false, worldTotal: Int = DrawerSummary.worldCountries) -> String {
+        guard count > 0 else {
+            return isFiltered ? "Nothing matches these filters" : "Your countries will fill with ink here"
+        }
         return PassportSpreadCard.title(count: count, worldTotal: worldTotal)
     }
 
@@ -54,13 +68,18 @@ enum AtlasLogic {
 
     /// The places to pin in `region`: items with a position and at least one entry, outside the
     /// Countries drawer (a country is ink, not a pin), nearest the middle first.
-    static func pins(items: [Item], in region: AtlasRegion, limit: Int = pinLimit) -> [Item] {
+    static func pins(
+        items: [Item],
+        in region: AtlasRegion,
+        limit: Int = pinLimit,
+        filter: AtlasFilter = AtlasFilter(),
+    ) -> [Item] {
         items
             .compactMap { item -> (item: Item, distance: Double)? in
                 guard
                     item.collection?.kind != .countries,
                     let latitude = item.latitude, let longitude = item.longitude,
-                    !(item.entries ?? []).isEmpty,
+                    hasEntry(item, passing: filter),
                     region.contains(latitude: latitude, longitude: longitude)
                 else { return nil }
                 return (item, region.distance(latitude: latitude, longitude: longitude))
@@ -68,6 +87,12 @@ enum AtlasLogic {
             .sorted { $0.distance < $1.distance }
             .prefix(limit)
             .map(\.item)
+    }
+
+    /// Whether `item` has an entry, one that passes `filter` when it's on.
+    private static func hasEntry(_ item: Item, passing filter: AtlasFilter) -> Bool {
+        let entries = item.entries ?? []
+        return filter.isActive ? entries.contains { filter.matches($0) } : !entries.isEmpty
     }
 
     /// "Savoured 3 times, last 12 Nov 2026" / "Savoured once, 4 Mar 2026" / a ghost line.
