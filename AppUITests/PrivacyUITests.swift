@@ -31,10 +31,11 @@ final class PrivacyUITests: UITestCase {
         delete.tap()
 
         // The first ask, then the second: cancelling the second deletes nothing.
-        let proceed = app.buttons["deleteContinue"]
+        // The system draws a dialog's button twice in the hierarchy; either one taps it.
+        let proceed = app.buttons.matching(identifier: "deleteContinue").firstMatch
         XCTAssertTrue(proceed.waitForExistence(timeout: 5), "No first confirmation")
         proceed.tap()
-        let confirm = app.buttons["deleteConfirm"]
+        let confirm = app.buttons.matching(identifier: "deleteConfirm").firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 5), "No second confirmation")
         attachScreenshot(of: app, named: "delete-all-confirm")
         app.buttons["Cancel"].tap()
