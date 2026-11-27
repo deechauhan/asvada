@@ -26,14 +26,19 @@ struct InkWorld: Sendable {
     /// Width over height of the cropped map.
     let aspectRatio: CGFloat
 
+    /// The top of the cropped map and its height, in Robinson map units.
+    private let top: Double
+    private let height: Double
+
     init(catalog: CountryCatalog) {
         let top = Robinson.project(GeoPoint(longitude: 0, latitude: Self.north)).y
         let bottom = Robinson.project(GeoPoint(longitude: 0, latitude: Self.south)).y
         let height = top - bottom
+        self.top = top
+        self.height = height
         aspectRatio = 2 / height
         func unit(_ point: GeoPoint) -> CGPoint {
-            let projected = Robinson.project(point)
-            return CGPoint(x: (projected.x + 1) / 2, y: (top - projected.y) / height)
+            Self.unit(point, top: top, height: height)
         }
         func path(_ rings: [[GeoPoint]]) -> Path {
             var path = Path()
@@ -61,6 +66,16 @@ struct InkWorld: Sendable {
     }
 
     private let byCode: [String: Shape]
+
+    /// Where `point` sits on the map, in unit space (outside 0...1 above or below the crop).
+    func unit(_ point: GeoPoint) -> CGPoint {
+        Self.unit(point, top: top, height: height)
+    }
+
+    private static func unit(_ point: GeoPoint, top: Double, height: Double) -> CGPoint {
+        let projected = Robinson.project(point)
+        return CGPoint(x: (projected.x + 1) / 2, y: (top - projected.y) / height)
+    }
 
     /// The drawn shape for ISO code `code`, if the map draws it.
     func shape(code: String) -> Shape? {
