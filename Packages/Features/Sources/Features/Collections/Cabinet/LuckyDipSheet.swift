@@ -33,7 +33,6 @@ struct LuckyDipSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Palette.background.color)
         .presentationDetents([.medium, .large])
-        .accessibilityIdentifier("luckyDip")
     }
 
     /// Face down: the aubergine back with the cream ā and a saffron macron.

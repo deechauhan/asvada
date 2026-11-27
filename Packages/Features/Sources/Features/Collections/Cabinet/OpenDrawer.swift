@@ -90,7 +90,6 @@ struct OpenDrawer: View {
         .background(Palette.background.color)
         .navigationTitle(collection.name)
         .navigationBarTitleDisplayModeInline()
-        .accessibilityIdentifier("openDrawer")
         .toolbar { toolbar }
         .navigationDestination(item: $lifted) { item in
             ItemDetailScreen(item: item)

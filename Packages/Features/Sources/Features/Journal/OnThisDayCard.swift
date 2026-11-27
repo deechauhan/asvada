@@ -21,7 +21,6 @@ struct OnThisDayCard: View {
         }
         .rotation3DEffect(.degrees(isFaceUp && !reduceMotion ? 180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
         .paperTilt(-1)
-        .accessibilityIdentifier("onThisDayCard")
     }
 
     /// Face down: the paper back with a saffron macron and a question.
