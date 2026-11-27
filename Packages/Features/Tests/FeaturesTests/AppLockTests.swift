@@ -33,8 +33,8 @@ struct AppLockTests {
         clock: WindableClock = WindableClock(),
     ) -> AppLockModel {
         let defaults = UserDefaults(suiteName: "AppLockTests-\(UUID().uuidString)") ?? .standard
-        defaults.set(enabled, forKey: AppLockModel.enabledKey)
-        defaults.set(delay.rawValue, forKey: AppLockModel.delayKey)
+        defaults.set(enabled, forKey: AppLockDefaults.enabledKey)
+        defaults.set(delay.rawValue, forKey: AppLockDefaults.delayKey)
         return AppLockModel(authenticator: authenticator, defaults: defaults, now: { clock.now })
     }
 

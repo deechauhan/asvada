@@ -85,9 +85,6 @@ struct FakeAuthenticator: Authenticating {
 @MainActor
 @Observable
 final class AppLockModel {
-    static let enabledKey = "appLock.enabled"
-    static let delayKey = "appLock.delay"
-
     enum EnableResult: Equatable {
         case enabled
         /// The phone has no passcode, so there's nothing to unlock with.
@@ -109,10 +106,10 @@ final class AppLockModel {
         self.authenticator = authenticator
         self.defaults = defaults
         self.now = now
-        let enabled = defaults.bool(forKey: Self.enabledKey)
+        let enabled = defaults.bool(forKey: AppLockDefaults.enabledKey)
         isEnabled = enabled
         isLocked = enabled
-        delay = AppLockDelay(rawValue: defaults.integer(forKey: Self.delayKey)) ?? .immediately
+        delay = AppLockDelay(rawValue: defaults.integer(forKey: AppLockDefaults.delayKey)) ?? .immediately
     }
 
     /// The model the app uses: the system's authenticator, or the test one under `-fakeAuthenticator`.
@@ -163,7 +160,7 @@ final class AppLockModel {
         guard await authenticator.authenticate(reason: "Turn on the lock for Asvada") else { return .cancelled }
         isEnabled = true
         isLocked = false
-        defaults.set(true, forKey: Self.enabledKey)
+        defaults.set(true, forKey: AppLockDefaults.enabledKey)
         return .enabled
     }
 
@@ -171,19 +168,22 @@ final class AppLockModel {
         isEnabled = false
         isLocked = false
         backgroundedAt = nil
-        defaults.set(false, forKey: Self.enabledKey)
+        defaults.set(false, forKey: AppLockDefaults.enabledKey)
     }
 
     func setDelay(_ delay: AppLockDelay) {
         self.delay = delay
-        defaults.set(delay.rawValue, forKey: Self.delayKey)
+        defaults.set(delay.rawValue, forKey: AppLockDefaults.delayKey)
     }
 }
 
-/// Clears the lock's stored choices (UI tests start with `-resetState`).
+/// The lock's stored choices. UI tests start with `-resetState`, which clears them.
 public enum AppLockDefaults {
+    static let enabledKey = "appLock.enabled"
+    static let delayKey = "appLock.delay"
+
     public static func reset(_ defaults: UserDefaults = .standard) {
-        defaults.removeObject(forKey: AppLockModel.enabledKey)
-        defaults.removeObject(forKey: AppLockModel.delayKey)
+        defaults.removeObject(forKey: enabledKey)
+        defaults.removeObject(forKey: delayKey)
     }
 }
