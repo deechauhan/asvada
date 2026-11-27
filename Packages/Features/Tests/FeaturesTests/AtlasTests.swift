@@ -327,3 +327,39 @@ struct AtlasFilterTests {
         #expect(AtlasLogic.headline(visited: 0, isFiltered: false) == "Your countries will fill with ink here")
     }
 }
+
+// MARK: - Performance (#53)
+
+@MainActor
+struct AtlasRingCacheTests {
+    @Test func aCountrysRingsAreBuiltOnceAndKept() throws {
+        AtlasRingCache.clear()
+        let japan = try #require(CountryCatalog.shared.country(code: "JP"))
+        #expect(AtlasRingCache.countriesHeld == 0)
+        let first = AtlasRingCache.rings(of: japan)
+        #expect(AtlasRingCache.countriesHeld == 1)
+        let second = AtlasRingCache.rings(of: japan)
+        #expect(AtlasRingCache.countriesHeld == 1)
+        #expect(first.count == second.count)
+        #expect(first.first?.first?.latitude == second.first?.first?.latitude)
+        #expect(first.count == AtlasLogic.rings(of: japan).count)
+        AtlasRingCache.clear()
+        #expect(AtlasRingCache.countriesHeld == 0)
+    }
+
+    @Test func fiveThousandPinsAreFilteredToTheViewAndCapped() throws {
+        let container = try AsvadaStore.makeContainer(.inMemory)
+        let repository = Repository(context: container.mainContext)
+        try BuiltInCollections.seedIfNeeded(in: repository.context)
+        try PreviewData.addStressPlaces(5000, to: repository)
+        let items = try repository.context.fetch(FetchDescriptor<Item>())
+        // The world is in view, so pins aren't asked for; London on its own is a crowd.
+        let london = AtlasRegion(centreLatitude: 51.5, centreLongitude: -0.1, latitudeSpan: 1.5, longitudeSpan: 2)
+        let pins = AtlasLogic.pins(items: items, in: london)
+        #expect(pins.count == AtlasLogic.pinLimit)
+        #expect(pins.allSatisfy { london.contains(latitude: $0.latitude ?? 0, longitude: $0.longitude ?? 0) })
+        // Zoomed in on one street, there's room for them all.
+        let street = AtlasRegion(centreLatitude: 51.5, centreLongitude: -0.1, latitudeSpan: 0.02, longitudeSpan: 0.03)
+        #expect(AtlasLogic.pins(items: items, in: street).count < AtlasLogic.pinLimit)
+    }
+}
