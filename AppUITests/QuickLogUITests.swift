@@ -286,4 +286,3 @@ final class QuickLogUITests: UITestCase {
         XCTAssertTrue(app.descendants(matching: .any)["savouredToast"].waitForExistence(timeout: 10))
     }
 }
-
