@@ -64,7 +64,8 @@ struct PosterTests {
         try visit("Last year", at: porto, country: "PT", on: date(2025, 9))
         let subject = try PosterSubject(year: 2026, collections: repository.collections(), calendar: utc)
         #expect(subject.title == "2026")
-        #expect(subject.subtitle == "2 keepsakes · 2 countries")
+        // Each café visit also stamps its country in Countries, so two visits are four keepsakes.
+        #expect(subject.subtitle == "4 keepsakes · 2 countries")
         #expect(subject.points.count == 2)
     }
 
