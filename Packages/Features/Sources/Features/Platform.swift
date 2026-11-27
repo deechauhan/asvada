@@ -24,6 +24,11 @@ import SwiftUI
         func decimalKeyboard() -> some View {
             keyboardType(.decimalPad)
         }
+
+        /// Swipeable pages with dots.
+        func pagedTabStyle() -> some View {
+            tabViewStyle(.page(indexDisplayMode: .always))
+        }
     }
 
 #else
@@ -45,6 +50,11 @@ import SwiftUI
 
         /// No-op on macOS.
         func decimalKeyboard() -> some View {
+            self
+        }
+
+        /// No-op on macOS.
+        func pagedTabStyle() -> some View {
             self
         }
     }

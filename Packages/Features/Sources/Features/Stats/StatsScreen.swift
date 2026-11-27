@@ -16,6 +16,18 @@ struct StatsScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.xl) {
                 tiles(stats)
+                NavigationLink {
+                    YearInReviewScreen()
+                } label: {
+                    Label("Your year, as a Tasting Menu", systemImage: "menucard")
+                        .font(.system(.body, design: .serif, weight: .semibold))
+                        .foregroundStyle(Palette.brand.color)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(Spacing.medium)
+                        .background(Palette.surface.color, in: RoundedRectangle(cornerRadius: Radius.medium))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("yearInReviewLink")
                 MonthsChart(months: stats.months)
                 ForEach(stats.drawers.filter { $0.items > 0 }) { drawer in
                     DrawerStatsCard(stats: drawer)
