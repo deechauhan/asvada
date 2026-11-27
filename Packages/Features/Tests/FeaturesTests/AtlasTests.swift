@@ -109,3 +109,85 @@ struct AtlasTests {
         #expect(AtlasLogic.emptyLine(for: portugal, isVisited: false).contains("Not stamped yet"))
     }
 }
+
+// MARK: - Pins (#51)
+
+@MainActor
+struct AtlasPinTests {
+    private func place(
+        _ name: String,
+        at latitude: Double,
+        _ longitude: Double,
+        entries: Int = 1,
+        in collection: ExperienceCollection,
+    ) -> Item {
+        let item = Item(name: name)
+        item.latitude = latitude
+        item.longitude = longitude
+        item.collection = collection
+        item.entries = (0 ..< entries).map { _ in Entry() }
+        return item
+    }
+
+    private let london = AtlasRegion(centreLatitude: 51.5, centreLongitude: -0.1, latitudeSpan: 1, longitudeSpan: 1.5)
+
+    private func cafes() -> ExperienceCollection {
+        ExperienceCollection(name: "Cafés", kind: .cafes, ratingMode: .ranked)
+    }
+
+    @Test func pinsOnlyShowOnceZoomedIn() {
+        #expect(!AtlasLogic.showsPins(latitudeSpan: 110))
+        #expect(!AtlasLogic.showsPins(latitudeSpan: 30.1))
+        #expect(AtlasLogic.showsPins(latitudeSpan: 30))
+        #expect(AtlasLogic.showsPins(latitudeSpan: 0.05))
+        #expect(!AtlasLogic.showsPins(latitudeSpan: 0))
+    }
+
+    @Test func aRegionHoldsWhatIsInViewIncludingAcrossTheDateLine() {
+        #expect(london.contains(latitude: 51.5, longitude: -0.1))
+        #expect(!london.contains(latitude: 53, longitude: -0.1))
+        #expect(!london.contains(latitude: 51.5, longitude: 2))
+        let fiji = AtlasRegion(centreLatitude: -17, centreLongitude: 179.5, latitudeSpan: 4, longitudeSpan: 4)
+        #expect(fiji.contains(latitude: -17, longitude: -179.5))
+        #expect(!fiji.contains(latitude: -17, longitude: -170))
+    }
+
+    @Test func aPinNeedsAPositionAndAnEntryAndIsNeverACountry() {
+        let cafes = cafes()
+        let countries = ExperienceCollection(name: "Countries", kind: .countries, ratingMode: .checklist)
+        let shown = place("Monmouth", at: 51.51, -0.09, in: cafes)
+        let unvisited = place("Wishlist", at: 51.52, -0.1, entries: 0, in: cafes)
+        let stamp = place("United Kingdom", at: 51.5, -0.1, in: countries)
+        let unplaced = Item(name: "No position")
+        unplaced.collection = cafes
+        unplaced.entries = [Entry()]
+        let far = place("Paris café", at: 48.85, 2.35, in: cafes)
+        let found = AtlasLogic.pins(items: [shown, unvisited, stamp, unplaced, far], in: london)
+        #expect(found.map(\.name) == ["Monmouth"])
+    }
+
+    @Test func theNearestPinsComeFirstAndTheListIsCapped() {
+        let cafes = cafes()
+        let near = place("Near", at: 51.5, -0.1, in: cafes)
+        let middling = place("Middling", at: 51.6, -0.2, in: cafes)
+        let edge = place("Edge", at: 51.95, 0.6, in: cafes)
+        let everything = [edge, middling, near]
+        #expect(AtlasLogic.pins(items: everything, in: london).map(\.name) == ["Near", "Middling", "Edge"])
+        #expect(AtlasLogic.pins(items: everything, in: london, limit: 2).map(\.name) == ["Near", "Middling"])
+    }
+
+    @Test func theCardSaysHowOftenAndWhen() {
+        let when = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        let text = when.formatted(date: .abbreviated, time: .omitted)
+        #expect(AtlasLogic.visitLine(entryDates: []) == "Nothing savoured here yet.")
+        #expect(AtlasLogic.visitLine(entryDates: [when]) == "Savoured once, \(text)")
+        let earlier = when.addingTimeInterval(-86400 * 30)
+        #expect(AtlasLogic.visitLine(entryDates: [when, earlier]) == "Savoured 2 times, last \(text)")
+    }
+
+    @Test func eachSheetHasItsOwnId() {
+        let id = UUID()
+        #expect(AtlasSheet.country("PT").id != AtlasSheet.place(id).id)
+        #expect(AtlasSheet.place(id) == AtlasSheet.place(id))
+    }
+}
