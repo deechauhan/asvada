@@ -15,7 +15,8 @@ struct AsvadaApp: App {
     /// opens the country picker on its own, `-skipOnboarding` keeps first-launch onboarding away,
     /// `-cabinetMidRoll` stops the turning cabinet between two drawers (for screenshots),
     /// `-stressItems N` adds N ranked cafés (with `-inMemoryStore`, for performance runs),
-    /// `-samplePlaces` searches a fixed set of London places instead of Apple Maps.
+    /// `-samplePlaces` searches a fixed set of London places instead of Apple Maps,
+    /// `-fakeAuthenticator` passes the app lock without Face ID (the simulator has none).
     private let arguments = ProcessInfo.processInfo.arguments
     private let container: ModelContainer
 
@@ -25,6 +26,7 @@ struct AsvadaApp: App {
             UserDefaults.standard.removeObject(forKey: "seal.hasLearnedHold")
             UserDefaults.standard.removeObject(forKey: "onboarding.completed")
             UserDefaults.standard.removeObject(forKey: "cabinet.front")
+            AppLockDefaults.reset()
         }
         do {
             container = try AsvadaStore.makeContainer(arguments.contains("-inMemoryStore") ? .inMemory : .standard)
