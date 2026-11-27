@@ -19,6 +19,8 @@ struct TurningCabinet: View {
     var actions: CabinetActions
     /// Where opened drawers zoom out of.
     let namespace: Namespace.ID
+    /// Bumped to spin the cabinet for a lucky dip (#159), as the *Lucky dip* button does.
+    var luckyDips = 0
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var drum = CabinetDrum(count: 0)
@@ -32,6 +34,9 @@ struct TurningCabinet: View {
     @State private var clunks = 0
     /// How wide the cabinet is, for sizing the drawer in focus.
     @State private var width = 0.0
+    /// The last keepsake the lucky dip handed out, so it never comes up twice in a row.
+    @State private var lastDip: UUID?
+    @State private var isSpinning = false
     @AppStorage("cabinet.hintedPull") private var hintedPull = false
 
     /// How far the front drawer must be pulled (points) before it opens.
@@ -69,6 +74,7 @@ struct TurningCabinet: View {
         }
         .onAppear(perform: syncWithCollections)
         .onChange(of: faces.map(\.id)) { _, _ in syncWithCollections() }
+        .onChange(of: luckyDips) { _, _ in spin() }
     }
 
     // MARK: - The drum
@@ -168,7 +174,12 @@ struct TurningCabinet: View {
                 switch dragAxis {
                 case .horizontal:
                     let velocity = CabinetDrum.releaseVelocity(value.velocity.width, restedFor: rest)
-                    settle(to: drum.restingPosition(afterReleaseAt: velocity))
+                    // A hard fling spins the cabinet for a lucky dip.
+                    if abs(velocity) > LuckyDip.flingSpeed {
+                        spin()
+                    } else {
+                        settle(to: drum.restingPosition(afterReleaseAt: velocity))
+                    }
                 case .vertical:
                     endPull(velocity: CabinetDrum.releaseVelocity(value.velocity.height, restedFor: rest))
                 case nil: break
@@ -230,6 +241,56 @@ struct TurningCabinet: View {
             ajar = front
         }
         hintPullOnce()
+    }
+
+    // MARK: - Lucky dip
+
+    /// Spins the cabinet two turns and more, clicking slower and slower, to land on the drawer
+    /// of a keepsake picked by `LuckyDip`; then hands that keepsake over face down. Under Reduce
+    /// Motion there's no spin: the drawer comes straight to the front.
+    private func spin() {
+        guard !isSpinning else { return }
+        var generator = SystemRandomNumberGenerator()
+        guard
+            let item = LuckyDip.pick(from: collections, last: lastDip, using: &generator),
+            let collection = item.collection,
+            let index = faces.firstIndex(where: { $0.id == collection.id.uuidString })
+        else { return }
+        lastDip = item.id
+        ajar = nil
+        if reduceMotion {
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                drum.position = drum.position(turningTo: index)
+            }
+            landed(on: item)
+            return
+        }
+        let target = drum.wraps
+            ? LuckyDip.spinTarget(from: drum.position, to: index, count: faces.count)
+            : drum.position(turningTo: index)
+        let steps = Int(abs(target - drum.position.rounded()))
+        for time in LuckyDip.detentTimes(steps: steps, duration: Motion.spinDuration(distance: steps)) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(time))
+                detents += 1
+            }
+        }
+        isSpinning = true
+        withAnimation(Motion.spin(distance: steps)) {
+            drum.position = target
+        } completion: {
+            isSpinning = false
+            landed(on: item)
+        }
+    }
+
+    private func landed(on item: Item) {
+        clunks += 1
+        settled()
+        AccessibilityNotification.Announcement(LuckyDip.announcement(for: item)).post()
+        actions.luckyDip(item)
     }
 
     private func turn(to index: Int) {
@@ -308,6 +369,8 @@ struct CabinetActions {
     var move: (ExperienceCollection, Int) -> Void
     /// Pulls out what a drawer holds from this day in earlier years (#69).
     var onThisDay: (ExperienceCollection) -> Void = { _ in }
+    /// Hands over the keepsake a lucky dip landed on, face down (#159).
+    var luckyDip: (Item) -> Void = { _ in }
 }
 
 /// Places one face on the drum. Animatable in the drum's position, so a spring carries every
@@ -371,79 +434,5 @@ private struct KnobRail: View {
         .animation(.snappy, value: front)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("knobRail")
-    }
-}
-
-/// What VoiceOver gets instead of the 3D drum: the drawers as a plain ordered list, each with its
-/// stat and the drawer actions.
-private struct CabinetAccessibleList: View {
-    let collections: [ExperienceCollection]
-    let actions: CabinetActions
-
-    var body: some View {
-        VStack {
-            ForEach(Array(collections.enumerated()), id: \.element.id) { index, collection in
-                AccessibleDrawer(collection: collection, index: index, actions: actions)
-            }
-            Button("New collection", action: actions.create)
-                .accessibilityIdentifier("newCollectionDrawer")
-        }
-    }
-}
-
-/// One drawer in the VoiceOver list: a button that opens it, with its stat and drawer actions.
-private struct AccessibleDrawer: View {
-    let collection: ExperienceCollection
-    let index: Int
-    let actions: CabinetActions
-
-    private var label: String {
-        "\(collection.name) drawer"
-    }
-
-    private var canShare: Bool {
-        ShareContent(collection: collection) != nil
-    }
-
-    var body: some View {
-        Button(label, action: open)
-            .accessibilityValue(collection.drawerSummary.spoken)
-            .accessibilityIdentifier("collection-\(collection.kind.rawValue)-\(collection.name)")
-            .accessibilityAction(named: "Customise", customise)
-            .accessibilityAction(named: "Share", share)
-            .accessibilityAction(named: "Move earlier", moveEarlier)
-            .accessibilityAction(named: "Move later", moveLater)
-            .accessibilityAction(named: "Put away", putAway)
-            .accessibilityActions {
-                if !collection.anniversaries().isEmpty {
-                    Button("On this day") { actions.onThisDay(collection) }
-                }
-            }
-    }
-
-    private func open() {
-        actions.open(collection)
-    }
-
-    private func customise() {
-        actions.customise(collection)
-    }
-
-    private func share() {
-        if canShare {
-            actions.share(collection)
-        }
-    }
-
-    private func moveEarlier() {
-        actions.move(collection, index - 1)
-    }
-
-    private func moveLater() {
-        actions.move(collection, index + 1)
-    }
-
-    private func putAway() {
-        actions.hide(collection)
     }
 }

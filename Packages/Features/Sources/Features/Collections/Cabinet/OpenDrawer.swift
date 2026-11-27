@@ -32,6 +32,15 @@ struct OpenDrawer: View {
     /// Cards morph between the riffle and the spread.
     @Namespace private var morph
 
+    /// Opens the drawer with its riffle at `startItem`'s card (from a lucky dip), or at the front.
+    init(collection: ExperienceCollection, startItem: Item? = nil) {
+        self.collection = collection
+        let start = startItem.flatMap {
+            RiffleIndex.make(items: collection.items ?? [], mode: collection.ratingMode).index(of: $0)
+        }
+        _front = State(initialValue: start ?? 0)
+    }
+
     private var items: [Item] {
         ExperienceCollection.drawerOrder(collection.items ?? [], mode: collection.ratingMode)
     }
