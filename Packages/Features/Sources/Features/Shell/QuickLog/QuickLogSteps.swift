@@ -185,10 +185,18 @@ struct SealStep: View {
                     },
                 )
             }
-            SealButton(action: onSeal)
-            Text("Hold the ā to seal it")
-                .font(.caption)
-                .foregroundStyle(Palette.textSecondary.color)
+            if collection.kind == .films {
+                // Films tear their stub along the perforation instead of holding the ā (#121).
+                TearToSeal(action: onSeal)
+                Text("Tear along the line to seal it")
+                    .font(.caption)
+                    .foregroundStyle(Palette.textSecondary.color)
+            } else {
+                SealButton(action: onSeal)
+                Text("Hold the ā to seal it")
+                    .font(.caption)
+                    .foregroundStyle(Palette.textSecondary.color)
+            }
         }
     }
 }
