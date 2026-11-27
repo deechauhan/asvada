@@ -2,11 +2,18 @@ import DesignSystem
 import Geo
 import SwiftUI
 
-/// The stamp pad (docs/design/INTERACTION.md §6, flat map): stamp countries by aiming a rubber
-/// stamp at the ink map, by tapping through a strip of unstamped stamps, or by typing a name
-/// and pressing Return. Each stamp thunks, blooms ink from where it hit, lands in the passport
-/// strip and rolls the counter. Long-press a stamp in the passport to wash it off, with Undo.
+/// The stamp pad (docs/design/INTERACTION.md §6): stamp countries by spinning the ink globe and
+/// stamping the one in the ring, by aiming a rubber stamp at the flat map it unrolls into, by
+/// tapping through a strip of unstamped stamps, or by typing a name and pressing Return. Each
+/// stamp thunks, blooms ink from where it hit, lands in the passport strip and rolls the counter.
+/// Long-press a stamp in the passport to wash it off, with Undo.
 struct StampPad: View {
+    /// The globe, or the flat map it unrolls into.
+    enum Surface {
+        case globe
+        case flat
+    }
+
     @Binding var stamped: Set<String>
     /// Whether the pad shows its own rolling "23 countries · 12% of the world". The Countries
     /// drawer turns it off: its passport panel already leads with the same count and a ring.
@@ -25,6 +32,13 @@ struct StampPad: View {
     @State private var stampsMade = 0
     @State private var washedOff: String?
     @State private var showsList = false
+    @State private var surface = Surface.globe
+    @State private var globe = GlobeMovement.resting(GlobeCamera())
+    @State private var globeFocus: String?
+    /// 0 is the globe, 1 the flat map; in between, the unroll morph.
+    @State private var unroll = 0.0
+    @State private var globeBloom: String?
+    @State private var globeBloomProgress = 0.0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let world = InkWorld.shared
@@ -82,7 +96,39 @@ struct StampPad: View {
 
     // MARK: - The map
 
+    @ViewBuilder
     private var map: some View {
+        switch surface {
+        case .globe:
+            InkGlobe(
+                stamped: stamped,
+                movement: $globe,
+                focus: $globeFocus,
+                bloom: globeBloom,
+                bloomProgress: globeBloomProgress,
+                unroll: $unroll,
+                onStamp: { stamp($0, at: nil) },
+                onUnrolled: showFlatMap,
+            )
+            .aspectRatio(GlobeLayout.aspect(unroll: unroll), contentMode: .fit)
+            .transition(.opacity)
+        case .flat:
+            flatMap
+                .overlay(alignment: .topTrailing) {
+                    GlobeButton(title: "Roll up", systemImage: "globe.europe.africa", identifier: "rollUpGlobe", action: rollUp)
+                        .accessibilityHint("Rolls the map back up into the globe")
+                }
+                // Spreading two fingers rolls it back up.
+                .simultaneousGesture(MagnifyGesture().onEnded { value in
+                    if value.magnification > 1.25 {
+                        rollUp()
+                    }
+                })
+                .transition(.opacity)
+        }
+    }
+
+    private var flatMap: some View {
         InkWorldMap(visited: stamped, unInked: bloom?.code) { code in
             stamp(code, at: nil)
         }
@@ -199,11 +245,49 @@ struct StampPad: View {
         catalog.country(code: aim.code).map { StampPadLogic.aimLabel($0, stamped: stamped) } ?? aim.code
     }
 
-    /// Flies the reticle to the best match for `query`.
+    /// Flies the reticle (or turns the globe) to the best match for `query`.
     private func fly(to query: String) {
         guard let country = StampPadLogic.flyTarget(for: query), let shape = world.shape(code: country.code) else { return }
+        turnGlobe(to: country.code)
         withAnimation(Motion.animation(.easeInOut(duration: 0.75), reduceMotion: reduceMotion)) {
             aim = StampAim(code: country.code, point: shape.anchor)
+        }
+    }
+
+    /// Turns the globe to put `code` in the ring (a cut under Reduce Motion).
+    private func turnGlobe(to code: String) {
+        guard surface == .globe,
+              let flight = GlobeMovement.flight(from: globe, toCountry: code, at: .now, reduceMotion: reduceMotion)
+        else { return }
+        globeFocus = code
+        globe = flight
+    }
+
+    /// The globe has unrolled: swap in the flat map, which looks the same at that moment.
+    private func showFlatMap() {
+        withAnimation(reduceMotion ? Motion.crossfade : nil) {
+            surface = .flat
+            unroll = 1
+        }
+    }
+
+    /// Rolls the flat map back up into the globe: the morph in reverse, or a crossfade under
+    /// Reduce Motion.
+    private func rollUp() {
+        guard surface == .flat else { return }
+        if reduceMotion {
+            withAnimation(Motion.crossfade) {
+                surface = .globe
+                unroll = 0
+            }
+            return
+        }
+        surface = .globe
+        unroll = 1
+        // The globe appears unrolled first, then rolls up.
+        Task { @MainActor in
+            await Task.yield()
+            withAnimation(.easeInOut(duration: GlobeMotion.unrollDuration)) { unroll = 0 }
         }
     }
 
@@ -220,14 +304,30 @@ struct StampPad: View {
         if let point {
             aim = StampAim(code: code, point: point)
         }
+        turnGlobe(to: code)
         guard !stamped.contains(code) else { return }
-        if let point {
+        if surface == .globe {
+            bloomOnGlobe(code)
+        } else if let point {
             bloom = InkBloom(code: code, origin: point)
         }
         latest = code
         withAnimation(Motion.animation(.snappy, reduceMotion: reduceMotion)) {
             stamped.insert(code)
             stampsMade += 1
+        }
+    }
+
+    /// Ink floods the country on the globe from its middle, as on the flat map.
+    private func bloomOnGlobe(_ code: String) {
+        globeBloom = code
+        globeBloomProgress = 0
+        withAnimation(reduceMotion ? Motion.inkBloomFill : Motion.inkBloomRing) {
+            globeBloomProgress = 1
+        } completion: {
+            if globeBloom == code {
+                globeBloom = nil
+            }
         }
     }
 

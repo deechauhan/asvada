@@ -21,13 +21,14 @@ final class OnboardingUITests: UITestCase {
         australia.tap()
         let counter = app.staticTexts["stampCounter"]
         XCTAssertEqual(counter.label, "2 countries · 1% of the world")
-        let map = app.descendants(matching: .any)["inkWorldMap"]
-        XCTAssertEqual(map.label, "World map, 2 countries inked: Australia and Japan")
+        XCTAssertEqual(app.descendants(matching: .any)["inkGlobe"].label, "World map, 2 countries inked: Australia and Japan")
         XCTAssertTrue(australia.isSelected)
 
-        // Carry the rubber stamp to Brazil and lift: its foot sits 44 pt above the finger.
+        // Unroll the globe into the flat map, then carry the rubber stamp to Brazil and lift:
+        // its foot sits 44 pt above the finger.
+        let map = unrollTheGlobe(app)
         let rubberStamp = app.buttons["rubberStamp"]
-        XCTAssertTrue(rubberStamp.exists)
+        XCTAssertTrue(rubberStamp.waitForExistence(timeout: 5))
         let brazil = map.coordinate(withNormalizedOffset: CGVector(dx: 0.36, dy: 0))
             .withOffset(CGVector(dx: 0, dy: map.frame.height * 0.65 + 44))
         rubberStamp.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
@@ -77,5 +78,15 @@ final class OnboardingUITests: UITestCase {
             skip.tap()
         }
         XCTAssertTrue(app.navigationBars["Journal"].waitForExistence(timeout: 10))
+    }
+
+    /// Taps Unroll and waits for the flat ink map the globe unrolls into.
+    @MainActor
+    private func unrollTheGlobe(_ app: XCUIApplication) -> XCUIElement {
+        app.buttons["unrollGlobe"].tap()
+        let map = app.descendants(matching: .any)["inkWorldMap"]
+        XCTAssertTrue(map.waitForExistence(timeout: 5))
+        XCTAssertEqual(map.label, "World map, 2 countries inked: Australia and Japan")
+        return map
     }
 }

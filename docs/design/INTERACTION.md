@@ -351,6 +351,11 @@ All of these sit under the 15 s acceptance criterion in #31.
   - Hit-test by inverse-projecting the touch to latitude/longitude, then reuse `InkWorld.code(atUnit:)` via the Robinson projection.
   - A `TimelineView(.animation(paused:))` runs only while spinning.
   - The unroll morph interpolates per-point between the orthographic and Robinson positions. The back hemisphere fades in.
+  - *As built (#158, `Countries/Globe/`):*
+    - Dragging pins the place under the finger exactly for a north-up camera, and falls back to a versor turn near the rim.
+    - The horizon clip pushes hidden points out to the rim. A ring that holds the far side gets the rim added and is filled even-odd.
+    - Outlines are thinned to 0.3° at rest (about 20k points) and to 1° while moving (about 9k).
+    - The camera is a pure function of time (rest, coast `e^(−2.4t)`, or fly), so a `TimelineView` draws only while it moves.
 
 ### Accessibility and fallbacks
 - **VoiceOver.** The globe stays one summarised element, as `InkWorldMap` is today ("World map, 8 countries inked: …"). The accessible path is search plus the continent strips (buttons with `.isSelected`), or the representation list from `CountryPicker`. There's a "Stamp" action.

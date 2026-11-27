@@ -42,14 +42,16 @@ struct RubberStampHandle: View {
     }
 }
 
-/// The dashed ring where the stamp will land, locked on a country, with its name on glass.
+/// The ring where the stamp will land, on a country, with its name on glass.
 struct StampReticle: View {
     let label: String
+    /// Solid once it has locked on a country (the globe, at rest); dashed while it's moving.
+    var isLocked = false
 
     var body: some View {
         VStack(spacing: Spacing.xxs) {
             Circle()
-                .strokeBorder(Palette.brand.color, style: StrokeStyle(lineWidth: 2, dash: [5, 3]))
+                .strokeBorder(Palette.brand.color, style: StrokeStyle(lineWidth: 2, dash: isLocked ? [] : [5, 3]))
                 .frame(width: 30, height: 30)
             Text(label)
                 .typeToken(.caption)
