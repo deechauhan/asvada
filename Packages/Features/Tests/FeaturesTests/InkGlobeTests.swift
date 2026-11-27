@@ -225,9 +225,11 @@ struct InkGlobeTests {
         let renderer = GlobeRenderer(projection: projection(180, 0), moving: false)
         let ring = try #require(InkGlobeWorld.ring(box(west: 60, east: 120, south: -20, north: 20), flat: .shared))
         let path = try #require(renderer.outline(ring))
-        let front = try #require(projection(180, 0).screen(of: GeoPoint(longitude: 110, latitude: 0)))
+        // Probes sit between the box's 5° vertices: a ray through a vertex is a tie for Path.contains.
+        let front = try #require(projection(180, 0).screen(of: GeoPoint(longitude: 110, latitude: 2.5)))
+        let middle = try #require(projection(180, 0).screen(of: GeoPoint(longitude: 180, latitude: 2.5)))
         #expect(path.contains(front, eoFill: true))
-        #expect(!path.contains(centre, eoFill: true))
+        #expect(!path.contains(middle, eoFill: true))
     }
 
     @Test func anOutlineHoldingTheFarSideIsTurnedInsideOut() throws {
@@ -236,10 +238,11 @@ struct InkGlobeTests {
         let renderer = GlobeRenderer(projection: globe, moving: false)
         let ring = try #require(InkGlobeWorld.ring(box(west: -100, east: 100, south: -50, north: 50), flat: .shared))
         let path = try #require(renderer.outline(ring))
-        #expect(!path.contains(centre, eoFill: true))
-        #expect(try path.contains(#require(globe.screen(of: GeoPoint(longitude: 95, latitude: 0))), eoFill: true))
-        #expect(try path.contains(#require(globe.screen(of: GeoPoint(longitude: -95, latitude: 10))), eoFill: true))
-        #expect(try !path.contains(#require(globe.screen(of: GeoPoint(longitude: 150, latitude: 0))), eoFill: true))
+        // Probes sit between the box's 5° vertices, as above.
+        #expect(try !path.contains(#require(globe.screen(of: GeoPoint(longitude: 180, latitude: 2.5))), eoFill: true))
+        #expect(try path.contains(#require(globe.screen(of: GeoPoint(longitude: 95, latitude: 2.5))), eoFill: true))
+        #expect(try path.contains(#require(globe.screen(of: GeoPoint(longitude: -95, latitude: 12.5))), eoFill: true))
+        #expect(try !path.contains(#require(globe.screen(of: GeoPoint(longitude: 150, latitude: 2.5))), eoFill: true))
     }
 
     // MARK: - Unrolling
