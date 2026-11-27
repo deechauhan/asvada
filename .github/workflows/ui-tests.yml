@@ -45,6 +45,13 @@ jobs:
               scripts/ci/pick-simulator.sh > build/simulator-udid
               xcrun simctl boot "$(cat build/simulator-udid)" || true
               xcrun simctl bootstatus "$(cat build/simulator-udid)" -b
+              # A fresh simulator shows a "slide to type" tip the first time the keyboard comes
+              # up, and the tip swallows the next tap (#242). Mark it seen, and turn
+              # slide-to-type off. Best effort: these never fail the boot.
+              for key in DidShowContinuousPathIntroduction:true KeyboardContinuousPathEnabled:false; do
+                xcrun simctl spawn "$(cat build/simulator-udid)" defaults write com.apple.Preferences \
+                  "${key%%:*}" -bool "${key##*:}" || true
+              done
             )
             echo $? > build/simulator-status
           ' > build/simulator.log 2>&1 &
