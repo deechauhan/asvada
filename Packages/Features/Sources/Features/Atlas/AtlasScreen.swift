@@ -11,7 +11,9 @@ import SwiftUI
 /// ink is there offline; the map underneath is Apple Maps, muted so the ink is the loudest thing.
 struct AtlasScreen: View {
     @Query private var items: [Item]
-    @State private var selection: AtlasSelection?
+    @State private var sheet: AtlasSheet?
+    /// What the map shows now; pins appear once it's zoomed in.
+    @State private var region: AtlasRegion?
     @State private var position = MapCameraPosition.region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 25, longitude: 10),
@@ -23,6 +25,12 @@ struct AtlasScreen: View {
 
     private var visited: Set<String> {
         AtlasLogic.visitedCodes(items: items)
+    }
+
+    /// The places to pin: none while the world is in view.
+    private var pins: [Item] {
+        guard let region, AtlasLogic.showsPins(latitudeSpan: region.latitudeSpan) else { return [] }
+        return AtlasLogic.pins(items: items, in: region)
     }
 
     var body: some View {
@@ -46,13 +54,29 @@ struct AtlasScreen: View {
                         }
                     }
                 }
+                ForEach(pins, id: \.id) { item in
+                    if let latitude = item.latitude, let longitude = item.longitude {
+                        Annotation(item.name, coordinate: CLLocationCoordinate2D(latitude: latitude, longitude: longitude)) {
+                            Button {
+                                sheet = .place(item.id)
+                            } label: {
+                                AtlasPinView(item: item)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .annotationTitles(.hidden)
+                    }
+                }
+            }
+            .onMapCameraChange(frequency: .onEnd) { context in
+                region = AtlasRegion(context.region)
             }
             .mapStyle(.standard(elevation: .flat, emphasis: .muted, pointsOfInterest: .excludingAll))
             .onTapGesture(coordinateSpace: .local) { point in
                 guard let coordinate = proxy.convert(point, from: .local),
                       let country = AtlasLogic.country(at: coordinate, in: catalog)
                 else { return }
-                selection = AtlasSelection(code: country.code)
+                sheet = .country(country.code)
             }
         }
         .overlay(alignment: .top) {
@@ -61,19 +85,29 @@ struct AtlasScreen: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("atlasMap")
-        .sheet(item: $selection) { selection in
-            AtlasCountrySheet(code: selection.code, isVisited: visited.contains(selection.code))
-                .presentationDetents([.medium, .large])
+        .sheet(item: $sheet) { sheet in
+            switch sheet {
+            case let .country(code):
+                AtlasCountrySheet(code: code, isVisited: visited.contains(code))
+                    .presentationDetents([.medium, .large])
+            case let .place(id):
+                AtlasPinCard(itemID: id)
+                    .presentationDetents([.medium, .large])
+            }
         }
     }
 }
 
-/// The country a tap landed on.
-struct AtlasSelection: Identifiable, Equatable {
-    let code: String
+/// What a tap on the map opens: a country's entries, or one place's card.
+enum AtlasSheet: Identifiable, Equatable {
+    case country(String)
+    case place(UUID)
 
     var id: String {
-        code
+        switch self {
+        case let .country(code): "country-\(code)"
+        case let .place(id): "place-\(id.uuidString)"
+        }
     }
 }
 
