@@ -266,4 +266,24 @@ final class QuickLogUITests: UITestCase {
         XCTAssertTrue(picked.waitForExistence(timeout: 5))
         XCTAssertEqual(picked.label, "Monmouth Coffee")
     }
+
+    @MainActor
+    func testAFilmIsSealedByTearingItsStub() {
+        let app = launch(["-resetState"])
+        draw("Savour a film", in: app)
+        addNew("Zodiac", in: app)
+        XCTAssertTrue(app.staticTexts["When?"].waitForExistence(timeout: 5))
+        app.buttons["when-Yesterday"].tap()
+
+        // Drag along the perforation, left to right: it tears and seals.
+        let stub = app.descendants(matching: .any)["sealButton"]
+        XCTAssertTrue(stub.waitForExistence(timeout: 5))
+        XCTAssertEqual(stub.label, "Tear to savour")
+        attachScreenshot(of: app, named: "film-tear")
+        let start = stub.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: stub.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.5)))
+        XCTAssertTrue(app.textFields["quickLogNote"].waitForNonExistence(timeout: 10), "Tearing the stub didn't seal it")
+        XCTAssertTrue(app.descendants(matching: .any)["savouredToast"].waitForExistence(timeout: 10))
+    }
 }
+

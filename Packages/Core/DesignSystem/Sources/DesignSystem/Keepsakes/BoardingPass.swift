@@ -77,6 +77,9 @@ public struct BoardingPass: KeepsakeTemplate {
                     Text(code)
                         .font(.system(size: 40, weight: .heavy, design: .monospaced))
                         .foregroundStyle(Palette.textPrimary.color)
+                        // Split-flap: a new code rolls in letter by letter (#121).
+                        .contentTransition(.numericText())
+                        .animation(.snappy, value: code)
                     Text(airline)
                         .font(.system(.callout, design: .serif, weight: .semibold))
                         .foregroundStyle(Palette.textSecondary.color)
