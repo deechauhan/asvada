@@ -349,17 +349,19 @@ struct AtlasRingCacheTests {
 
     @Test func fiveThousandPinsAreFilteredToTheViewAndCapped() throws {
         let container = try AsvadaStore.makeContainer(.inMemory)
-        let repository = Repository(context: container.mainContext)
-        try BuiltInCollections.seedIfNeeded(in: repository.context)
-        try PreviewData.addStressPlaces(5000, to: repository)
-        let items = try repository.context.fetch(FetchDescriptor<Item>())
-        // The world is in view, so pins aren't asked for; London on its own is a crowd.
-        let london = AtlasRegion(centreLatitude: 51.5, centreLongitude: -0.1, latitudeSpan: 1.5, longitudeSpan: 2)
-        let pins = AtlasLogic.pins(items: items, in: london)
-        #expect(pins.count == AtlasLogic.pinLimit)
-        #expect(pins.allSatisfy { london.contains(latitude: $0.latitude ?? 0, longitude: $0.longitude ?? 0) })
-        // Zoomed in on one street, there's room for them all.
-        let street = AtlasRegion(centreLatitude: 51.5, centreLongitude: -0.1, latitudeSpan: 0.02, longitudeSpan: 0.03)
-        #expect(AtlasLogic.pins(items: items, in: street).count < AtlasLogic.pinLimit)
+        try withExtendedLifetime(container) {
+            let repository = Repository(context: container.mainContext)
+            try BuiltInCollections.seedIfNeeded(in: repository.context)
+            try PreviewData.addStressPlaces(5000, to: repository)
+            let items = try repository.context.fetch(FetchDescriptor<Item>())
+            // The world is in view, so pins aren't asked for; London on its own is a crowd.
+            let london = AtlasRegion(centreLatitude: 51.5, centreLongitude: -0.1, latitudeSpan: 1.5, longitudeSpan: 2)
+            let pins = AtlasLogic.pins(items: items, in: london)
+            #expect(pins.count == AtlasLogic.pinLimit)
+            #expect(pins.allSatisfy { london.contains(latitude: $0.latitude ?? 0, longitude: $0.longitude ?? 0) })
+            // Zoomed in on one street, there's room for them all.
+            let street = AtlasRegion(centreLatitude: 51.5, centreLongitude: -0.1, latitudeSpan: 0.02, longitudeSpan: 0.03)
+            #expect(AtlasLogic.pins(items: items, in: street).count < AtlasLogic.pinLimit)
+        }
     }
 }
