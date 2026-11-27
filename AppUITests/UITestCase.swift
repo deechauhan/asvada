@@ -165,6 +165,14 @@ class UITestCase: XCTestCase {
         return app
     }
 
+    /// Opens Settings from the Journal's toolbar.
+    @MainActor
+    func openSettings(_ app: XCUIApplication) {
+        let settings = app.buttons["settingsButton"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 10))
+        settings.tap()
+    }
+
     @MainActor
     func attachScreenshot(of app: XCUIApplication, named name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
