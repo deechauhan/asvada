@@ -49,11 +49,4 @@ final class PrivacyUITests: UITestCase {
         XCTAssertTrue(done.waitForExistence(timeout: 10), "Nothing said it was deleted")
         XCTAssertTrue(done.label.hasPrefix("Deleted"), done.label)
     }
-
-    @MainActor
-    private func openSettings(_ app: XCUIApplication) {
-        let settings = app.buttons["settingsButton"]
-        XCTAssertTrue(settings.waitForExistence(timeout: 10))
-        settings.tap()
-    }
 }

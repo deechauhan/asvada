@@ -5,6 +5,8 @@ import SwiftUI
 /// skipped (UI tests pass `-skipOnboarding`, or `-onboarding` to see it).
 public struct RootView: View {
     @AppStorage(OnboardingStore.completedKey) private var hasOnboarded = false
+    @State private var lock = AppLockModel.standard()
+    @Environment(\.scenePhase) private var scenePhase
     private let skipsOnboarding = ProcessInfo.processInfo.arguments.contains("-skipOnboarding")
 
     public init() {}
@@ -22,9 +24,12 @@ public struct RootView: View {
 
     public var body: some View {
         AppShellView()
+            .environment(lock)
             .onboardingCover(isPresented: showsOnboarding) {
                 OnboardingFlow { hasOnboarded = true }
             }
+            .appLockWindow(lock)
+            .onChange(of: scenePhase) { _, phase in lock.scenePhaseChanged(to: phase) }
     }
 }
 
