@@ -23,6 +23,8 @@ struct DrawerSpread: View {
     var body: some View {
         VStack(spacing: Spacing.large) {
             Masthead(title: kind.title, caption: caption)
+                // On the masthead alone: an identifier on the whole spread would rename its cards.
+                .accessibilityIdentifier("spread-\(kind.title)")
             switch kind {
             case .menu: menu
             case .ticketBox: ticketBox
@@ -31,7 +33,6 @@ struct DrawerSpread: View {
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("spread-\(kind.title)")
     }
 
     private var caption: String {
