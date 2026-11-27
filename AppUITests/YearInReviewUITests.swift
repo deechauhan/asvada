@@ -20,5 +20,11 @@ final class YearInReviewUITests: UITestCase {
         attachScreenshot(of: app, named: "tasting-menu-cover")
         app.swipeLeft()
         attachScreenshot(of: app, named: "tasting-menu-course")
+
+        // The year's poster: the map, the photos and the colophon, to share as an image or a PDF.
+        app.buttons["yearPosterButton"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["posterPreview"].waitForExistence(timeout: 10), "No poster")
+        XCTAssertTrue(app.buttons["posterSharePDF"].waitForExistence(timeout: 30), "The poster wasn't made")
+        attachScreenshot(of: app, named: "year-poster")
     }
 }

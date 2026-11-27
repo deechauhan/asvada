@@ -15,6 +15,7 @@ struct TripPage: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isEditing = false
     @State private var isConfirmingDelete = false
+    @State private var isMakingPoster = false
 
     private var summary: TripSummary {
         TripSummary.make(entries: trip.entries ?? [])
@@ -84,6 +85,8 @@ struct TripPage: View {
         .accessibilityIdentifier("tripPage")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                Button("Poster", systemImage: "photo.artframe") { isMakingPoster = true }
+                    .accessibilityIdentifier("tripPosterButton")
                 Button("Edit", systemImage: "pencil") { isEditing = true }
                     .accessibilityIdentifier("editTripButton")
                 Button("Delete trip", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
@@ -92,6 +95,9 @@ struct TripPage: View {
         }
         .sheet(isPresented: $isEditing) {
             TripEditor(trip: trip)
+        }
+        .sheet(isPresented: $isMakingPoster) {
+            PosterSheet(subject: PosterSubject(trip: trip))
         }
         .confirmationDialog("Delete this trip?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
             Button("Delete trip", role: .destructive) {

@@ -11,6 +11,7 @@ struct YearInReviewScreen: View {
     @State private var year: Int?
     @State private var page = 0
     @State private var images: [Image] = []
+    @State private var isMakingPoster = false
 
     private var shownYear: Int {
         year ?? TastingMenu.defaultYear(collections: collections)
@@ -35,6 +36,8 @@ struct YearInReviewScreen: View {
         .accessibilityIdentifier("tastingMenu")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                Button("Poster", systemImage: "photo.artframe") { isMakingPoster = true }
+                    .accessibilityIdentifier("yearPosterButton")
                 let years = TastingMenu.years(collections: collections)
                 if years.count > 1 {
                     Menu {
@@ -55,6 +58,9 @@ struct YearInReviewScreen: View {
                     .accessibilityIdentifier("tastingMenuShare")
                 }
             }
+        }
+        .sheet(isPresented: $isMakingPoster) {
+            PosterSheet(subject: PosterSubject(year: shownYear, collections: collections))
         }
         .task(id: shownYear) {
             images = pages.compactMap { ShareCard.render(MenuPageView(page: $0, menu: menu)) }
