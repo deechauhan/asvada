@@ -156,7 +156,7 @@ public struct AppShellView: View {
         case .collections:
             CollectionsScreen()
         case .atlas:
-            PlaceholderScreen(tab: tab, message: "A collage of everywhere you've been. Your countries will fill with ink here.")
+            AtlasScreen()
         }
     }
 }
