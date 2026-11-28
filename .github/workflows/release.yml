@@ -8,6 +8,8 @@ name: Release
 #   - manual run              → the version you type
 # Each new release also gets an unsigned Artifacts-<version>.ipa to sideload (Sideloadly, AltStore…
 # sign it with your own Apple ID). It's built without the TMDB key: release assets are public.
+# And each new release is archived, signed and uploaded to TestFlight (docs/TESTFLIGHT.md), once
+# the App Store Connect secrets are set; until then that job skips with a notice.
 
 on:
   push:
@@ -133,3 +135,101 @@ jobs:
           (cd ipa && zip -qry "../Artifacts-$V.ipa" Payload)
           ls -lh "Artifacts-$V.ipa"
           gh release upload "$V" "Artifacts-$V.ipa" --clobber
+
+  testflight:
+    # A signed build of the same release, uploaded to App Store Connect for TestFlight. Signing is
+    # Xcode's cloud-managed signing, authorised by an App Store Connect API key, so no certificate
+    # or profile is kept here. One-time setup: docs/TESTFLIGHT.md.
+    needs: release
+    if: needs.release.outputs.created == 'true'
+    runs-on: macos-26
+    timeout-minutes: 40
+    env:
+      ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      ASC_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+      TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - name: Check the App Store Connect secrets
+        id: secrets
+        run: |
+          if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -n "$ASC_KEY" ] && [ -n "$TEAM_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::TestFlight skipped: set the App Store Connect secrets (docs/TESTFLIGHT.md)"
+          fi
+      - uses: actions/checkout@v5
+        if: steps.secrets.outputs.ready == 'true'
+        with:
+          ref: ${{ needs.release.outputs.version }}
+      - uses: maxim-lobanov/setup-xcode@v1
+        if: steps.secrets.outputs.ready == 'true'
+        with:
+          xcode-version: latest-stable
+      - name: Install XcodeGen
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          for attempt in 1 2 3; do
+            brew install xcodegen && exit 0
+            echo "::warning::brew install xcodegen failed (attempt $attempt of 3)"
+            sleep 20
+          done
+          exit 1
+      - name: Generate project, TMDB key and API key
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          xcodegen generate
+          # TestFlight builds are private, so they get film search.
+          if [ -n "$TMDB_API_KEY" ]; then
+            printf 'TMDB_API_KEY = %s\n' "$TMDB_API_KEY" > Config/Secrets.xcconfig
+          else
+            echo "::notice::TMDB_API_KEY secret not set; building without a TMDB key"
+          fi
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s' "$ASC_KEY" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
+      - name: Archive (Release, signed)
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          V: ${{ needs.release.outputs.version }}
+        run: |
+          set -o pipefail
+          # The version is the tag; the build number is this workflow's run number, which only
+          # goes up, as App Store Connect requires.
+          xcodebuild archive \
+            -project Artifacts.xcodeproj -scheme Artifacts -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/Artifacts.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="${V#v}" CURRENT_PROJECT_VERSION="${{ github.run_number }}"
+      - name: Upload to App Store Connect
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          set -o pipefail
+          cat > build/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+            <key>testFlightInternalTestingOnly</key><true/>
+          </dict></plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath build/Artifacts.xcarchive \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -exportPath build/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          echo "::notice::Uploaded ${{ needs.release.outputs.version }} (build ${{ github.run_number }}). It shows in TestFlight once App Store Connect has processed it, usually 5–15 minutes."
+      - name: Remove the API key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"

@@ -48,6 +48,9 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: App/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Artifacts
+        # Only HTTPS to Apple and TMDB: exempt from export documentation, so TestFlight
+        # doesn't stop each upload to ask.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Artifacts uses where you are to guess the café, restaurant or country you're savouring. Nearby searches go to Apple Maps; your location is never stored or shared."
