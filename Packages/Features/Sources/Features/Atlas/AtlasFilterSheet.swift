@@ -19,6 +19,22 @@ struct AtlasFilterSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                // Up top, where the half-height sheet shows it without scrolling.
+                Section {
+                    HStack {
+                        Text(AtlasFilterText.footer(count: store.filter.partsOn))
+                            .typeToken(.callout)
+                            .foregroundStyle(Palette.textSecondary.color)
+                            .accessibilityIdentifier("atlasFilterStatus")
+                        Spacer()
+                        Button("Reset") {
+                            store.filter = AtlasFilter()
+                        }
+                        .buttonStyle(.borderless)
+                        .disabled(!store.filter.isActive)
+                        .accessibilityIdentifier("atlasFilterReset")
+                    }
+                }
                 Section("Collections") {
                     ForEach(collections.filter { !$0.isHidden }) { collection in
                         Button {
@@ -67,16 +83,6 @@ struct AtlasFilterSheet: View {
                         }
                     }
                     .accessibilityIdentifier("atlasFilterTrip")
-                }
-                Section {
-                    Button("Reset filters", role: .destructive) {
-                        store.filter = AtlasFilter()
-                    }
-                    .disabled(!store.filter.isActive)
-                    .accessibilityIdentifier("atlasFilterReset")
-                } footer: {
-                    Text(AtlasFilterText.footer(count: store.filter.partsOn))
-                        .accessibilityIdentifier("atlasFilterFooter")
                 }
             }
             .scrollContentBackground(.hidden)

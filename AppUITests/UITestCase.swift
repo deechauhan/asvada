@@ -165,6 +165,18 @@ class UITestCase: XCTestCase {
         return app
     }
 
+    /// Opens Look back from the Collections toolbar. It's a secondary action, so it sits in the
+    /// toolbar's "More" menu, whose items are found by label (the menu doesn't carry identifiers).
+    @MainActor
+    func openLookBack(_ app: XCUIApplication) {
+        let more = app.navigationBars["Collections"].buttons["More"]
+        XCTAssertTrue(more.waitForExistence(timeout: 10), "No overflow menu on Collections")
+        more.tap()
+        let lookBack = app.buttons["Look back"]
+        XCTAssertTrue(lookBack.waitForExistence(timeout: 5), "No way to look back from Collections")
+        lookBack.tap()
+    }
+
     /// Opens Settings from the Journal's toolbar.
     @MainActor
     func openSettings(_ app: XCUIApplication) {

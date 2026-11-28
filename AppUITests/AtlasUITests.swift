@@ -41,7 +41,7 @@ final class AtlasUITests: UITestCase {
         // Pick a collection: one filter on, and the map says nothing matches.
         let cafes = app.buttons["atlasFilterCollection-Cafés"]
         XCTAssertTrue(cafes.waitForExistence(timeout: 5))
-        let footer = app.staticTexts["atlasFilterFooter"]
+        let footer = app.staticTexts["atlasFilterStatus"]
         XCTAssertEqual(footer.label, "Showing everything.")
         cafes.tap()
         XCTAssertEqual(footer.label, "1 filter on.")

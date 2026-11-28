@@ -6,12 +6,7 @@ final class YearInReviewUITests: UITestCase {
     func testTheYearIsServedAsATastingMenu() {
         let app = launch(["-resetState", "-sampleData"])
         openCollectionsAndWait(app)
-        let stats = app.buttons["statsButton"]
-        if !stats.waitForExistence(timeout: 3) {
-            app.navigationBars["Collections"].buttons["More"].tap()
-        }
-        XCTAssertTrue(stats.waitForExistence(timeout: 5))
-        stats.tap()
+        openLookBack(app)
         let link = app.buttons["yearInReviewLink"]
         XCTAssertTrue(link.waitForExistence(timeout: 10), "No way to the year in review from Look back")
         link.tap()

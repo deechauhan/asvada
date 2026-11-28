@@ -6,13 +6,7 @@ final class StatsUITests: UITestCase {
     func testLookBackShowsTheNumbersTheChartAndEachDrawer() {
         let app = launch(["-resetState", "-sampleData"])
         openCollectionsAndWait(app)
-        let more = app.buttons["statsButton"]
-        if !more.waitForExistence(timeout: 3) {
-            // A secondary action can sit in the toolbar's overflow menu.
-            app.navigationBars["Collections"].buttons["More"].tap()
-        }
-        XCTAssertTrue(more.waitForExistence(timeout: 5), "No way to look back from Collections")
-        more.tap()
+        openLookBack(app)
         XCTAssertTrue(app.navigationBars["Look back"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.descendants(matching: .any)["monthsChart"].waitForExistence(timeout: 5), "No months chart")
         XCTAssertTrue(app.descendants(matching: .any)["drawerStats"].firstMatch.exists, "No drawer stats")

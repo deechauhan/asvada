@@ -24,6 +24,10 @@ final class PrivacyUITests: UITestCase {
         let app = launch(["-resetState", "-sampleData"])
         openSettings(app)
         let link = app.buttons["deleteDataLink"]
+        // The list is long (the Lock section sits above this row), so scroll down to it.
+        for _ in 0 ..< 6 where !link.exists {
+            app.swipeUp()
+        }
         XCTAssertTrue(link.waitForExistence(timeout: 10), "No way to delete data in Settings")
         link.tap()
         let delete = app.buttons["deleteAllButton"]
