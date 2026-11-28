@@ -26,6 +26,11 @@ struct TurningCabinet: View {
     @State private var drum = CabinetDrum(count: 0)
     @State private var dragStart: Double?
     @State private var dragAxis: Axis?
+    /// Where the current drag began: a drag from anywhere else is a new one (#205).
+    @State private var dragOrigin: CGPoint?
+    /// True while a drag is under way. The system resets it when it cancels a drag (another
+    /// gesture took the touch), which `onEnded` never hears about (#205).
+    @GestureState private var isDragging = false
     /// When the finger last moved, and where to: a release after a rest flings nowhere.
     @State private var lastMove: (time: Date, translation: CGSize)?
     @State private var pull = 0.0
@@ -103,6 +108,12 @@ struct TurningCabinet: View {
         .onGeometryChange(for: Double.self, of: { Double($0.size.width) }, action: { width = $0 })
         .contentShape(Rectangle())
         .gesture(dragGesture)
+        .onChange(of: isDragging) { _, dragging in
+            // After a normal end `onEnded` has already cleared the axis; only a cancel leaves it.
+            if !dragging, dragAxis != nil {
+                dragCancelled()
+            }
+        }
         .detentHaptic(trigger: detents)
         .haptic(.clunk, trigger: clunks)
         .accessibilityRepresentation {
@@ -153,7 +164,15 @@ struct TurningCabinet: View {
     /// the first 10 points of travel.
     private var dragGesture: some Gesture {
         DragGesture(minimumDistance: 10)
+            .updating($isDragging) { _, dragging, _ in dragging = true }
             .onChanged { value in
+                // A drag that starts somewhere new never inherits the last one's axis, even if
+                // that one was cancelled without an end.
+                if dragOrigin != value.startLocation {
+                    dragOrigin = value.startLocation
+                    dragAxis = nil
+                    lastMove = nil
+                }
                 if lastMove?.translation != value.translation {
                     lastMove = (value.time, value.translation)
                 }
@@ -184,9 +203,7 @@ struct TurningCabinet: View {
                     endPull(velocity: CabinetDrum.releaseVelocity(value.velocity.height, restedFor: rest))
                 case nil: break
                 }
-                dragAxis = nil
-                dragStart = nil
-                lastMove = nil
+                endDrag()
             }
     }
 
@@ -357,6 +374,31 @@ struct TurningCabinet: View {
     }
 
     private static let arguments = ProcessInfo.processInfo.arguments
+}
+
+// MARK: - Ending a drag
+
+extension TurningCabinet {
+    private func endDrag() {
+        dragAxis = nil
+        dragStart = nil
+        dragOrigin = nil
+        lastMove = nil
+    }
+
+    /// The system cancelled the drag (a hold menu or the pinch took the touch): put the drawer
+    /// back and let the drum come to rest, as if the finger had lifted without a fling.
+    private func dragCancelled() {
+        switch dragAxis {
+        case .horizontal: settle(to: drum.restingPosition(afterReleaseAt: 0))
+        case .vertical:
+            withAnimation(Motion.animation(Motion.pull, reduceMotion: reduceMotion)) {
+                pull = 0
+            }
+        case nil: break
+        }
+        endDrag()
+    }
 }
 
 /// What the cabinet asks its screen to do.
