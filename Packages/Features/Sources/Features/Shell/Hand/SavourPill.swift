@@ -41,17 +41,32 @@ struct SavourPill: View {
 
     private let tip = HoldToDrawTip()
     @State private var identity = UUID()
+    @Environment(\.dynamicTypeSize) private var typeSize
+    /// The ā badge grows with the reader's text size.
+    @ScaledMetric(relativeTo: .headline) private var badge: CGFloat = 26
 
     var body: some View {
         HStack(spacing: Spacing.small) {
-            Text("ā")
-                .font(.system(size: 15, weight: .heavy, design: .serif))
-                .foregroundStyle(Palette.onBrand.color)
-                .frame(width: 26, height: 26)
-                .background(Palette.brand.color, in: Circle())
-            Text("Savour something")
-                .typeToken(.headline)
-                .foregroundStyle(Palette.textPrimary.color)
+            if typeSize.isAccessibilitySize {
+                // The accessory is only so tall: at accessibility sizes the plum ā stands alone,
+                // free to grow, rather than squeezed into a circle.
+                Text("ā")
+                    .font(.system(.headline, design: .serif, weight: .heavy))
+                    .foregroundStyle(Palette.brand.color)
+            } else {
+                Text("ā")
+                    .font(.system(.subheadline, design: .serif, weight: .heavy))
+                    .foregroundStyle(Palette.onBrand.color)
+                    .frame(width: badge, height: badge)
+                    .background(Palette.brand.color, in: Circle())
+            }
+            // The accessory can't grow to hold a wrapped label at accessibility sizes, so there the
+            // ā stands for it; the label stays for VoiceOver and Voice Control.
+            if !typeSize.isAccessibilitySize {
+                Text("Savour something")
+                    .typeToken(.headline)
+                    .foregroundStyle(Palette.textPrimary.color)
+            }
             Image(systemName: "chevron.up")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(Palette.textSecondary.color)

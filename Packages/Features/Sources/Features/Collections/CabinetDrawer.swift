@@ -13,6 +13,8 @@ struct CabinetDrawer: View {
         collection.accent
     }
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
         let summary = collection.drawerSummary
         VStack(alignment: .leading, spacing: Spacing.small) {
@@ -24,7 +26,8 @@ struct CabinetDrawer: View {
                 Text(collection.name)
                     .typeToken(.headline)
                     .foregroundStyle(Palette.textPrimary.color)
-                    .lineLimit(1)
+                    .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                    .fixedSize(horizontal: false, vertical: typeSize.isAccessibilitySize)
             }
             DrawerFan(collection: collection, items: collection.drawerItems())
                 .frame(maxWidth: .infinity)
@@ -56,6 +59,7 @@ struct CabinetDrawer: View {
 /// The serif numeral with its saffron macron, and a caption. Empty drawers get the ghost line.
 private struct DrawerStat: View {
     let summary: DrawerSummary
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: Spacing.small) {
@@ -75,8 +79,10 @@ private struct DrawerStat: View {
             Text(summary.caption)
                 .font(summary.numeral == nil ? .system(.callout, design: .serif).italic() : .caption)
                 .foregroundStyle(Palette.textSecondary.color)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                // At accessibility sizes the caption wraps rather than truncating.
+                .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.8)
+                .fixedSize(horizontal: false, vertical: typeSize.isAccessibilitySize)
         }
         .frame(minHeight: 34, alignment: .bottom)
         .accessibilityElement(children: .ignore)

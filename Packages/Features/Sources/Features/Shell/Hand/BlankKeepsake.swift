@@ -47,10 +47,16 @@ struct BlankKeepsake: View {
                     .frame(width: line == 0 ? 40 : 30, height: 2)
             }
             Spacer(minLength: 0)
-            Text("ā")
-                .font(.system(size: 13, weight: .heavy, design: .serif))
-                .foregroundStyle(ink.opacity(0.35))
-                .padding(.bottom, Spacing.xs)
+            // The blank is a fixed-size miniature, so its ā is drawn as part of the picture
+            // rather than set as text that Dynamic Type would be expected to scale.
+            Canvas { context, size in
+                context.draw(
+                    Text("ā").font(.system(size: 13, weight: .heavy, design: .serif)).foregroundStyle(ink.opacity(0.35)),
+                    at: CGPoint(x: size.width / 2, y: size.height / 2),
+                )
+            }
+            .frame(width: 16, height: 18)
+            .padding(.bottom, Spacing.xs)
         }
         .frame(width: Self.size.width, height: Self.size.height)
         .background(KeepsakePaper(seed: collection.id.uuidString))

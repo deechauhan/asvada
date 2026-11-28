@@ -9,6 +9,7 @@ import SwiftUI
 /// drawing from the hand it starts on the drawn blank. Then: what was it, the savour step for its
 /// collection, and the seal. The print head (#154) will print guesses onto the blank.
 struct QuickLogSheet: View {
+    @ScaledMetric(relativeTo: .caption2) private var blankCell: CGFloat = 92
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -78,6 +79,7 @@ struct QuickLogSheet: View {
     }
 
     /// The tap path: the same blanks as the hand, as a grid, plus "Again?" chips.
+    /// Cells widen with the text size so the names under the blanks can grow.
     private var hand: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.large) {
@@ -87,7 +89,7 @@ struct QuickLogSheet: View {
                         draw(item.collection)
                     }
                 }
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: Spacing.medium)], spacing: Spacing.large) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: blankCell), spacing: Spacing.medium)], spacing: Spacing.large) {
                     ForEach(collections) { collection in
                         Button {
                             draw(collection)
@@ -97,8 +99,8 @@ struct QuickLogSheet: View {
                                 Text(collection.name)
                                     .font(.caption2.weight(.semibold))
                                     .foregroundStyle(Palette.textPrimary.color)
-                                    .lineLimit(2)
                                     .multilineTextAlignment(.center)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                         .buttonStyle(.plain)

@@ -37,9 +37,18 @@ final class AccessibilityUITests: UITestCase {
         XCTAssertTrue(app.buttons["quickLogButton"].waitForExistence(timeout: 10))
         try audit(app, screen: "journal", size: size)
 
-        openCollectionsAndWait(app)
+        // At accessibility sizes (AX3 up) the chest of drawers is shown instead of the cabinet.
+        let listed = size == "ax5"
+        if listed {
+            app.tabBars.buttons["Collections"].tap()
+            XCTAssertTrue(app.navigationBars["Collections"].waitForExistence(timeout: 10))
+            XCTAssertTrue(labelled("Cafés", in: app).waitForExistence(timeout: 10))
+        } else {
+            openCollectionsAndWait(app)
+        }
         try audit(app, screen: "cabinet", size: size)
 
+        // `openDrawer` leaves the chest for the cabinet first.
         openDrawer(app, "Countries")
         XCTAssertTrue(app.descendants(matching: .any)["inkGlobe"].waitForExistence(timeout: 10))
         try audit(app, screen: "countries", size: size)
@@ -54,11 +63,20 @@ final class AccessibilityUITests: UITestCase {
 
     @MainActor
     private func audit(_ app: XCUIApplication, screen: String, size: String) throws {
+        // Let a pushed screen's navigation bar and a search field finish moving; the audit reads
+        // frames mid-animation otherwise.
+        Thread.sleep(forTimeInterval: 1)
         attachScreenshot(of: app, named: "a11y-\(screen)-\(size)")
         // Each issue is reported with what it found and where, so a Nightly log says which element
         // to fix (the bare "Text clipped" says neither). Reporting it here still fails the test.
         try app.performAccessibilityAudit(for: audits) { issue in
             let element = issue.element
+            // UIKit's own search field (from `.searchable`) is always reported as possibly clipped
+            // on iOS 27, at full height and at every text size; the app can't change how it draws.
+            // Only that one pairing is let through; everything else still fails the test.
+            if issue.auditType == .textClipped, element?.elementType == .searchField {
+                return true
+            }
             XCTFail(
                 """
                 \(screen) at \(size): \(issue.compactDescription) — \(issue.detailedDescription) \

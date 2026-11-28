@@ -128,8 +128,9 @@ private struct CardHolder: View {
             Text(name)
                 .font(.system(.headline, design: .serif, weight: .semibold))
                 .foregroundStyle(Palette.textPrimary.color)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, Spacing.medium)
         .padding(.vertical, Spacing.xs)
@@ -172,8 +173,8 @@ private struct DrumStat: View {
             Text(summary.caption)
                 .font(summary.numeral == nil ? .system(.footnote, design: .serif).italic() : .caption)
                 .foregroundStyle(Palette.textSecondary.color)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityHidden(true)
     }
