@@ -58,7 +58,14 @@ struct QuickLogSheet: View {
             .navigationBarTitleDisplayModeInline()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    // The sheet's close glyph, as system sheets have it: toolbar text stops
+                    // growing at accessibility sizes, a glyph doesn't need to.
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel("Cancel")
                 }
                 if drawn != nil {
                     ToolbarItem(placement: .primaryAction) {

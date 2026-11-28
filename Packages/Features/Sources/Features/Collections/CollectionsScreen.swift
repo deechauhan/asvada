@@ -178,7 +178,8 @@ struct CollectionsScreen: View {
                 .font(.system(.footnote, design: .serif).italic())
                 .foregroundStyle(Palette.textSecondary.color)
                 .multilineTextAlignment(.center)
-                .accessibilityHidden(true)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, Spacing.large)
             // A spin for a forgotten keepsake (a hard fling of the cabinet does the same).
             if visible.contains(where: { !($0.items ?? []).isEmpty }) {
                 Button("Lucky dip", systemImage: "dice") {
