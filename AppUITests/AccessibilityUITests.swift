@@ -55,6 +55,19 @@ final class AccessibilityUITests: UITestCase {
     @MainActor
     private func audit(_ app: XCUIApplication, screen: String, size: String) throws {
         attachScreenshot(of: app, named: "a11y-\(screen)-\(size)")
-        try app.performAccessibilityAudit(for: audits)
+        // Each issue is reported with what it found and where, so a Nightly log says which element
+        // to fix (the bare "Text clipped" says neither). Reporting it here still fails the test.
+        try app.performAccessibilityAudit(for: audits) { issue in
+            let element = issue.element
+            XCTFail(
+                """
+                \(screen) at \(size): \(issue.compactDescription) — \(issue.detailedDescription) \
+                [element: "\(element?.label ?? "?")" id "\(element?.identifier ?? "?")" \
+                type \(element.map { String(describing: $0.elementType) } ?? "?") \
+                frame \(element.map { String(describing: $0.frame) } ?? "?")]
+                """,
+            )
+            return true
+        }
     }
 }
