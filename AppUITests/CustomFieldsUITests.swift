@@ -35,6 +35,9 @@ final class CustomFieldsUITests: UITestCase {
         XCTAssertTrue(app.navigationBars["Films"].waitForNonExistence(timeout: 10))
         draw("Savour a film", in: app)
         addNew("Zodiac", in: app)
+        // A film is a log: it asks when first, then comes the seal step with its details.
+        XCTAssertTrue(app.staticTexts["When?"].waitForExistence(timeout: 5))
+        app.buttons["when-Yesterday"].tap()
         let details = app.buttons["quickLogDetails"]
         XCTAssertTrue(details.waitForExistence(timeout: 10))
         details.tap()

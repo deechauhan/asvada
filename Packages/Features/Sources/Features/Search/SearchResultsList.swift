@@ -28,11 +28,13 @@ struct SearchResultsList: View {
                     }
                     .padding(Spacing.large)
                 }
+                // Only here: an identifier on the whole Group is handed down to the empty state
+                // and replaces its own.
+                .accessibilityIdentifier("searchResults")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Palette.background.color)
-        .accessibilityIdentifier("searchResults")
     }
 }
 
