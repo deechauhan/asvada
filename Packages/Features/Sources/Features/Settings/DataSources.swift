@@ -1,11 +1,11 @@
 import Foundation
 
-/// Where Asvada's data comes from and what, if anything, it sends there. Shown in About, and the
+/// Where Artifacts's data comes from and what, if anything, it sends there. Shown in About, and the
 /// privacy seal is written to match it: keep the two in step.
 struct DataSource: Identifiable, Equatable {
     let id: String
     let name: String
-    /// What it gives Asvada.
+    /// What it gives Artifacts.
     let provides: String
     /// What leaves the phone to reach it, or that nothing does.
     let sends: String
@@ -64,7 +64,7 @@ struct DataSource: Identifiable, Equatable {
             name: "Your iCloud",
             provides: "Backups of your keepsakes, once backup arrives.",
             sends: "Nothing yet. Backups will go to your own iCloud Drive, only if you turn them on.",
-            licence: "Your Apple Account. Asvada has no server of its own.",
+            licence: "Your Apple Account. Artifacts has no server of its own.",
             link: URL(string: "https://www.apple.com/icloud/")!,
         ),
     ]

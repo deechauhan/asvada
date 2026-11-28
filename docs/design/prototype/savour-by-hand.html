@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Savour by Hand</title>
 <style>
-/* Asvada · "Savour by hand" feel prototype. Tokens from docs/design/CONCEPT.md §9 (Aubergine & Saffron). */
+/* Artifacts · "Savour by hand" feel prototype. Tokens from docs/design/CONCEPT.md §9 (Aubergine & Saffron). */
 :root{
   --serif: ui-serif, "New York", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: system-ui, -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
@@ -399,7 +399,7 @@ input{font:inherit}
 <aside class="panel" id="panel" aria-label="About this prototype">
   <button class="close chip" id="panelClose" style="background:var(--desk);border:1px solid currentColor">Close</button>
   <h1>Savour by hand</h1>
-  <p>A feel prototype for Asvada's cabinet, drawers and quick-log. Paper and ink are approximated in CSS; haptics play as sound, a vibration where the browser allows, and a small ring where your finger is.</p>
+  <p>A feel prototype for Artifacts's cabinet, drawers and quick-log. Paper and ink are approximated in CSS; haptics play as sound, a vibration where the browser allows, and a small ring where your finger is.</p>
   <h2>Collections · the turning cabinet</h2>
   <ul>
     <li><b>Swipe</b> the cabinet to turn it. Each drawer clicks into place and eases open to show its best keepsakes.</li>
@@ -554,8 +554,8 @@ const SP={roll:springK(.42,.12),pull:springK(.36,.2),morph:springK(.5,.06),riffl
 class VT{constructor(){this.s=[];}add(x,y){this.s.push({t:now(),x,y});if(this.s.length>10)this.s.shift();}
   v(){const s=this.s;if(s.length<2)return{x:0,y:0};const L=s[s.length-1];if(now()-L.t>80)return{x:0,y:0};let F=s[0];for(const p of s){if(L.t-p.t<=100){F=p;break;}}const dt=(L.t-F.t)/1000;return dt>0?{x:(L.x-F.x)/dt,y:(L.y-F.y)/dt}:{x:0,y:0};}}
 const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-function store(k,v){try{localStorage.setItem('asvada.proto.'+k,JSON.stringify(v));}catch(e){}}
-function load(k,d){try{const v=localStorage.getItem('asvada.proto.'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function store(k,v){try{localStorage.setItem('artifacts.proto.'+k,JSON.stringify(v));}catch(e){}}
+function load(k,d){try{const v=localStorage.getItem('artifacts.proto.'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
 
 const phone=$('#phone');
 const FX={sound:load('sound',true),haptics:load('haptics',true),pulses:load('pulses',true),rm:false};
@@ -1369,7 +1369,7 @@ $('#optHaptics').addEventListener('change',e=>{FX.haptics=e.target.checked;store
 $('#optPulses').addEventListener('change',e=>{FX.pulses=e.target.checked;store('pulses',FX.pulses);});
 $('#optRM').addEventListener('change',e=>{FX.rm=e.target.checked;store('rm',FX.rm);applyFX();Cab.S.dirty=true;});
 $('#optDark').addEventListener('change',e=>{phone.dataset.theme=e.target.checked?'dark':'light';store('dark',e.target.checked);Globe.colors();});
-$('#optReset').addEventListener('click',()=>{try{Object.keys(localStorage).filter(k=>k.startsWith('asvada.proto.')).forEach(k=>localStorage.removeItem(k));}catch(e){}location.reload();});
+$('#optReset').addEventListener('click',()=>{try{Object.keys(localStorage).filter(k=>k.startsWith('artifacts.proto.')).forEach(k=>localStorage.removeItem(k));}catch(e){}location.reload();});
 $('#helpBtn').addEventListener('click',()=>{const p=$('#panel');if(window.innerWidth<=620||window.innerHeight<=760){p.classList.add('sheetmode');}else{$('#coach').hidden=false;}});
 $('#panelClose').addEventListener('click',()=>$('#panel').classList.remove('sheetmode'));
 $('#coachOk').addEventListener('click',()=>{$('#coach').hidden=true;store('coached',true);});

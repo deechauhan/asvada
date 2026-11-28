@@ -6,7 +6,7 @@ import SwiftUI
 import TipKit
 
 @main
-struct AsvadaApp: App {
+struct ArtifactsApp: App {
     /// Launch arguments used by UI tests and for quick manual checks:
     /// `-resetState` clears restored UI state, `-designCatalog` opens the design catalogue,
     /// `-keepsakeGallery` opens the keepsake gallery, `-forceDarkMode` forces dark appearance,
@@ -30,10 +30,10 @@ struct AsvadaApp: App {
             AppLockDefaults.reset()
         }
         do {
-            container = try AsvadaStore.makeContainer(arguments.contains("-inMemoryStore") ? .inMemory : .standard)
+            container = try ArtifactsStore.makeContainer(arguments.contains("-inMemoryStore") ? .inMemory : .standard)
         } catch {
             // Without a store the app can't do anything useful; surface the reason clearly.
-            fatalError("Could not open the Asvada data store: \(error)")
+            fatalError("Could not open the Artifacts data store: \(error)")
         }
         // Tips teach gestures like "hold the ā"; UI tests turn them off so popovers don't cover controls.
         if !arguments.contains("-disableTips") {

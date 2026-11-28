@@ -101,5 +101,5 @@ jobs:
     secrets: inherit
     with:
       shards: >-
-        [{"name": "smoke", "tests": "-only-testing:AsvadaUITests/LaunchTests/testLaunchShowsJournal
-        -only-testing:AsvadaUITests/QuickLogUITests/testAFilmIsLoggedAndACountryStamped"}]
+        [{"name": "smoke", "tests": "-only-testing:ArtifactsUITests/LaunchTests/testLaunchShowsJournal
+        -only-testing:ArtifactsUITests/QuickLogUITests/testAFilmIsLoggedAndACountryStamped"}]

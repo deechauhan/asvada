@@ -10,7 +10,7 @@ struct PosterView: View {
     var body: some View {
         VStack(spacing: Spacing.large) {
             VStack(spacing: Spacing.xs) {
-                Text("Asvada")
+                Text("Artifacts")
                     .font(.system(size: 11, weight: .semibold, design: .serif))
                     .textCase(.uppercase)
                     .tracking(3)
@@ -34,7 +34,7 @@ struct PosterView: View {
             Spacer(minLength: 0)
             HStack(spacing: Spacing.small) {
                 AMark(size: 28)
-                Text("savoured with Asvada")
+                Text("savoured with Artifacts")
                     .font(.system(size: 11, design: .serif).italic())
                     .foregroundStyle(Palette.onAubergine.color.opacity(0.8))
             }

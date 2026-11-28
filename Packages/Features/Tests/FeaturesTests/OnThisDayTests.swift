@@ -20,7 +20,7 @@ struct OnThisDayTests {
     }
 
     private func store() throws -> Store {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         let films = ExperienceCollection(name: "Films", kind: .films, ratingMode: .log)
         repository.context.insert(films)

@@ -280,7 +280,7 @@ def ensure_project(repo: str, b: dict, records: list[dict]):
     pid = project["id"]
     print(f"  ✓ {b['project_title']} → {project['url']}")
     graphql("""mutation($p:ID!){ updateProjectV2(input:{projectId:$p,
-        shortDescription:"Asvada — agile backlog (see docs/WAYS_OF_WORKING.md)",
+        shortDescription:"Artifacts — agile backlog (see docs/WAYS_OF_WORKING.md)",
         readme:"Board columns follow Status. Milestones = releases; Sprint = 2-week iterations. Source of truth: backlog/backlog.yaml"}){ projectV2{ id } } }""",
             {"p": pid}, ok_fail=True)
 

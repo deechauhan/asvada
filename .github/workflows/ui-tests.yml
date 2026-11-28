@@ -103,7 +103,7 @@ jobs:
           # ~2 min thinning an 80 KB asset catalog for that device. arm64 only (the runners).
           # No app icon: rendering the iOS 26 icon took actool over 2 min, and tests don't see it.
           xcodebuild build-for-testing \
-            -project Asvada.xcodeproj -scheme Asvada \
+            -project Artifacts.xcodeproj -scheme Artifacts \
             -destination "generic/platform=iOS Simulator" \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
             ASSETCATALOG_COMPILER_APPICON_NAME= \
@@ -126,16 +126,16 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild test-without-building \
-            -project Asvada.xcodeproj -scheme Asvada \
+            -project Artifacts.xcodeproj -scheme Artifacts \
             -destination "id=${{ steps.simulator.outputs.udid }}" \
             -derivedDataPath build/DerivedData \
-            -resultBundlePath build/Asvada.xcresult \
+            -resultBundlePath build/Artifacts.xcresult \
             ${{ matrix.shard.tests }}
       - name: Export screenshots
         if: always()
         run: |
-          [ -d build/Asvada.xcresult ] || exit 0
-          scripts/ci/export-screenshots.sh build/Asvada.xcresult build/screenshots
+          [ -d build/Artifacts.xcresult ] || exit 0
+          scripts/ci/export-screenshots.sh build/Artifacts.xcresult build/screenshots
           # Also print each PNG as base64 so tools that can read logs but not artifacts can recover them
           # (scripts/screenshots-from-log.py).
           for f in build/screenshots/*.png; do
@@ -156,16 +156,16 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: xcresult-${{ matrix.shard.name }}
-          path: build/Asvada.xcresult
+          path: build/Artifacts.xcresult
           if-no-files-found: ignore
       # Last, so the report sits at the very end of the log, after the screenshot dump: the
       # slowest tests (to see where CI time goes), then any failures with file:line.
       - name: Test report
         if: always()
         run: |
-          [ -d build/Asvada.xcresult ] || exit 0
-          xcrun xcresulttool get test-results summary --path build/Asvada.xcresult --compact > build/summary.json || exit 0
-          xcrun xcresulttool get test-results tests --path build/Asvada.xcresult --compact > build/tests.json || exit 0
+          [ -d build/Artifacts.xcresult ] || exit 0
+          xcrun xcresulttool get test-results summary --path build/Artifacts.xcresult --compact > build/summary.json || exit 0
+          xcrun xcresulttool get test-results tests --path build/Artifacts.xcresult --compact > build/tests.json || exit 0
           python3 - build/summary.json build/tests.json <<'PY'
           import json, sys
 

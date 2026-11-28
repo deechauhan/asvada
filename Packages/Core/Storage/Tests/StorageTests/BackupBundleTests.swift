@@ -10,7 +10,7 @@ struct BackupBundleTests {
     /// a photo, a tag, a person, a trip and custom-field values. Hold on to the container for the
     /// whole test: the context stops working once it's released.
     private func populatedStore() throws -> ModelContainer {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         try PreviewData.fillBuiltIns(repository)
@@ -80,7 +80,7 @@ struct BackupBundleTests {
         let files = try BackupBundle.export(from: original.mainContext)
 
         // A new, empty store: the "wipe".
-        let restored = try AsvadaStore.makeContainer(.inMemory)
+        let restored = try ArtifactsStore.makeContainer(.inMemory)
         let summary = try BackupBundle.importFiles(files, into: restored.mainContext)
         let manifest = try manifest(of: files)
         #expect(summary.added == manifest.counts)
@@ -101,7 +101,7 @@ struct BackupBundleTests {
     @Test func linksAndDetailsComeBackToo() throws {
         let original = try populatedStore()
         let files = try BackupBundle.export(from: original.mainContext)
-        let restored = try AsvadaStore.makeContainer(.inMemory)
+        let restored = try ArtifactsStore.makeContainer(.inMemory)
         try BackupBundle.importFiles(files, into: restored.mainContext)
 
         let entries = try restored.mainContext.fetch(FetchDescriptor<Entry>())
@@ -139,7 +139,7 @@ struct BackupBundleTests {
         var files = try BackupBundle.export(from: container.mainContext)
         let photoPath = try #require(files.keys.first { $0.hasSuffix(".photo") })
         files[photoPath] = Data([0, 0, 0])
-        let empty = try AsvadaStore.makeContainer(.inMemory)
+        let empty = try ArtifactsStore.makeContainer(.inMemory)
         #expect(throws: BackupBundle.BackupError.checksumMismatch(photoPath)) {
             try BackupBundle.importFiles(files, into: empty.mainContext)
         }
@@ -151,7 +151,7 @@ struct BackupBundleTests {
         var files = try BackupBundle.export(from: container.mainContext)
         let thumbPath = try #require(files.keys.first { $0.hasSuffix(".thumb") })
         files[thumbPath] = nil
-        let empty = try AsvadaStore.makeContainer(.inMemory)
+        let empty = try ArtifactsStore.makeContainer(.inMemory)
         #expect(throws: BackupBundle.BackupError.missingFile(thumbPath)) {
             try BackupBundle.importFiles(files, into: empty.mainContext)
         }
@@ -167,7 +167,7 @@ struct BackupBundleTests {
         var manifest = try manifest(of: files)
         manifest.formatVersion = BackupBundle.formatVersion + 1
         let newer = try rewrite(manifest, in: files)
-        let empty = try AsvadaStore.makeContainer(.inMemory)
+        let empty = try ArtifactsStore.makeContainer(.inMemory)
         #expect(throws: BackupBundle.BackupError.unsupportedFormat(BackupBundle.formatVersion + 1)) {
             try BackupBundle.importFiles(newer, into: empty.mainContext)
         }
@@ -179,7 +179,7 @@ struct BackupBundleTests {
         var manifest = try manifest(of: files)
         manifest.counts.entries += 1
         let wrong = try rewrite(manifest, in: files)
-        let empty = try AsvadaStore.makeContainer(.inMemory)
+        let empty = try ArtifactsStore.makeContainer(.inMemory)
         #expect(throws: BackupBundle.BackupError.countMismatch) {
             try BackupBundle.importFiles(wrong, into: empty.mainContext)
         }
@@ -193,7 +193,7 @@ struct BackupBundleTests {
         try BackupBundle.write(files, to: folder)
         let read = try BackupBundle.read(from: folder)
         #expect(read == files)
-        let restored = try AsvadaStore.makeContainer(.inMemory)
+        let restored = try ArtifactsStore.makeContainer(.inMemory)
         try BackupBundle.importFiles(read, into: restored.mainContext)
         #expect(try restored.mainContext.fetch(FetchDescriptor<Photo>()).count == 1)
     }
@@ -203,7 +203,7 @@ struct BackupBundleTests {
         let files = try BackupBundle.export(from: original.mainContext)
         let manifest = try manifest(of: files)
 
-        let empty = try AsvadaStore.makeContainer(.inMemory)
+        let empty = try ArtifactsStore.makeContainer(.inMemory)
         let preview = try BackupBundle.preview(files, in: empty.mainContext)
         #expect(preview.manifest == manifest)
         #expect(preview.summary.added == manifest.counts)

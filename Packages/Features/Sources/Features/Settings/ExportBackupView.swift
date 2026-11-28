@@ -68,9 +68,9 @@ struct ExportBackupView: View {
         }
     }
 
-    /// The folder's default name: "Asvada backup 2026-11-26".
+    /// The folder's default name: "Artifacts backup 2026-11-26".
     static func filename(for date: Date) -> String {
-        "Asvada backup \(date.formatted(.iso8601.year().month().day()))"
+        "Artifacts backup \(date.formatted(.iso8601.year().month().day()))"
     }
 
     /// Reads the whole store into a bundle and opens the Files picker to save it.

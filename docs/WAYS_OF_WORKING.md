@@ -1,6 +1,6 @@
 # Ways of working
 
-Asvada is a solo project run with lightweight Scrum: two-week sprints, a groomed backlog on the
+Artifacts is a solo project run with lightweight Scrum: two-week sprints, a groomed backlog on the
 GitHub Project board, and one issue in progress at a time.
 
 ## Roles
@@ -14,7 +14,7 @@ GitHub Project board, and one issue in progress at a time.
 
 | Artefact | Where |
 |---|---|
-| Product backlog | GitHub Issues, ordered on the **Asvada** Project board |
+| Product backlog | GitHub Issues, ordered on the **Artifacts** Project board |
 | Releases | Milestones `M0`–`M5` (see `ROADMAP.md`) |
 | Sprints | Project **Sprint** field (2-week iterations) |
 | Epics | Issues labelled `type:epic`; stories are their sub-issues |

@@ -12,7 +12,7 @@ struct RankingStorageTests {
     let cafes: ExperienceCollection
 
     init() throws {
-        container = try AsvadaStore.makeContainer(.inMemory)
+        container = try ArtifactsStore.makeContainer(.inMemory)
         repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         let match = try repository.collections().first { $0.kind == .cafes }
@@ -82,7 +82,7 @@ struct RankingStorageTests {
 @MainActor
 struct StressItemsTests {
     @Test func stressItemsRankBelowTheSamples() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         try PreviewData.fillBuiltIns(repository)
@@ -100,7 +100,7 @@ struct StressItemsTests {
 @MainActor
 struct PlaceStorageTests {
     @Test func aFoundPlaceIsKeptWithItsWhereabouts() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         let match = try repository.collections().first { $0.kind == .cafes }
@@ -143,7 +143,7 @@ struct StressPlacesTests {
     }
 
     private func makeStore() throws -> Store {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         return Store(container: container, repository: repository)

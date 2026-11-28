@@ -8,7 +8,7 @@ import SwiftData
 public enum PreviewData {
     /// A fresh in-memory container with sample collections, items and entries.
     public static func makeContainer() throws -> ModelContainer {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         try populate(Repository(context: container.mainContext))
         return container
     }

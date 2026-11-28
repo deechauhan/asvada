@@ -1,12 +1,15 @@
-# Asvada — project brief for Claude
+# Artifacts — project brief for Claude
 
 Read this first in every session. It records decisions already made; don't re-litigate them unless the owner asks.
 
 ## What this is
 
-**Asvada** (Sanskrit *āsvāda*, आस्वाद — "savouring, relish") is a private, local-first iOS app for
+**Artifacts** (formerly *Asvada*; renamed Nov 2026) is a private, local-first iOS app for
 recording and ranking things you've experienced: cafés, restaurants, countries, cities, airlines,
 films, and any custom category. Its signature view is a **map collage** of everywhere you've been.
+
+The seal mark stays the serif **ā**, from Sanskrit *āsvāda* (आस्वाद, "savouring, relish"): every
+keepsake is sealed with it. Bundle id `app.artifacts.Artifacts`; the GitHub repo is still `deechauhan/asvada`.
 
 Tagline candidates: "Savour what you've lived" · "Places, plates & films, savoured".
 
@@ -59,7 +62,7 @@ name and UX from sounding travel-only.
 
 ## How we work
 
-- Backlog lives in **GitHub Issues + the "Asvada" Project board**. Work one issue at a time, top of the current sprint first.
+- Backlog lives in **GitHub Issues + the "Artifacts" Project board**. Work one issue at a time, top of the current sprint first.
 - Milestones = releases (M0–M5). Project "Sprint" iteration field = 2-week sprints.
 - Issue types via labels: `type:epic`, `type:story`, `type:task`, `type:spike`, `type:bug`. Stories are sub-issues of epics.
 - Branch per issue: `<type>/<issue#>-short-slug` (e.g. `feat/12-entry-model`). PR closes the issue (`Closes #12`).

@@ -6,8 +6,8 @@ import SwiftData
 ///
 /// Local-only for now (`cloudKitDatabase: .none`): iCloud backup arrives in M3 and sync is an
 /// explicit opt-in later, so the store must never start syncing just because an entitlement exists.
-public enum AsvadaStore {
-    /// The current versioned schema (see `CurrentSchema` and `AsvadaMigrationPlan` in Model).
+public enum ArtifactsStore {
+    /// The current versioned schema (see `CurrentSchema` and `ArtifactsMigrationPlan` in Model).
     public static var schema: Schema {
         Schema(versionedSchema: CurrentSchema.self)
     }
@@ -25,12 +25,12 @@ public enum AsvadaStore {
     public static func makeContainer(_ location: Location = .standard) throws -> ModelContainer {
         let configuration = switch location {
         case .standard:
-            ModelConfiguration("Asvada", schema: schema, cloudKitDatabase: .none)
+            ModelConfiguration("Artifacts", schema: schema, cloudKitDatabase: .none)
         case let .file(url):
-            ModelConfiguration("Asvada", schema: schema, url: url, cloudKitDatabase: .none)
+            ModelConfiguration("Artifacts", schema: schema, url: url, cloudKitDatabase: .none)
         case .inMemory:
-            ModelConfiguration("Asvada", schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
+            ModelConfiguration("Artifacts", schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         }
-        return try ModelContainer(for: schema, migrationPlan: AsvadaMigrationPlan.self, configurations: configuration)
+        return try ModelContainer(for: schema, migrationPlan: ArtifactsMigrationPlan.self, configurations: configuration)
     }
 }

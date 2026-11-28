@@ -45,7 +45,7 @@ struct ShareCardSheet: View {
                 if let image {
                     ShareLink(
                         item: image,
-                        preview: SharePreview("\(collection.name) · Asvada", image: image),
+                        preview: SharePreview("\(collection.name) · Artifacts", image: image),
                     ) {
                         Label("Share", systemImage: "square.and.arrow.up")
                             .typeToken(.headline)

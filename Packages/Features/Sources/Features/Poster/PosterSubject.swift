@@ -107,9 +107,9 @@ enum PosterText {
         count == 1 ? "1 keepsake" : "\(count) keepsakes"
     }
 
-    /// The file name for a poster, without extension: "Asvada poster · Lisbon in June".
+    /// The file name for a poster, without extension: "Artifacts poster · Lisbon in June".
     static func fileName(for title: String) -> String {
         let safe = title.components(separatedBy: CharacterSet(charactersIn: "/\\:?%*|\"<>")).joined()
-        return "Asvada poster · \(safe)"
+        return "Artifacts poster · \(safe)"
     }
 }

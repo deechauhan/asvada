@@ -7,7 +7,7 @@ import Testing
 @MainActor
 struct EraseEverythingTests {
     private func filledStore() throws -> (ModelContainer, Repository) {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         try PreviewData.fillBuiltIns(repository)
@@ -61,7 +61,7 @@ struct EraseEverythingTests {
     }
 
     @Test func erasingAnEmptyStoreSaysNothingWasDeletedAndIsSafe() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         let deleted = try repository.eraseEverything()
         #expect(deleted == BackupBundle.Counts())

@@ -16,7 +16,7 @@ struct RiffleIndexTests {
     }
 
     private func store(_ mode: RatingMode) throws -> Store {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         let collection = ExperienceCollection(name: "Things", ratingMode: mode)
         repository.context.insert(collection)

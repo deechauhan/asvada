@@ -12,7 +12,7 @@ struct PosterTests {
     let repository: Repository
 
     init() throws {
-        container = try AsvadaStore.makeContainer(.inMemory)
+        container = try ArtifactsStore.makeContainer(.inMemory)
         repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
     }
@@ -82,7 +82,7 @@ struct PosterTests {
     }
 
     @Test func fileNamesAreSafe() {
-        #expect(PosterText.fileName(for: "Lisbon / Porto: June?") == "Asvada poster · Lisbon  Porto June")
+        #expect(PosterText.fileName(for: "Lisbon / Porto: June?") == "Artifacts poster · Lisbon  Porto June")
         #expect(PosterText.count(1) == "1 keepsake")
     }
 }

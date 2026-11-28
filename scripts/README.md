@@ -3,7 +3,7 @@
 ## `bootstrap_github.py`
 
 Seeds GitHub from `backlog/backlog.yaml`: labels, milestones, epics and stories (linked as
-sub-issues), a Sprint 0 tracking issue, and the **Asvada** Project board with Status, Priority,
+sub-issues), a Sprint 0 tracking issue, and the **Artifacts** Project board with Status, Priority,
 Points and Sprint fields. Safe to re-run; it matches existing labels, milestones and issues by name.
 
 ```bash

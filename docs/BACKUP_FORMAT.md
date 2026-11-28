@@ -5,7 +5,7 @@ one. The code is `BackupBundle` in `Packages/Core/Storage` (#56). iCloud Drive b
 this folder; the merging restore (#58) reads it.
 
 ```
-Asvada backup/
+Artifacts backup/
 ├── manifest.json
 ├── data.json
 └── photos/

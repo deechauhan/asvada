@@ -1,4 +1,4 @@
-/// Asvada's colour tokens, v2 "Aubergine & Saffron" (docs/design/CONCEPT.md §9).
+/// Artifacts's colour tokens, v2 "Aubergine & Saffron" (docs/design/CONCEPT.md §9).
 ///
 /// Plum is the ink (seals, ranks, visited countries, primary actions); saffron is the spark
 /// (macron bars, glints) and is **decorative only** as a fill: use `saffronInk` for saffron text.

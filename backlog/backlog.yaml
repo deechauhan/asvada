@@ -1,4 +1,4 @@
-# Asvada backlog — source of truth for seeding GitHub.
+# Artifacts backlog — source of truth for seeding GitHub.
 # scripts/bootstrap_github.py reads this file and creates labels, milestones, issues,
 # epic → sub-issue links and the Project board. Re-running is safe (matches by title).
 #
@@ -6,7 +6,7 @@
 # sprint: index into `sprints`. milestone: key into `milestones`.
 
 repo: deechauhan/asvada
-project_title: Asvada
+project_title: Artifacts
 
 sprints:
   start: 2026-11-23      # Monday
@@ -62,7 +62,7 @@ epics:
         points: 3
         priority: P0
         sprint: 0
-        body: "Create the `Asvada` iOS app target and local Swift packages per `docs/ARCHITECTURE.md` (Features, Core/Model, Core/Storage, Core/Geo, Core/Sources, Core/Ranking, Core/DesignSystem)."
+        body: "Create the `Artifacts` iOS app target and local Swift packages per `docs/ARCHITECTURE.md` (Features, Core/Model, Core/Storage, Core/Geo, Core/Sources, Core/Ranking, Core/DesignSystem)."
         ac:
           - "App builds and launches an empty screen on the iOS simulator"
           - "Each module is a local Swift package with a placeholder type and one passing test"
@@ -125,7 +125,7 @@ epics:
         points: 1
         priority: P1
         sprint: 0
-        body: "Check 'Asvada' is free in App Store Connect, register a domain (e.g. asvada.app) and do a basic trademark search."
+        body: "Check 'Artifacts' is free in App Store Connect, register a domain (e.g. artifacts.app) and do a basic trademark search."
         ac:
           - "App name reserved in App Store Connect (or alternative chosen)"
           - "Domain registered"
@@ -273,7 +273,7 @@ epics:
     milestone: M1
     area: design
     priority: P0
-    summary: "Make Asvada distinctive: entries become category-shaped keepsakes sealed with the ā, in the Aubergine & Saffron palette (docs/design/CONCEPT.md)."
+    summary: "Make Artifacts distinctive: entries become category-shaped keepsakes sealed with the ā, in the Aubergine & Saffron palette (docs/design/CONCEPT.md)."
     items:
       - title: "Design tokens v2: Aubergine & Saffron"
         type: task
@@ -703,7 +703,7 @@ epics:
         points: 2
         priority: P0
         sprint: 9
-        story: "As a user I want to see plainly where Asvada's data comes from and what leaves my phone, so I can trust it."
+        story: "As a user I want to see plainly where Artifacts's data comes from and what leaves my phone, so I can trust it."
         body: "Found on device: the Colophon credited only Natural Earth and OpenFlights. TMDB's API terms ask for their notice and logo, and the privacy seal left out that place searches go to Apple Maps."
         ac:
           - "A 'Where your data comes from' section in About: one row each for Apple Maps, TMDB, Natural Earth, OpenFlights and your iCloud, saying what it gives, what is sent, the licence and a link"

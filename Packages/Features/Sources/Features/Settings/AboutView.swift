@@ -1,7 +1,7 @@
 import DesignSystem
 import SwiftUI
 
-/// The Colophon: the ā mark on the aubergine field, what the name means, the privacy seal, where
+/// The Colophon: the ā mark on the aubergine field, where the mark comes from, the privacy seal, where
 /// every piece of data comes from, how the app is set and the version.
 struct AboutView: View {
     var version = AppVersion.current
@@ -13,7 +13,7 @@ struct AboutView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.top, Spacing.xl)
                 VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("Asvada")
+                    Text("Artifacts")
                         .typeToken(.display)
                         .foregroundStyle(Palette.onAubergine.color)
                         .accessibilityAddTraits(.isHeader)
@@ -24,8 +24,9 @@ struct AboutView: View {
                 }
                 Text(
                     """
-                    In Sanskrit, āsvāda means savouring, relishing: the taste of something \
-                    and the pleasure of lingering over it.
+                    Artifacts are the things you keep from what you've lived. Each one is sealed \
+                    with the ā of āsvāda, Sanskrit for savouring: the taste of something and the \
+                    pleasure of lingering over it.
                     """,
                 )
                 .typeToken(.voice)

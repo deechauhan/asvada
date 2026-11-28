@@ -17,7 +17,7 @@ struct AtlasTests {
     }
 
     private func store() throws -> Store {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         let cafes = ExperienceCollection(name: "Cafés", kind: .cafes, ratingMode: .ranked)
         let countries = ExperienceCollection(name: "Countries", kind: .countries, ratingMode: .checklist)
@@ -348,7 +348,7 @@ struct AtlasRingCacheTests {
     }
 
     @Test func fiveThousandPinsAreFilteredToTheViewAndCapped() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         try withExtendedLifetime(container) {
             let repository = Repository(context: container.mainContext)
             try BuiltInCollections.seedIfNeeded(in: repository.context)

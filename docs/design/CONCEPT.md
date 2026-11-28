@@ -1,4 +1,4 @@
-# Asvada — Design Concept: "Keepsakes"
+# Artifacts — Design Concept: "Keepsakes"
 
 *Product + visual design concept · 23 Nov 2026 · **approved by the owner**: Keepsakes direction, Aubergine & Saffron palette, full scope (epic E15).*
 *How you browse and pick (cabinet, riffle, hand of blanks, stamp pad) is in `INTERACTION.md` (epic E16), which supersedes the gestures and list layouts sketched here where they differ.*
@@ -149,7 +149,7 @@ Three short sounds: paper *shff*, stamp *thock*, seal *press*. A toggle in Setti
 ### ⑥ From the cabinet — on this day, and a Tasting Menu of your year
 - **On this day:** a **face-down keepsake** appears in the Journal. Tap it and it flips (`rotation3DEffect`) to show "A year ago, you savoured…".
 - **Year in review:** a **degustation menu**. *Amuse-bouche:* first coffee of the year. *Entrée:* new countries. *Main:* best restaurant. *Dessert:* film of the year. *Digestif:* most-flown airline. It's set like a real printed menu on cream, with the ā seal at the foot.
-- **Why:** it's a novel, culinary twist on "Wrapped" that only Asvada can do.
+- **Why:** it's a novel, culinary twist on "Wrapped" that only Artifacts can do.
 
 ---
 
@@ -460,7 +460,7 @@ These keep their names; **Countries is darkened slightly** and **Films moves fro
 - `MonthMasthead`
 - `FlipCard`
 - `GhostKeepsake` (empty state)
-- `SavourAccessory` (AsvadaApp)
+- `SavourAccessory` (ArtifactsApp)
 - `InkWorldMap` (Core/Geo + DesignSystem)
 - `PassportSpread`
 - `DuelView` (Features/Ranking)
