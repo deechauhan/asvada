@@ -80,5 +80,6 @@ name and UX from sounding travel-only.
 - `docs/design/CONCEPT.md` — the approved "Keepsakes" design: language, signature moments, screens, tokens v2
 - `docs/design/INTERACTION.md` — the approved "Savour by hand" interaction design: cabinet, riffle, hand, print head, stamp pad, motion and haptics kit II (prototype in `docs/design/prototype/`)
 - `docs/AUTOPILOT.md` — runbook for unattended scheduled sessions
+- `docs/TESTFLIGHT.md` — every release goes to TestFlight; the owner's one-time setup
 - `backlog/backlog.yaml` — source of truth used to seed the GitHub board
 - `scripts/bootstrap_github.py` — creates labels, milestones, issues and the Project board
