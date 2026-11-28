@@ -19,6 +19,7 @@ struct ChestOfDrawers: View {
     var turnTo: (ExperienceCollection) -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
     /// The drawer a carried drawer is hovering over: it shuffles aside to make room.
     @State private var makingRoom: UUID?
 
@@ -26,10 +27,18 @@ struct ChestOfDrawers: View {
         Motion.animation(Motion.settle, reduceMotion: reduceMotion)
     }
 
+    /// Two to a row; one at accessibility text sizes, so names and counts have room to wrap.
+    private var perRow: Int {
+        typeSize.isAccessibilitySize ? 1 : 2
+    }
+
     private var rows: [[ExperienceCollection?]] {
         // `nil` is the blank "new collection" tag at the end.
         let slots: [ExperienceCollection?] = drawers + [nil]
-        return stride(from: 0, to: slots.count, by: 2).map { Array(slots[$0 ..< min($0 + 2, slots.count)]) }
+        let perRow = perRow
+        return stride(from: 0, to: slots.count, by: perRow).map {
+            Array(slots[$0 ..< min($0 + perRow, slots.count)])
+        }
     }
 
     var body: some View {
@@ -42,7 +51,7 @@ struct ChestOfDrawers: View {
                         ForEach(Array(row.enumerated()), id: \.offset) { _, slot in
                             cell(slot)
                         }
-                        if row.count == 1 {
+                        if row.count < perRow {
                             Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
                         }
                     }
@@ -51,12 +60,23 @@ struct ChestOfDrawers: View {
             .padding(.horizontal, Spacing.large)
             .padding(.vertical, Spacing.medium)
             .animation(settle, value: drawers.map(\.id))
+            // At accessibility sizes the shelf would cover most of the screen, so it sits after
+            // the last drawer instead of docked over them.
+            if typeSize.isAccessibilitySize {
+                storeroom
+            }
         }
         .safeAreaInset(edge: .bottom) {
-            Storeroom(drawers: putAway, takeOut: takeOut, putAway: putAwayDropped)
-                .padding(.horizontal, Spacing.large)
-                .padding(.bottom, Spacing.small)
+            if !typeSize.isAccessibilitySize {
+                storeroom
+            }
         }
+    }
+
+    private var storeroom: some View {
+        Storeroom(drawers: putAway, takeOut: takeOut, putAway: putAwayDropped)
+            .padding(.horizontal, Spacing.large)
+            .padding(.bottom, Spacing.small)
     }
 
     @ViewBuilder

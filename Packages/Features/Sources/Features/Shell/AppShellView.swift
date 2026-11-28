@@ -204,6 +204,7 @@ private struct SavouredToast: View {
     let text: String
     /// Opens the new entry's details.
     let addDetails: () -> Void
+    @ScaledMetric(relativeTo: .callout) private var badge: CGFloat = 22
 
     var body: some View {
         Button(action: addDetails) {
@@ -219,9 +220,9 @@ private struct SavouredToast: View {
     private var content: some View {
         HStack(spacing: Spacing.small) {
             Text("ā")
-                .font(.system(size: 13, weight: .heavy, design: .serif))
+                .font(.system(.footnote, design: .serif, weight: .heavy))
                 .foregroundStyle(Palette.onBrand.color)
-                .frame(width: 22, height: 22)
+                .frame(width: badge, height: badge)
                 .background(Palette.brand.color, in: Circle())
             Text(text)
                 .typeToken(.callout)
