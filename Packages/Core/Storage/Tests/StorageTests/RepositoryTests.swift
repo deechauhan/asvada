@@ -11,7 +11,7 @@ struct RepositoryTests {
     let repository: Repository
 
     init() throws {
-        container = try AsvadaStore.makeContainer(.inMemory)
+        container = try ArtifactsStore.makeContainer(.inMemory)
         repository = Repository(context: container.mainContext)
     }
 

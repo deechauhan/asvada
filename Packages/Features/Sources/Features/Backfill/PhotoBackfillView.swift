@@ -23,7 +23,7 @@ struct PhotoBackfillView: View {
             Section {
                 Text(
                     """
-                    Asvada can look through your photos for where and when they were taken, to find \
+                    Artifacts can look through your photos for where and when they were taken, to find \
                     places and countries you've already been. It reads only each photo's place and \
                     date, on this phone. Nothing is uploaded, and no pictures are copied. If you \
                     choose to share only some photos, it uses just those.
@@ -62,7 +62,7 @@ struct PhotoBackfillView: View {
 
     private var deniedSection: some View {
         Section {
-            Text("Asvada can't read your photos. You can allow it in Settings, then try again.")
+            Text("Artifacts can't read your photos. You can allow it in Settings, then try again.")
                 .typeToken(.body)
                 .accessibilityIdentifier("photosDenied")
             if let settings = URL(string: "app-settings:") {

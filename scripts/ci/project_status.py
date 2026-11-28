@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Set an issue's Status on the "Asvada" GitHub Project (adding it to the board if needed).
+"""Set an issue's Status on the "Artifacts" GitHub Project (adding it to the board if needed).
 
 Usage: project_status.py <issue-number> <status>
-Env:   GH_TOKEN (classic PAT with repo + project scopes), GITHUB_REPOSITORY, PROJECT_TITLE (default Asvada)
+Env:   GH_TOKEN (classic PAT with repo + project scopes), GITHUB_REPOSITORY, PROJECT_TITLE (default Artifacts)
 Status names come from scripts/bootstrap_github.py: Backlog, Ready, In progress, In review, Done.
 """
 import json
@@ -27,7 +27,7 @@ def graphql(query: str, **variables):
 def main():
     number, status = int(sys.argv[1]), sys.argv[2]
     owner, name = os.environ["GITHUB_REPOSITORY"].split("/")
-    title = os.environ.get("PROJECT_TITLE", "Asvada")
+    title = os.environ.get("PROJECT_TITLE", "Artifacts")
 
     data = graphql(
         """query($owner:String!,$name:String!,$number:Int!){
@@ -40,7 +40,11 @@ def main():
     if not issue:
         print(f"#{number} is not an issue; nothing to do")
         return
-    project = next((p for p in data["user"]["projectsV2"]["nodes"] if p["title"] == title), None)
+    # The board was titled "Asvada" before the app was renamed; either title is accepted.
+    titles = {title, "Artifacts", "Asvada"} if "PROJECT_TITLE" not in os.environ else {title}
+    projects = data["user"]["projectsV2"]["nodes"]
+    project = next((p for t in (title, "Artifacts", "Asvada") if t in titles
+                    for p in projects if p["title"] == t), None)
     if not project:
         print(f"::warning::Project '{title}' not found; run the Project board workflow to create it")
         return

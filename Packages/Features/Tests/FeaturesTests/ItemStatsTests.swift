@@ -30,7 +30,7 @@ struct ItemStatsTests {
     }
 
     @Test func starItemsAverageTheirRelish() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         let concerts = ExperienceCollection(name: "Concerts", kind: .custom, ratingMode: .stars)
         container.mainContext.insert(concerts)
@@ -45,7 +45,7 @@ struct ItemStatsTests {
     }
 
     @Test func logItemsCountEveryEntryAndAverageOnlyTheRatedOnes() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         let films = ExperienceCollection(name: "Films", kind: .films, ratingMode: .log)
         container.mainContext.insert(films)
@@ -61,7 +61,7 @@ struct ItemStatsTests {
     }
 
     @Test func anUnratedLogShowsNoRelish() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         let airlines = ExperienceCollection(name: "Airlines", kind: .airlines, ratingMode: .log)
         container.mainContext.insert(airlines)
@@ -76,7 +76,7 @@ struct ItemStatsTests {
     }
 
     @Test func entriesComeNewestFirst() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         let films = ExperienceCollection(name: "Films", kind: .films, ratingMode: .log)
         container.mainContext.insert(films)

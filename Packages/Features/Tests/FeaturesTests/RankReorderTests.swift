@@ -29,7 +29,7 @@ struct RankReorderTests {
     }
 
     @Test func aRankedItemMovesAndTheOthersKeepTheirOrder() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         let cafes = try #require(try repository.collections().first { $0.kind == .cafes })
@@ -50,7 +50,7 @@ struct RankReorderTests {
     }
 
     @Test func aDuelCardShowsTheNewestPhotoOfTheNewestEntryThatHasOne() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let context = container.mainContext
         let repository = Repository(context: context)
         try BuiltInCollections.seedIfNeeded(in: context)

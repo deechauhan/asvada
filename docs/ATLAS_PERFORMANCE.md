@@ -15,7 +15,7 @@ places, on a device, and where to write the numbers down.
 
 ## Set-up
 
-1. Build and run Asvada on the device from Xcode with the **Release** configuration (Profile),
+1. Build and run Artifacts on the device from Xcode with the **Release** configuration (Profile),
    so Debug overhead doesn't hide or fake a problem.
 2. Add these launch arguments to the scheme (they only work with the in-memory store, so nothing
    touches your real data):

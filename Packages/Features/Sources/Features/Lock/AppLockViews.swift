@@ -19,7 +19,7 @@ struct AppLockCover: View {
                     .font(.system(size: 64, weight: .heavy, design: .serif))
                     .foregroundStyle(Palette.onAubergine.color)
                     .accessibilityHidden(true)
-                Text(model.isLocked ? "Locked" : "Asvada")
+                Text(model.isLocked ? "Locked" : "Artifacts")
                     .typeToken(.title)
                     .foregroundStyle(Palette.onAubergine.color)
                 if model.isLocked {

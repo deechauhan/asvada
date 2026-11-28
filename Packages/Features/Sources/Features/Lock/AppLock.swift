@@ -149,7 +149,7 @@ final class AppLockModel {
         guard isLocked, !isAuthenticating else { return }
         isAuthenticating = true
         defer { isAuthenticating = false }
-        if await authenticator.authenticate(reason: "Unlock Asvada") {
+        if await authenticator.authenticate(reason: "Unlock Artifacts") {
             isLocked = false
         }
     }
@@ -157,7 +157,7 @@ final class AppLockModel {
     /// Turns the lock on, after they prove they can open it.
     func enable() async -> EnableResult {
         guard authenticator.canAuthenticate() else { return .unavailable }
-        guard await authenticator.authenticate(reason: "Turn on the lock for Asvada") else { return .cancelled }
+        guard await authenticator.authenticate(reason: "Turn on the lock for Artifacts") else { return .cancelled }
         isEnabled = true
         isLocked = false
         defaults.set(true, forKey: AppLockDefaults.enabledKey)

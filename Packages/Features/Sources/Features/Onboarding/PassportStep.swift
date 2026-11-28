@@ -27,7 +27,7 @@ struct PassportStep: View {
                     .frame(maxWidth: .infinity)
                     .accessibilityIdentifier("passportSpread")
                 if let image {
-                    ShareLink(item: image, preview: SharePreview("My passport · Asvada", image: image)) {
+                    ShareLink(item: image, preview: SharePreview("My passport · Artifacts", image: image)) {
                         Label("Share my passport", systemImage: "square.and.arrow.up")
                             .typeToken(.headline)
                             .frame(maxWidth: .infinity)

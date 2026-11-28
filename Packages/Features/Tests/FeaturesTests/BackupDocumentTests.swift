@@ -36,7 +36,7 @@ struct BackupDocumentTests {
     }
 
     @Test func aRealBackupSurvivesBeingSavedAsAFolderAndRestoredFromIt() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         try PreviewData.fillBuiltIns(repository)
@@ -44,7 +44,7 @@ struct BackupDocumentTests {
 
         let folder = BackupDocument.files(in: BackupDocument.wrapper(for: files))
         #expect(folder == files)
-        let restored = try AsvadaStore.makeContainer(.inMemory)
+        let restored = try ArtifactsStore.makeContainer(.inMemory)
         let summary = try BackupBundle.importFiles(folder, into: restored.mainContext)
         #expect(RestoreText.addsAnything(summary.added))
         #expect(try BackupBundle.export(from: restored.mainContext)[BackupBundle.dataPath] == files[BackupBundle.dataPath])
@@ -52,6 +52,6 @@ struct BackupDocumentTests {
 
     @Test func theFolderIsNamedForTheDay() {
         let day = Date(timeIntervalSince1970: 1_795_000_000)
-        #expect(ExportBackupView.filename(for: day).hasPrefix("Asvada backup 20"))
+        #expect(ExportBackupView.filename(for: day).hasPrefix("Artifacts backup 20"))
     }
 }

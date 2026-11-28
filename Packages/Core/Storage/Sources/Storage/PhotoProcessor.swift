@@ -16,7 +16,7 @@ public struct ProcessedPhoto: Sendable, Equatable {
     public let longitude: Double?
 }
 
-/// Turns a picked photo (any format ImageIO reads: HEIC, JPEG, PNG…) into the copies Asvada keeps.
+/// Turns a picked photo (any format ImageIO reads: HEIC, JPEG, PNG…) into the copies Artifacts keeps.
 ///
 /// Photos are stored in the app, never as Photos-library references, so they survive the
 /// original being deleted and travel with backups. The kept copies are re-encoded from pixels

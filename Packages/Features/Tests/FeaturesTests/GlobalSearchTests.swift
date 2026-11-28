@@ -17,7 +17,7 @@ struct GlobalSearchTests {
     }
 
     private func seededStore() throws -> Store {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         let collections = try repository.collections()

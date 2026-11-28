@@ -1,8 +1,8 @@
-# Asvada
+# Artifacts
 
 [![CI](https://github.com/deechauhan/asvada/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/deechauhan/asvada/actions/workflows/ci.yml)
 
-> *āsvāda* (आस्वाद), Sanskrit — savouring, relish.
+> The things you keep from what you've lived, each sealed with the ā of *āsvāda* (आस्वाद, Sanskrit: savouring).
 
 A private, local-first iOS app to record and rank what you've lived: cafés, restaurants,
 countries, airlines, films and anything else, all stitched into a map collage of everywhere
@@ -14,7 +14,7 @@ you've been.
 
 ## Status
 
-Pre-development. Planning happens on the **Asvada** GitHub Project board; see
+Pre-development. Planning happens on the **Artifacts** GitHub Project board; see
 [`docs/ROADMAP.md`](docs/ROADMAP.md) for releases and sprints.
 
 ## Docs
@@ -34,8 +34,8 @@ Requirements: macOS with Xcode 26+, [XcodeGen](https://github.com/yonaskolb/Xcod
 ```bash
 brew install xcodegen
 cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig   # then paste your TMDB key (gitignored)
-xcodegen generate        # creates Asvada.xcodeproj from project.yml (not committed)
-open Asvada.xcodeproj
+xcodegen generate        # creates Artifacts.xcodeproj from project.yml (not committed)
+open Artifacts.xcodeproj
 ```
 
 Run a module's unit tests without Xcode's UI: `swift test --package-path Packages/Core/Model`.
@@ -56,7 +56,7 @@ swiftlint lint --strict       # warnings fail CI
 |---|---|
 | **CI** (`ci.yml`) | On every PR and push to `main`: `swift test` for each package, then builds the app, runs the UI tests on an iOS simulator and uploads screenshots |
 | **Label PR** (`labeler.yml`) | Adds `area:*` labels from changed paths and `type:*` from the branch prefix |
-| **Project board** (`project.yml`) | Moves cards on the Asvada board: new issue → Backlog, branch `<type>/<issue#>-…` pushed → In progress, PR with `Closes #N` → In review, issue closed → Done. Run it by hand to (re)seed the board from `backlog/backlog.yaml`. Needs a `PROJECT_TOKEN` secret (classic PAT, `repo` + `project` scopes) |
+| **Project board** (`project.yml`) | Moves cards on the Artifacts board: new issue → Backlog, branch `<type>/<issue#>-…` pushed → In progress, PR with `Closes #N` → In review, issue closed → Done. Run it by hand to (re)seed the board from `backlog/backlog.yaml`. Needs a `PROJECT_TOKEN` secret (classic PAT, `repo` + `project` scopes) |
 | **Release** (`release.yml`) | Every merge to `main` publishes a GitHub Release with a changelog of the PRs since the last one, grouped by type (patch bump, e.g. `v0.1.3` → `v0.1.4`). Closing a milestone publishes `v0.<k+1>.0` (M5 → `v1.0.0`) and sweeps stale branches. See [Releases](https://github.com/deechauhan/asvada/releases) |
 | **Branch cleanup** (`branch-cleanup.yml`) | Deletes a PR's branch when it merges; weekly (and on demand) deletes branches whose PR is closed or that are already in `main`. Never deletes `main`, the default branch, branches with open PRs, or unmerged branches without a PR |
 

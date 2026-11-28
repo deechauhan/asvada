@@ -23,11 +23,11 @@ jobs:
       # Three runners of roughly equal length: the cabinet with the two slow context-menu tests,
       # the rest of LaunchTests, and every other test class (new ones included).
       shards: >-
-        [{"name": "menus", "tests": "-only-testing:AsvadaUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
-        -only-testing:AsvadaUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer
-        -only-testing:AsvadaUITests/CabinetUITests"},
-        {"name": "launch", "tests": "-only-testing:AsvadaUITests/LaunchTests
-        -skip-testing:AsvadaUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
-        -skip-testing:AsvadaUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer"},
-        {"name": "features", "tests": "-skip-testing:AsvadaUITests/LaunchTests
-        -skip-testing:AsvadaUITests/CabinetUITests"}]
+        [{"name": "menus", "tests": "-only-testing:ArtifactsUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
+        -only-testing:ArtifactsUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer
+        -only-testing:ArtifactsUITests/CabinetUITests"},
+        {"name": "launch", "tests": "-only-testing:ArtifactsUITests/LaunchTests
+        -skip-testing:ArtifactsUITests/LaunchTests/testEditAndDeleteCustomCollectionButNotBuiltIn
+        -skip-testing:ArtifactsUITests/LaunchTests/testShareTopFiveFromTheCafesDrawer"},
+        {"name": "features", "tests": "-skip-testing:ArtifactsUITests/LaunchTests
+        -skip-testing:ArtifactsUITests/CabinetUITests"}]

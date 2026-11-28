@@ -60,7 +60,7 @@ struct PrintHeadTests {
     }
 
     @Test func againGuessesTheLastThingsSavouredInTheDrawer() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         let cafes = try #require(try repository.collections().first { $0.kind == .cafes })
@@ -94,7 +94,7 @@ struct PrintHeadTests {
     }
 
     @Test func acceptingAGuessAddsItToTheDrawerOnce() throws {
-        let container = try AsvadaStore.makeContainer(.inMemory)
+        let container = try ArtifactsStore.makeContainer(.inMemory)
         let repository = Repository(context: container.mainContext)
         try BuiltInCollections.seedIfNeeded(in: repository.context)
         let countries = try #require(try repository.collections().first { $0.kind == .countries })

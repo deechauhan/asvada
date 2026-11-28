@@ -38,7 +38,7 @@ enum RestoreText {
         }
         switch error {
         case .unsupportedFormat:
-            return "This backup was made by a newer version of Asvada. Update the app, then try again."
+            return "This backup was made by a newer version of Artifacts. Update the app, then try again."
         case .missingFile, .checksumMismatch, .countMismatch, .unreadable:
             return "This backup looks damaged or incomplete, so nothing was restored."
         }

@@ -2,7 +2,7 @@ import Foundation
 import Geo
 import MapKit
 
-/// A place found by search: what Asvada keeps of it. Country codes come from the bundled outlines
+/// A place found by search: what Artifacts keeps of it. Country codes come from the bundled outlines
 /// (offline), so they're right even where MapKit's address is sparse.
 public struct PlaceResult: Sendable, Hashable, Identifiable {
     public let name: String
@@ -175,7 +175,7 @@ public struct MapKitPlaceSearch: PlaceSearching {
 }
 
 public extension PlaceResult {
-    /// What Asvada keeps of a MapKit result, or `nil` if it has no name.
+    /// What Artifacts keeps of a MapKit result, or `nil` if it has no name.
     init?(mapItem: MKMapItem) {
         guard let name = mapItem.name, !name.isEmpty else { return nil }
         let coordinate = mapItem.location.coordinate

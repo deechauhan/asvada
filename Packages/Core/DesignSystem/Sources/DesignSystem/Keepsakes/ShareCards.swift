@@ -63,7 +63,7 @@ public struct ShareFrame<Content: View>: View {
     }
 }
 
-/// "ā · Asvada · savoured", set small at the foot of a share card.
+/// "ā · Artifacts · savoured", set small at the foot of a share card.
 private struct Colophon: View {
     var body: some View {
         HStack(spacing: Spacing.small) {
@@ -76,12 +76,12 @@ private struct Colophon: View {
                     .fill(Palette.saffron.color)
                     .frame(width: 9, height: 2.5)
             }
-            Text("Asvada · savoured")
+            Text("Artifacts · savoured")
                 .font(.system(.caption, design: .serif).italic())
                 .foregroundStyle(Palette.onAubergine.color.opacity(0.8))
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Asvada")
+        .accessibilityLabel("Artifacts")
     }
 }
 

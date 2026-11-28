@@ -26,7 +26,7 @@ struct LuckyDipTests {
     let cafes: ExperienceCollection
 
     init() throws {
-        container = try AsvadaStore.makeContainer(.inMemory)
+        container = try ArtifactsStore.makeContainer(.inMemory)
         repository = Repository(context: container.mainContext)
         films = ExperienceCollection(name: "Films", kind: .films, ratingMode: .log)
         cafes = ExperienceCollection(name: "Cafés", kind: .cafes, ratingMode: .ranked)

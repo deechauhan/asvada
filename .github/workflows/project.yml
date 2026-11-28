@@ -1,6 +1,6 @@
 name: Project board
 
-# Keeps the "Asvada" GitHub Project in sync with the repo:
+# Keeps the "Artifacts" GitHub Project in sync with the repo:
 #   issue opened/reopened                 → Backlog (added to the board)
 #   branch <type>/<issue#>-slug pushed    → In progress
 #   PR opened with "Closes #N"            → #N In review

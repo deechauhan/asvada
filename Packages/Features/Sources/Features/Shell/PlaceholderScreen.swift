@@ -12,7 +12,7 @@ struct SettingsScreen: View {
                     NavigationLink {
                         AboutView()
                     } label: {
-                        LabeledContent("About Asvada", value: AppVersion.current.version)
+                        LabeledContent("About Artifacts", value: AppVersion.current.version)
                     }
                     .accessibilityIdentifier("aboutLink")
                 }

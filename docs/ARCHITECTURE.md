@@ -17,7 +17,7 @@
 ## Modules (Swift packages inside one Xcode workspace)
 
 ```
-AsvadaApp        — app target, navigation, composition root
+ArtifactsApp        — app target, navigation, composition root
 Features/        — Timeline, QuickLog, Collections, EntryDetail, Map, Settings, Import
 Core/Model       — SwiftData models + migrations (VersionedSchema)
 Core/Storage     — ModelContainer setup, repositories, export/import (backup format)
